@@ -1,0 +1,762 @@
+use super::*;
+
+impl Codegen {
+    pub(crate) fn compile_statement_list(
+        &mut self,
+        statements: &[Statement],
+        root_script: bool,
+    ) -> Result<Option<u8>, CodegenError> {
+        let mut last_value = None;
+        for statement in statements {
+            let value = self.compile_statement(statement, root_script)?;
+            if value.is_some() {
+                last_value = value;
+            }
+        }
+        Ok(last_value)
+    }
+
+    pub(crate) fn compile_statement(
+        &mut self,
+        statement: &Statement,
+        root_script: bool,
+    ) -> Result<Option<u8>, CodegenError> {
+        match statement {
+            Statement::Directive(_) | Statement::Empty(_) | Statement::Debugger(_) => Ok(None),
+            Statement::Block(block) => self.compile_block(block, !root_script),
+            Statement::VariableDeclaration(declaration) => {
+                self.compile_variable_declaration(declaration)?;
+                Ok(None)
+            }
+            Statement::FunctionDeclaration(function) => {
+                self.compile_function_declaration(function)?;
+                Ok(None)
+            }
+            Statement::If(statement) => {
+                self.compile_if_statement(statement, root_script)?;
+                Ok(None)
+            }
+            Statement::While(statement) => {
+                self.compile_while_statement(statement, root_script)?;
+                Ok(None)
+            }
+            Statement::DoWhile(statement) => {
+                self.compile_do_while_statement(statement, root_script)?;
+                Ok(None)
+            }
+            Statement::For(statement) => {
+                self.compile_for_statement(statement, root_script)?;
+                Ok(None)
+            }
+            Statement::Return(statement) => {
+                self.compile_return_statement(statement)?;
+                Ok(None)
+            }
+            Statement::Break(jump) => {
+                if jump.label.is_some() {
+                    return Err(CodegenError::Unsupported {
+                        feature: "labeled break",
+                        span: jump.span,
+                    });
+                }
+                let patch = self.emit_placeholder_jmp();
+                let Some(control_ctx) = self.control_stack.last_mut() else {
+                    return Err(CodegenError::InvalidBreak { span: jump.span });
+                };
+                control_ctx.break_patches.push(patch);
+                Ok(None)
+            }
+            Statement::Continue(jump) => {
+                if jump.label.is_some() {
+                    return Err(CodegenError::Unsupported {
+                        feature: "labeled continue",
+                        span: jump.span,
+                    });
+                }
+                let patch = self.emit_placeholder_jmp();
+                let Some(control_ctx) = self
+                    .control_stack
+                    .iter_mut()
+                    .rev()
+                    .find(|ctx| ctx.continue_patches.is_some())
+                else {
+                    return Err(CodegenError::InvalidContinue { span: jump.span });
+                };
+                control_ctx
+                    .continue_patches
+                    .as_mut()
+                    .expect("loop continue patches")
+                    .push(patch);
+                Ok(None)
+            }
+            Statement::Expression(ExpressionStatement { expression, .. }) => {
+                self.compile_expression(expression).map(Some)
+            }
+            Statement::Labeled(node) => Err(CodegenError::Unsupported {
+                feature: "labeled statements",
+                span: node.span,
+            }),
+            Statement::ImportDeclaration(node) => Err(CodegenError::Unsupported {
+                feature: "imports",
+                span: node.span,
+            }),
+            Statement::ExportDeclaration(node) => Err(CodegenError::Unsupported {
+                feature: "exports",
+                span: node.span(),
+            }),
+            Statement::ClassDeclaration(node) => Err(CodegenError::Unsupported {
+                feature: "classes",
+                span: node.span,
+            }),
+            Statement::Switch(node) => {
+                self.compile_switch_statement(node, root_script)?;
+                Ok(None)
+            }
+            Statement::Throw(node) => {
+                self.compile_throw_statement(node)?;
+                Ok(None)
+            }
+            Statement::Try(node) => {
+                self.compile_try_statement(node)?;
+                Ok(None)
+            }
+            Statement::With(node) => Err(CodegenError::Unsupported {
+                feature: "with",
+                span: node.span,
+            }),
+        }
+    }
+
+    pub(crate) fn compile_block(
+        &mut self,
+        block: &BlockStatement,
+        create_scope: bool,
+    ) -> Result<Option<u8>, CodegenError> {
+        if !create_scope {
+            return self.compile_statement_list(&block.body, false);
+        }
+
+        let saved_top = self.temp_top;
+        self.nested_scope_depth += 1;
+
+        // Check if this block actually needs runtime bindings
+        let needs_runtime_bindings = self.block_needs_runtime_bindings(block);
+        self.enter_fast_name_scope_with_runtime_bindings(needs_runtime_bindings);
+
+        if needs_runtime_bindings {
+            self.builder.emit_enter(256);
+            let _env_reg = self.alloc_temp(Some(block.span))?;
+            self.builder.emit_create_env(_env_reg);
+        }
+
+        let last = self.compile_statement_list(&block.body, false)?;
+
+        if needs_runtime_bindings {
+            self.builder.emit_leave();
+        }
+
+        self.leave_fast_name_scope();
+        self.nested_scope_depth = self.nested_scope_depth.saturating_sub(1);
+        self.temp_top = saved_top;
+        Ok(last)
+    }
+
+    pub(crate) fn compile_if_statement(
+        &mut self,
+        statement: &IfStatement,
+        root_script: bool,
+    ) -> Result<(), CodegenError> {
+        if self.compile_fused_if_return(statement)? {
+            return Ok(());
+        }
+
+        let (false_jump, false_kind, test_top) =
+            self.compile_condition_jump_false(&statement.test)?;
+        self.compile_statement(&statement.consequent, root_script)?;
+
+        if let Some(alternate) = &statement.alternate {
+            let end_jump = self.emit_placeholder_jmp();
+            let alternate_start = self.builder.len();
+            self.patch_jump(false_jump, alternate_start, false_kind);
+            self.compile_statement(alternate, root_script)?;
+            let end = self.builder.len();
+            self.patch_jump(end_jump, end, JumpPatchKind::Jmp);
+        } else {
+            let end = self.builder.len();
+            self.patch_jump(false_jump, end, false_kind);
+        }
+
+        self.temp_top = test_top.saturating_sub(1);
+        Ok(())
+    }
+
+    pub(crate) fn compile_fused_if_return(
+        &mut self,
+        statement: &IfStatement,
+    ) -> Result<bool, CodegenError> {
+        if statement.alternate.is_some() {
+            return Ok(false);
+        }
+
+        let Statement::Return(return_stmt) = statement.consequent.as_ref() else {
+            return Ok(false);
+        };
+        let Some(Expression::Identifier(return_id)) = return_stmt.argument.as_ref() else {
+            return Ok(false);
+        };
+        let Expression::Binary(binary) = &statement.test else {
+            return Ok(false);
+        };
+        if binary.operator != BinaryOperator::LessThanOrEqual {
+            return Ok(false);
+        }
+        let Expression::Identifier(lhs_id) = &binary.left else {
+            return Ok(false);
+        };
+        if lhs_id.name != return_id.name {
+            return Ok(false);
+        }
+
+        let lhs = self.compile_identifier_current(lhs_id)?;
+        let rhs = self.compile_readonly_expression(&binary.right)?;
+        self.builder.emit_ret_if_lte_i(lhs, rhs, lhs);
+        self.temp_top = lhs.max(rhs).saturating_sub(1);
+        Ok(true)
+    }
+
+    pub(crate) fn compile_while_statement(
+        &mut self,
+        statement: &WhileStatement,
+        root_script: bool,
+    ) -> Result<(), CodegenError> {
+        let loop_start = self.builder.len();
+        let (exit_jump, exit_kind, test_top) =
+            self.compile_condition_jump_false(&statement.test)?;
+
+        self.control_stack.push(ControlContext::loop_context());
+        self.compile_statement(&statement.body, root_script)?;
+        let loop_ctx = self.control_stack.pop().expect("loop context");
+
+        let continue_target = loop_start;
+        self.patch_loop_continues(
+            loop_ctx.continue_patches.expect("loop continue patches"),
+            continue_target,
+        );
+
+        self.builder
+            .emit_jmp(offset_to(loop_start, self.builder.len())?);
+
+        let end = self.builder.len();
+        self.patch_jump(exit_jump, end, exit_kind);
+        self.patch_loop_breaks(loop_ctx.break_patches, end);
+        self.temp_top = test_top.saturating_sub(1);
+        Ok(())
+    }
+
+    pub(crate) fn compile_do_while_statement(
+        &mut self,
+        statement: &DoWhileStatement,
+        root_script: bool,
+    ) -> Result<(), CodegenError> {
+        let body_start = self.builder.len();
+        self.control_stack.push(ControlContext::loop_context());
+        self.compile_statement(&statement.body, root_script)?;
+        let test_start = self.builder.len();
+        let test_reg = self.compile_expression(&statement.test)?;
+        self.builder
+            .emit_jmp_true(test_reg, offset_to(body_start, self.builder.len())?);
+
+        let loop_ctx = self.control_stack.pop().expect("loop context");
+        self.patch_loop_continues(
+            loop_ctx.continue_patches.expect("loop continue patches"),
+            test_start,
+        );
+        let end = self.builder.len();
+        self.patch_loop_breaks(loop_ctx.break_patches, end);
+        self.temp_top = test_reg.saturating_sub(1);
+        Ok(())
+    }
+
+    pub(crate) fn compile_for_statement(
+        &mut self,
+        statement: &ForStatement,
+        root_script: bool,
+    ) -> Result<(), CodegenError> {
+        match statement {
+            ForStatement::Classic(classic) => {
+                self.compile_for_classic_statement(classic, root_script)
+            }
+            ForStatement::In(node) => Err(CodegenError::Unsupported {
+                feature: "for-in",
+                span: node.span,
+            }),
+            ForStatement::Of(node) => self.compile_for_of_statement(node, root_script),
+        }
+    }
+
+    pub(crate) fn compile_for_classic_statement(
+        &mut self,
+        statement: &ForClassicStatement,
+        root_script: bool,
+    ) -> Result<(), CodegenError> {
+        self.nested_scope_depth += 1;
+
+        // Check if this loop actually needs runtime bindings
+        let needs_runtime_bindings =
+            self.for_statement_needs_runtime_bindings(&ForStatement::Classic(statement.clone()));
+        self.enter_fast_name_scope_with_runtime_bindings(needs_runtime_bindings);
+
+        if needs_runtime_bindings {
+            self.builder.emit_enter(256);
+            let _env_reg = self.alloc_temp(Some(statement.span))?;
+            self.builder.emit_create_env(_env_reg);
+        }
+
+        if let Some(init) = &statement.init {
+            match init {
+                ForInit::VariableDeclaration(declaration) => {
+                    self.compile_variable_declaration(declaration)?;
+                }
+                ForInit::Expression(expression) => {
+                    let reg = self.compile_expression(expression)?;
+                    self.temp_top = reg.saturating_sub(1);
+                }
+            }
+        }
+
+        let loop_start = self.builder.len();
+        let exit_jump = if let Some(test) = &statement.test {
+            let (patch, kind, top) = self.compile_condition_jump_false(test)?;
+            Some((patch, kind, top))
+        } else {
+            None
+        };
+
+        self.control_stack.push(ControlContext::loop_context());
+        self.compile_statement(&statement.body, root_script)?;
+        let mut loop_ctx = self.control_stack.pop().expect("loop context");
+
+        let continue_target = self.builder.len();
+        self.patch_loop_continues(
+            std::mem::take(
+                loop_ctx
+                    .continue_patches
+                    .as_mut()
+                    .expect("loop continue patches"),
+            ),
+            continue_target,
+        );
+
+        if let Some(update) = &statement.update {
+            let reg = self.compile_expression(update)?;
+            self.temp_top = reg.saturating_sub(1);
+        }
+
+        self.builder
+            .emit_jmp(offset_to(loop_start, self.builder.len())?);
+
+        let end = self.builder.len();
+        if let Some((patch_pos, kind, test_top)) = exit_jump {
+            self.patch_jump(patch_pos, end, kind);
+            self.temp_top = test_top.saturating_sub(1);
+        }
+        self.patch_loop_breaks(loop_ctx.break_patches, end);
+
+        if needs_runtime_bindings {
+            self.builder.emit_leave();
+        }
+
+        self.leave_fast_name_scope();
+        self.nested_scope_depth = self.nested_scope_depth.saturating_sub(1);
+        Ok(())
+    }
+
+    pub(crate) fn compile_for_of_statement(
+        &mut self,
+        statement: &ast::ForEachStatement,
+        root_script: bool,
+    ) -> Result<(), CodegenError> {
+        if statement.is_await {
+            return Err(CodegenError::Unsupported {
+                feature: "for-await-of",
+                span: statement.span,
+            });
+        }
+
+        self.nested_scope_depth += 1;
+
+        // Check if this loop actually needs runtime bindings
+        let needs_runtime_bindings =
+            self.for_statement_needs_runtime_bindings(&ForStatement::Of(statement.clone()));
+        self.enter_fast_name_scope_with_runtime_bindings(needs_runtime_bindings);
+
+        if needs_runtime_bindings {
+            self.builder.emit_enter(256);
+            let _env_reg = self.alloc_temp(Some(statement.span))?;
+            self.builder.emit_create_env(_env_reg);
+        }
+
+        let iterable_reg = self.compile_expression(&statement.right)?;
+        let index_reg = self.alloc_temp(Some(statement.span))?;
+        self.builder.emit_load_i(index_reg, 0);
+
+        let loop_start = self.builder.len();
+        let length_reg = self.alloc_temp(Some(statement.span))?;
+        self.builder.emit_get_length_ic(length_reg, iterable_reg, 0);
+        self.builder.emit_lt(index_reg, length_reg);
+        let cond_reg = self.alloc_temp(Some(statement.span))?;
+        self.builder.emit_mov(cond_reg, ACC);
+        let exit_jump = self.emit_placeholder_jmp_false(cond_reg);
+
+        self.builder.emit_get_prop_acc(iterable_reg, index_reg);
+        let value_reg = self.alloc_temp(Some(statement.span))?;
+        self.builder.emit_mov(value_reg, ACC);
+        self.bind_for_each_left(&statement.left, value_reg, statement.span)?;
+
+        self.control_stack.push(ControlContext::loop_context());
+        self.compile_statement(&statement.body, root_script)?;
+        let mut loop_ctx = self.control_stack.pop().expect("loop context");
+
+        let continue_target = self.builder.len();
+        self.patch_loop_continues(
+            std::mem::take(
+                loop_ctx
+                    .continue_patches
+                    .as_mut()
+                    .expect("loop continue patches"),
+            ),
+            continue_target,
+        );
+
+        self.builder.emit_inc(index_reg);
+        self.builder.emit_mov(index_reg, ACC);
+        self.builder
+            .emit_jmp(offset_to(loop_start, self.builder.len())?);
+
+        let end = self.builder.len();
+        self.patch_jump(exit_jump, end, JumpPatchKind::JmpFalse { reg: cond_reg });
+        self.patch_loop_breaks(loop_ctx.break_patches, end);
+
+        if needs_runtime_bindings {
+            self.builder.emit_leave();
+        }
+
+        self.leave_fast_name_scope();
+        self.nested_scope_depth = self.nested_scope_depth.saturating_sub(1);
+        Ok(())
+    }
+
+    pub(crate) fn compile_switch_statement(
+        &mut self,
+        statement: &ast::SwitchStatement,
+        _root_script: bool,
+    ) -> Result<(), CodegenError> {
+        let discriminant_reg = self.compile_expression(&statement.discriminant)?;
+        let mut pending_false_jump: Option<(usize, u8)> = None;
+        let mut case_entry_jumps = Vec::new();
+        let mut default_case = None;
+
+        for (index, case) in statement.cases.iter().enumerate() {
+            if let Some((patch, reg)) = pending_false_jump.take() {
+                self.patch_jump(patch, self.builder.len(), JumpPatchKind::JmpFalse { reg });
+            }
+
+            if let Some(test) = &case.test {
+                let case_reg = self.compile_expression(test)?;
+                self.builder.emit_strict_eq(discriminant_reg, case_reg);
+                let cond_reg = self.alloc_temp(Some(case.span))?;
+                self.builder.emit_mov(cond_reg, ACC);
+                let false_jump = self.emit_placeholder_jmp_false(cond_reg);
+                let matched_jump = self.emit_placeholder_jmp();
+                pending_false_jump = Some((false_jump, cond_reg));
+                case_entry_jumps.push((index, matched_jump));
+                self.temp_top = discriminant_reg;
+            } else {
+                default_case = Some(index);
+            }
+        }
+
+        let default_dispatch = self.builder.len();
+        let default_jump = self.emit_placeholder_jmp();
+        if let Some((patch, reg)) = pending_false_jump.take() {
+            self.patch_jump(patch, default_dispatch, JumpPatchKind::JmpFalse { reg });
+        }
+
+        self.control_stack.push(ControlContext::switch_context());
+        let mut case_starts = vec![None; statement.cases.len()];
+        for (index, case) in statement.cases.iter().enumerate() {
+            case_starts[index] = Some(self.builder.len());
+            self.compile_statement_list(&case.consequent, false)?;
+        }
+        let switch_ctx = self.control_stack.pop().expect("switch context");
+        let end = self.builder.len();
+        self.patch_loop_breaks(switch_ctx.break_patches, end);
+
+        for (index, jump_pos) in case_entry_jumps {
+            let target = case_starts[index].unwrap_or(end);
+            self.patch_jump(jump_pos, target, JumpPatchKind::Jmp);
+        }
+        let default_target = default_case
+            .and_then(|index| case_starts[index])
+            .unwrap_or(end);
+        self.patch_jump(default_jump, default_target, JumpPatchKind::Jmp);
+
+        self.temp_top = discriminant_reg.saturating_sub(1);
+        Ok(())
+    }
+
+    pub(crate) fn compile_return_statement(
+        &mut self,
+        statement: &ReturnStatement,
+    ) -> Result<(), CodegenError> {
+        if let Some(argument) = &statement.argument {
+            let reg = match argument {
+                Expression::Identifier(identifier) => {
+                    self.compile_identifier_current(identifier)?
+                }
+                _ => self.compile_expression(argument)?,
+            };
+            self.temp_top = reg.saturating_sub(1);
+            self.builder.emit_ret_reg(reg);
+        } else {
+            self.builder.emit_ret_u();
+        }
+        Ok(())
+    }
+
+    pub(crate) fn compile_throw_statement(
+        &mut self,
+        statement: &ast::ThrowStatement,
+    ) -> Result<(), CodegenError> {
+        let reg = self.compile_expression(&statement.argument)?;
+        self.builder.emit_throw(reg);
+        self.temp_top = reg.saturating_sub(1);
+        Ok(())
+    }
+
+    pub(crate) fn compile_try_statement(
+        &mut self,
+        statement: &ast::TryStatement,
+    ) -> Result<(), CodegenError> {
+        if statement.finalizer.is_some() {
+            return Err(CodegenError::Unsupported {
+                feature: "try/finally",
+                span: statement.span,
+            });
+        }
+
+        let Some(handler) = &statement.handler else {
+            return Err(CodegenError::Unsupported {
+                feature: "try without catch",
+                span: statement.span,
+            });
+        };
+
+        let try_patch = self.builder.len();
+        self.builder.emit_try(0);
+        self.compile_statement_list(&statement.block.body, false)?;
+        self.builder.emit_end_try();
+        let skip_catch = self.emit_placeholder_jmp();
+
+        let catch_start = self.builder.len();
+        self.patch_jump(try_patch, catch_start, JumpPatchKind::Try);
+        self.compile_catch_clause(handler)?;
+
+        let end = self.builder.len();
+        self.patch_jump(skip_catch, end, JumpPatchKind::Jmp);
+        Ok(())
+    }
+
+    pub(crate) fn compile_catch_clause(
+        &mut self,
+        clause: &ast::CatchClause,
+    ) -> Result<(), CodegenError> {
+        let saved_top = self.temp_top;
+        self.nested_scope_depth += 1;
+
+        // Check if this catch clause actually needs runtime bindings
+        let needs_runtime_bindings =
+            clause.param.is_some() || self.block_needs_runtime_bindings(&clause.body);
+        self.enter_fast_name_scope_with_runtime_bindings(needs_runtime_bindings);
+
+        if needs_runtime_bindings {
+            self.builder.emit_enter(256);
+            let _env_reg = self.alloc_temp(Some(clause.span))?;
+            self.builder.emit_create_env(_env_reg);
+        }
+
+        let exception_reg = self.alloc_temp(Some(clause.span))?;
+        self.builder.emit_catch(exception_reg);
+
+        if let Some(param) = &clause.param {
+            match param {
+                Pattern::Identifier(identifier) => {
+                    self.declare_name_binding(&identifier.name, exception_reg)?;
+                }
+                other => {
+                    return Err(CodegenError::Unsupported {
+                        feature: "complex catch parameter",
+                        span: other.span(),
+                    });
+                }
+            }
+        }
+
+        self.compile_statement_list(&clause.body.body, false)?;
+
+        if needs_runtime_bindings {
+            self.builder.emit_leave();
+        }
+
+        self.builder.emit_finally();
+        self.leave_fast_name_scope();
+        self.nested_scope_depth = self.nested_scope_depth.saturating_sub(1);
+        self.temp_top = saved_top;
+        Ok(())
+    }
+
+    pub(crate) fn bind_for_each_left(
+        &mut self,
+        left: &ast::ForLeft,
+        value_reg: u8,
+        span: Span,
+    ) -> Result<(), CodegenError> {
+        match left {
+            ast::ForLeft::VariableDeclaration(declaration) => {
+                if declaration.declarations.len() != 1 {
+                    return Err(CodegenError::Unsupported {
+                        feature: "multiple for-of bindings",
+                        span: declaration.span,
+                    });
+                }
+                let declarator = &declaration.declarations[0];
+                if declarator.init.is_some() {
+                    return Err(CodegenError::Unsupported {
+                        feature: "initialized for-of bindings",
+                        span: declarator.span,
+                    });
+                }
+                self.bind_pattern_value(&declarator.pattern, value_reg, span, true)
+            }
+            ast::ForLeft::Pattern(pattern) => {
+                self.bind_pattern_value(pattern, value_reg, span, false)
+            }
+            ast::ForLeft::Expression(expression) => {
+                self.bind_assignment_target(expression, value_reg)
+            }
+        }
+    }
+
+    pub(crate) fn bind_pattern_value(
+        &mut self,
+        pattern: &Pattern,
+        value_reg: u8,
+        span: Span,
+        declare: bool,
+    ) -> Result<(), CodegenError> {
+        match pattern {
+            Pattern::Identifier(identifier) => {
+                if declare {
+                    self.declare_name_binding(&identifier.name, value_reg)?;
+                } else {
+                    self.write_name_binding(&identifier.name, value_reg)?;
+                }
+                Ok(())
+            }
+            Pattern::Assignment(pattern) => match pattern.left.as_ref() {
+                Pattern::Identifier(identifier) => {
+                    if declare {
+                        self.declare_name_binding(&identifier.name, value_reg)?;
+                    } else {
+                        self.write_name_binding(&identifier.name, value_reg)?;
+                    }
+                    Ok(())
+                }
+                other => Err(CodegenError::Unsupported {
+                    feature: "complex for-of binding",
+                    span: other.span(),
+                }),
+            },
+            _ => Err(CodegenError::Unsupported {
+                feature: "complex for-of binding",
+                span,
+            }),
+        }
+    }
+
+    pub(crate) fn bind_assignment_target(
+        &mut self,
+        expression: &Expression,
+        value_reg: u8,
+    ) -> Result<(), CodegenError> {
+        match expression {
+            Expression::Identifier(identifier) => {
+                self.write_name_binding(&identifier.name, value_reg)?;
+                Ok(())
+            }
+            Expression::Member(member) => {
+                let (object_reg, key_reg, immediate_key) = self.compile_member_target(member)?;
+                if let Some(key) = immediate_key {
+                    self.builder.emit_set_prop(value_reg, object_reg, key);
+                } else {
+                    let key_reg = key_reg.expect("computed member key");
+                    self.builder.emit_mov(ACC, value_reg);
+                    self.builder.emit_set_prop_acc(object_reg, key_reg);
+                }
+                Ok(())
+            }
+            other => Err(CodegenError::Unsupported {
+                feature: "for-of assignment target",
+                span: other.span(),
+            }),
+        }
+    }
+
+    pub(crate) fn compile_variable_declaration(
+        &mut self,
+        declaration: &VariableDeclaration,
+    ) -> Result<(), CodegenError> {
+        for declarator in &declaration.declarations {
+            self.compile_variable_declarator(declarator)?;
+        }
+        Ok(())
+    }
+
+    pub(crate) fn compile_variable_declarator(
+        &mut self,
+        declarator: &VariableDeclarator,
+    ) -> Result<(), CodegenError> {
+        match &declarator.pattern {
+            Pattern::Identifier(identifier) => {
+                let value_reg = if let Some(init) = &declarator.init {
+                    self.compile_expression(init)?
+                } else {
+                    self.load_undefined(None)?
+                };
+                self.declare_name_binding(&identifier.name, value_reg)?;
+                self.temp_top = value_reg.saturating_sub(1);
+                Ok(())
+            }
+            Pattern::Assignment(pattern) => match pattern.left.as_ref() {
+                Pattern::Identifier(identifier) => {
+                    let value_reg = if let Some(init) = &declarator.init {
+                        self.compile_expression(init)?
+                    } else {
+                        self.compile_expression(&pattern.right)?
+                    };
+                    self.declare_name_binding(&identifier.name, value_reg)?;
+                    self.temp_top = value_reg.saturating_sub(1);
+                    Ok(())
+                }
+                other => Err(CodegenError::Unsupported {
+                    feature: "complex variable pattern",
+                    span: other.span(),
+                }),
+            },
+            other => Err(CodegenError::Unsupported {
+                feature: "destructuring declarations",
+                span: other.span(),
+            }),
+        }
+    }
+}

@@ -1,0 +1,13 @@
+[package]
+name = "built_ins"
+edition.workspace = true
+version.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+repository.workspace = true
+license.workspace = true
+description.workspace = true
+
+[dependencies]
+chrono = "0.4"
+value = { path = "../value" }

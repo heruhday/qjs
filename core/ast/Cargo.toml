@@ -8,5 +8,17 @@ repository.workspace = true
 license.workspace = true
 description.workspace = true
 
+[[bin]]
+name = "test262_ast"
+path = "bin/test262_ast.rs"
+
+[[bin]]
+name = "test262_ast_to_js"
+path = "bin/test262_ast_to_js.rs"
+
+[[bin]]
+name = "test262_ast_roudtrip"
+path = "bin/test262_ast_roudtrip.rs"
+
 [dependencies]
 unicode-ident = "1"

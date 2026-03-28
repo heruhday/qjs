@@ -13,3 +13,4 @@ authors = ["xjs-dev"]
 repository = "https://gdithub.com/xjs-dev/xjs"
 license = "Unlicense OR MIT"
 description = "XJS is a Javascript lexer, parser and compiler written in Rust. Currently, it has support for some of the language."
+

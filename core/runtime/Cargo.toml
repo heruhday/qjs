@@ -1,0 +1,15 @@
+[package]
+name = "runtime"
+edition.workspace = true
+version.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+repository.workspace = true
+license.workspace = true
+description.workspace = true
+
+[dependencies]
+atoms = { path = "../atoms" }
+gc = { path = "../gc" }
+heap = { path = "../heap" }
+value = { path = "../value" }

@@ -469,12 +469,11 @@ impl JsEmitter {
         if function.is_generator {
             out.push('*');
         }
-        if emit_name {
-            if let Some(id) = &function.id {
-                out.push(' ');
-                out.push_str(&self.emit_identifier(id));
-            }
+        if emit_name && let Some(id) = &function.id {
+            out.push(' ');
+            out.push_str(&self.emit_identifier(id));
         }
+
         out.push('(');
         out.push_str(
             &function
@@ -826,34 +825,34 @@ impl JsEmitter {
                 kind,
                 ..
             } => {
-                if *kind != ObjectPropertyKind::Init {
-                    if let Expression::Function(function) = value {
-                        let mut out = String::new();
-                        match kind {
-                            ObjectPropertyKind::Getter => out.push_str("get "),
-                            ObjectPropertyKind::Setter => out.push_str("set "),
-                            ObjectPropertyKind::Method | ObjectPropertyKind::Init => {}
-                        }
-                        if function.is_async {
-                            out.push_str("async ");
-                        }
-                        if function.is_generator {
-                            out.push('*');
-                        }
-                        out.push_str(&self.emit_property_key(key));
-                        out.push('(');
-                        out.push_str(
-                            &function
-                                .params
-                                .iter()
-                                .map(|pattern| self.emit_pattern(pattern))
-                                .collect::<Vec<_>>()
-                                .join(", "),
-                        );
-                        out.push_str(") ");
-                        out.push_str(&self.emit_block(&function.body, 0));
-                        return out;
+                if *kind != ObjectPropertyKind::Init
+                    && let Expression::Function(function) = value
+                {
+                    let mut out = String::new();
+                    match kind {
+                        ObjectPropertyKind::Getter => out.push_str("get "),
+                        ObjectPropertyKind::Setter => out.push_str("set "),
+                        ObjectPropertyKind::Method | ObjectPropertyKind::Init => {}
                     }
+                    if function.is_async {
+                        out.push_str("async ");
+                    }
+                    if function.is_generator {
+                        out.push('*');
+                    }
+                    out.push_str(&self.emit_property_key(key));
+                    out.push('(');
+                    out.push_str(
+                        &function
+                            .params
+                            .iter()
+                            .map(|pattern| self.emit_pattern(pattern))
+                            .collect::<Vec<_>>()
+                            .join(", "),
+                    );
+                    out.push_str(") ");
+                    out.push_str(&self.emit_block(&function.body, 0));
+                    return out;
                 }
 
                 if *shorthand {
@@ -1110,7 +1109,7 @@ impl JsEmitter {
     }
 
     fn emit_new_callee(self, expression: &Expression) -> String {
-        if self.new_callee_requires_parentheses(expression) {
+        if Self::new_callee_requires_parentheses(expression) {
             format!("({})", self.emit_expression(expression, PREC_LOWEST))
         } else if self.expression_can_be_chain_base(expression) {
             self.emit_expression(expression, PREC_NEW)
@@ -1119,10 +1118,10 @@ impl JsEmitter {
         }
     }
 
-    fn new_callee_requires_parentheses(self, expression: &Expression) -> bool {
+    fn new_callee_requires_parentheses(expression: &Expression) -> bool {
         match expression {
             Expression::Call(_) | Expression::TaggedTemplate(_) => true,
-            Expression::Member(member) => self.new_callee_requires_parentheses(&member.object),
+            Expression::Member(member) => Self::new_callee_requires_parentheses(&member.object),
             _ => false,
         }
     }
@@ -1136,39 +1135,39 @@ impl JsEmitter {
     }
 
     fn expression_statement_requires_parentheses(self, expression: &Expression) -> bool {
-        self.expression_statement_starts_with_forbidden_token(expression)
-            || self.expression_statement_starts_with_let_bracket(expression)
+        Self::expression_statement_starts_with_forbidden_token(expression)
+            || Self::expression_statement_starts_with_let_bracket(expression)
     }
 
-    fn expression_statement_starts_with_forbidden_token(self, expression: &Expression) -> bool {
+    fn expression_statement_starts_with_forbidden_token(expression: &Expression) -> bool {
         match expression {
             Expression::Object(_) | Expression::Function(_) | Expression::Class(_) => true,
             Expression::Sequence(sequence) => {
                 sequence.expressions.first().is_some_and(|expression| {
-                    self.expression_statement_starts_with_forbidden_token(expression)
+                    Self::expression_statement_starts_with_forbidden_token(expression)
                 })
             }
             Expression::Conditional(expression) => {
-                self.expression_statement_starts_with_forbidden_token(&expression.test)
+                Self::expression_statement_starts_with_forbidden_token(&expression.test)
             }
             Expression::Logical(expression) => {
-                self.expression_statement_starts_with_forbidden_token(&expression.left)
+                Self::expression_statement_starts_with_forbidden_token(&expression.left)
             }
             Expression::Binary(expression) => {
-                self.expression_statement_starts_with_forbidden_token(&expression.left)
+                Self::expression_statement_starts_with_forbidden_token(&expression.left)
             }
             Expression::Assignment(expression) => {
                 matches!(expression.left, Expression::Object(_))
-                    || self.expression_statement_starts_with_forbidden_token(&expression.left)
+                    || Self::expression_statement_starts_with_forbidden_token(&expression.left)
             }
             Expression::Update(expression) if !expression.prefix => {
-                self.expression_statement_starts_with_forbidden_token(&expression.argument)
+                Self::expression_statement_starts_with_forbidden_token(&expression.argument)
             }
             _ => false,
         }
     }
 
-    fn expression_statement_starts_with_let_bracket(self, expression: &Expression) -> bool {
+    fn expression_statement_starts_with_let_bracket(expression: &Expression) -> bool {
         match expression {
             Expression::Member(member) => {
                 matches!(
@@ -1177,13 +1176,13 @@ impl JsEmitter {
                         Expression::Identifier(Identifier { name, .. }),
                         MemberProperty::Computed { .. }
                     ) if name == "let"
-                ) || self.expression_statement_starts_with_let_bracket(&member.object)
+                ) || Self::expression_statement_starts_with_let_bracket(&member.object)
             }
             Expression::Call(call) => {
-                self.expression_statement_starts_with_let_bracket(&call.callee)
+                Self::expression_statement_starts_with_let_bracket(&call.callee)
             }
             Expression::TaggedTemplate(tagged) => {
-                self.expression_statement_starts_with_let_bracket(&tagged.tag)
+                Self::expression_statement_starts_with_let_bracket(&tagged.tag)
             }
             _ => false,
         }
@@ -1391,7 +1390,7 @@ impl JsEmitter {
         previous: &Statement,
         next: &Statement,
     ) -> bool {
-        self.statement_may_end_with_closing_brace(previous)
+        Self::statement_may_end_with_closing_brace(previous)
             && matches!(
                 next,
                 Statement::Expression(ExpressionStatement {
@@ -1401,35 +1400,35 @@ impl JsEmitter {
             )
     }
 
-    fn statement_may_end_with_closing_brace(self, statement: &Statement) -> bool {
+    fn statement_may_end_with_closing_brace(statement: &Statement) -> bool {
         match statement {
             Statement::Block(_)
             | Statement::FunctionDeclaration(_)
             | Statement::ClassDeclaration(_) => true,
             Statement::Labeled(statement) => {
-                self.statement_may_end_with_closing_brace(&statement.body)
+                Self::statement_may_end_with_closing_brace(&statement.body)
             }
             Statement::If(statement) => {
-                self.statement_may_end_with_closing_brace(&statement.consequent)
+                Self::statement_may_end_with_closing_brace(&statement.consequent)
                     || statement.alternate.as_ref().is_some_and(|alternate| {
-                        self.statement_may_end_with_closing_brace(alternate)
+                        Self::statement_may_end_with_closing_brace(alternate)
                     })
             }
             Statement::While(statement) => {
-                self.statement_may_end_with_closing_brace(&statement.body)
+                Self::statement_may_end_with_closing_brace(&statement.body)
             }
             Statement::DoWhile(_) => false,
             Statement::For(statement) => match statement {
                 ForStatement::Classic(statement) => {
-                    self.statement_may_end_with_closing_brace(&statement.body)
+                    Self::statement_may_end_with_closing_brace(&statement.body)
                 }
                 ForStatement::In(statement) | ForStatement::Of(statement) => {
-                    self.statement_may_end_with_closing_brace(&statement.body)
+                    Self::statement_may_end_with_closing_brace(&statement.body)
                 }
             },
             Statement::Switch(_) | Statement::Try(_) => true,
             Statement::With(statement) => {
-                self.statement_may_end_with_closing_brace(&statement.body)
+                Self::statement_may_end_with_closing_brace(&statement.body)
             }
             _ => false,
         }

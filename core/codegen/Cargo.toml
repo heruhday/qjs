@@ -1,0 +1,13 @@
+[package]
+name = "codegen"
+edition.workspace = true
+version.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+repository.workspace = true
+license.workspace = true
+description.workspace = true
+
+[dependencies]
+ast = { path = "../ast" }
+value = { path = "../value" }

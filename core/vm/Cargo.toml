@@ -1,0 +1,24 @@
+[package]
+name = "vm"
+edition.workspace = true
+version.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+repository.workspace = true
+license.workspace = true
+description.workspace = true
+
+[dependencies]
+atoms = { path = "../atoms" }
+built_ins = { path = "../built_ins" }
+cfg = { path = "../cfg" }
+codegen = { path = "../codegen" }
+gc = { path = "../gc" }
+heap = { path = "../heap" }
+itoa = "1"
+runtime = { path = "../runtime" }
+ryu = "1"
+serde = "1"
+serde_json = "1"
+ssa = { path = "../ssa" }
+value = { path = "../value" }
