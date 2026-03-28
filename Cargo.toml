@@ -1,0 +1,15 @@
+[workspace]
+resolver = "2"
+members = [
+     # CORE
+    "core/*",
+]
+
+[workspace.package]
+edition = "2024"
+version = "1.0.0-dev"
+rust-version = "1.91.0"
+authors = ["xjs-dev"]
+repository = "https://gdithub.com/xjs-dev/xjs"
+license = "Unlicense OR MIT"
+description = "XJS is a Javascript lexer, parser and compiler written in Rust. Currently, it has support for some of the language."
