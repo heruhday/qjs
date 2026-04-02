@@ -686,6 +686,7 @@ struct LoweringState {
     free_regs: Vec<u8>,
     next_stub: usize,
     edge_labels: HashMap<(BlockId, BlockId), Label>,
+    pending_edge_stubs: Vec<(Label, Vec<EdgeAssignment>, BlockId)>,
     numeric_values: HashSet<IRValue>,
 }
 
@@ -697,6 +698,7 @@ impl LoweringState {
             free_regs,
             next_stub: 0,
             edge_labels: HashMap::new(),
+            pending_edge_stubs: Vec::new(),
             numeric_values,
         }
     }
@@ -799,6 +801,29 @@ impl LoweringState {
 
         Ok((bytecode, constants))
     }
+
+    fn enqueue_edge_stub(
+        &mut self,
+        label: Label,
+        assignments: Vec<EdgeAssignment>,
+        target: BlockId,
+    ) {
+        self.pending_edge_stubs.push((label, assignments, target));
+    }
+
+    fn emit_pending_edge_stubs(&mut self) -> Result<(), BytecodeLoweringError> {
+        let pending = std::mem::take(&mut self.pending_edge_stubs);
+        for (label, assignments, target) in pending {
+            self.items.push(LowerItem::Label(label));
+            emit_parallel_copies(assignments, self)?;
+            self.items.push(LowerItem::Inst(PendingInst::Jump {
+                opcode: Opcode::Jmp,
+                a: 0,
+                target: Label::Block(target),
+            }));
+        }
+        Ok(())
+    }
 }
 
 fn lower_ir_to_bytecode(ir: IRFunction) -> Result<(Vec<u32>, Vec<JSValue>), BytecodeLoweringError> {
@@ -817,6 +842,7 @@ fn lower_ir_to_bytecode(ir: IRFunction) -> Result<(Vec<u32>, Vec<JSValue>), Byte
         lower_ir_terminator(block, &edge_copies, &mut lowering)?;
     }
 
+    lowering.emit_pending_edge_stubs()?;
     lowering.finish()
 }
 
@@ -1101,10 +1127,36 @@ fn lower_ir_terminator(
                 ))));
             Ok(())
         }
-        IRTerminator::ConditionalReturn { .. } => {
-            Err(BytecodeLoweringError::UnsupportedTerminator {
-                kind: "ConditionalReturn",
-            })
+        IRTerminator::ConditionalReturn {
+            condition,
+            value,
+            fallthrough,
+        } => {
+            if let IRCondition::Compare {
+                kind: CompareKind::Lte,
+                lhs,
+                rhs,
+                negate: false,
+            } = condition
+            {
+                let lhs = lowering.value_reg(lhs, &[], "conditional_return_lhs")?;
+                let rhs = lowering.value_reg(rhs, &[lhs], "conditional_return_rhs")?;
+                let value = lowering.value_reg(value, &[lhs, rhs], "conditional_return_value")?;
+                lowering
+                    .items
+                    .push(LowerItem::Inst(PendingInst::Raw(encode_raw(
+                        Opcode::RetIfLteI,
+                        lhs,
+                        rhs,
+                        value,
+                    ))));
+                return Ok(());
+            }
+
+            let fallthrough_label = edge_label_for(block.id, *fallthrough, edge_copies, lowering)?;
+            let negated = negate_condition(condition);
+            emit_condition_jump(&negated, fallthrough_label, lowering)?;
+            emit_return(Some(value), lowering)
         }
         IRTerminator::Try { .. } => {
             Err(BytecodeLoweringError::UnsupportedTerminator { kind: "Try" })
@@ -1185,6 +1237,69 @@ fn emit_branch_jump(kind: BranchKind, target: Label, lowering: &mut LoweringStat
     }
 }
 
+fn emit_condition_jump(
+    condition: &IRCondition,
+    target: Label,
+    lowering: &mut LoweringState,
+) -> Result<(), BytecodeLoweringError> {
+    match condition {
+        IRCondition::Truthy { value, negate } => {
+            let reg = lowering.value_reg(value, &[], "conditional_jump_truthy")?;
+            lowering.items.push(LowerItem::Inst(PendingInst::Jump {
+                opcode: if *negate {
+                    Opcode::JmpFalse
+                } else {
+                    Opcode::JmpTrue
+                },
+                a: reg,
+                target,
+            }));
+        }
+        IRCondition::Compare {
+            kind,
+            lhs,
+            rhs,
+            negate,
+        } => {
+            let numeric = value_is_numeric(lhs, &lowering.numeric_values)
+                && value_is_numeric(rhs, &lowering.numeric_values);
+            let lhs = lowering.value_reg(lhs, &[], "conditional_jump_lhs")?;
+            let rhs = lowering.value_reg(rhs, &[lhs], "conditional_jump_rhs")?;
+            let opcode = compare_branch_opcode(*kind, *negate, numeric, 0, 0).0;
+            lowering
+                .items
+                .push(LowerItem::Inst(PendingInst::CompareJump {
+                    opcode,
+                    lhs,
+                    rhs,
+                    target,
+                }));
+        }
+    }
+
+    Ok(())
+}
+
+fn negate_condition(condition: &IRCondition) -> IRCondition {
+    match condition {
+        IRCondition::Truthy { value, negate } => IRCondition::Truthy {
+            value: value.clone(),
+            negate: !*negate,
+        },
+        IRCondition::Compare {
+            kind,
+            lhs,
+            rhs,
+            negate,
+        } => IRCondition::Compare {
+            kind: *kind,
+            lhs: lhs.clone(),
+            rhs: rhs.clone(),
+            negate: !*negate,
+        },
+    }
+}
+
 fn emit_return(
     value: Option<&IRValue>,
     lowering: &mut LoweringState,
@@ -1218,7 +1333,16 @@ fn edge_label_for(
     edge_copies: &HashMap<(BlockId, BlockId), Vec<EdgeAssignment>>,
     lowering: &mut LoweringState,
 ) -> Result<Label, BytecodeLoweringError> {
-    let assignments = edge_copies.get(&(from, to)).cloned().unwrap_or_default();
+    let assignments = edge_copies
+        .get(&(from, to))
+        .cloned()
+        .unwrap_or_default()
+        .into_iter()
+        .filter(|assignment| match assignment.src {
+            EdgeSource::Register(src) => src != assignment.dst,
+            EdgeSource::Constant(_) => true,
+        })
+        .collect::<Vec<_>>();
     if assignments.is_empty() {
         return Ok(Label::Block(to));
     }
@@ -1228,13 +1352,7 @@ fn edge_label_for(
 
     let label = lowering.fresh_stub();
     lowering.edge_labels.insert((from, to), label);
-    lowering.items.push(LowerItem::Label(label));
-    emit_parallel_copies(assignments, lowering)?;
-    lowering.items.push(LowerItem::Inst(PendingInst::Jump {
-        opcode: Opcode::Jmp,
-        a: 0,
-        target: Label::Block(to),
-    }));
+    lowering.enqueue_edge_stub(label, assignments, to);
     Ok(label)
 }
 
@@ -1574,6 +1692,8 @@ fn compare_branch_opcode(
     match (kind, negate, numeric) {
         (CompareKind::Eq, false, _) => (Opcode::JmpEq, target, fallthrough),
         (CompareKind::Eq, true, _) => (Opcode::JmpNeq, target, fallthrough),
+        (CompareKind::Neq, false, _) => (Opcode::JmpNeq, target, fallthrough),
+        (CompareKind::Neq, true, _) => (Opcode::JmpEq, target, fallthrough),
         (CompareKind::Lt, false, true) => (Opcode::JmpLtF64, target, fallthrough),
         (CompareKind::Lt, true, true) => (Opcode::JmpLtF64, fallthrough, target),
         (CompareKind::Lt, false, false) => (Opcode::JmpLt, target, fallthrough),
@@ -1582,6 +1702,10 @@ fn compare_branch_opcode(
         (CompareKind::Lte, true, true) => (Opcode::JmpLteFalseF64, target, fallthrough),
         (CompareKind::Lte, false, false) => (Opcode::JmpLte, target, fallthrough),
         (CompareKind::Lte, true, false) => (Opcode::JmpLteFalse, target, fallthrough),
+        (CompareKind::LteFalse, false, true) => (Opcode::JmpLteFalseF64, target, fallthrough),
+        (CompareKind::LteFalse, true, true) => (Opcode::JmpLteF64, target, fallthrough),
+        (CompareKind::LteFalse, false, false) => (Opcode::JmpLteFalse, target, fallthrough),
+        (CompareKind::LteFalse, true, false) => (Opcode::JmpLte, target, fallthrough),
     }
 }
 

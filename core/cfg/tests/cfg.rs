@@ -200,6 +200,49 @@ fn classifies_conditional_return_as_exit() {
 }
 
 #[test]
+fn classifies_explicit_compare_branch_kinds() {
+    let neq_bytecode = vec![
+        encode_raw(Opcode::JmpNeq, 0, 1, 1),
+        encode_raw(Opcode::RetU, 0, 0, 0),
+        encode_raw(Opcode::RetU, 0, 0, 0),
+    ];
+    let neq_cfg = CFG::from_parts(neq_bytecode, Vec::new(), 0).expect("neq cfg");
+
+    assert!(matches!(
+        neq_cfg.blocks[0].terminator,
+        Terminator::Branch {
+            condition: Condition::Compare {
+                kind: CompareKind::Neq,
+                lhs: 0,
+                rhs: 1,
+                negate: false,
+            },
+            ..
+        }
+    ));
+
+    let lte_false_bytecode = vec![
+        encode_raw(Opcode::JmpLteFalse, 1, 2, 1),
+        encode_raw(Opcode::RetU, 0, 0, 0),
+        encode_raw(Opcode::RetU, 0, 0, 0),
+    ];
+    let lte_false_cfg = CFG::from_parts(lte_false_bytecode, Vec::new(), 0).expect("lte false cfg");
+
+    assert!(matches!(
+        lte_false_cfg.blocks[0].terminator,
+        Terminator::Branch {
+            condition: Condition::Compare {
+                kind: CompareKind::LteFalse,
+                lhs: 1,
+                rhs: 2,
+                negate: false,
+            },
+            ..
+        }
+    ));
+}
+
+#[test]
 fn classifies_call_return_as_exit() {
     let bytecode = vec![encode_raw(Opcode::CallRet, 4, 2, 0)];
 

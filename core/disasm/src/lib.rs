@@ -258,6 +258,7 @@ impl AsmInstruction {
             // Superinstructions
             Opcode::RetIfLteI
             | Opcode::AddAccReg
+            | Opcode::Call2SubIAdd
             | Opcode::Call1Add
             | Opcode::Call2Add
             | Opcode::LoadKAdd
@@ -337,7 +338,7 @@ impl AsmInstruction {
                             pc_byte_offset, opcode_str, self.a, self.b
                         )
                     }
-                    Opcode::Call1SubI => {
+                    Opcode::Call1SubI | Opcode::Call2SubIAdd => {
                         format!(
                             "{:04X}: {} r{}, r{}, {}",
                             pc_byte_offset, opcode_str, self.a, self.b, self.c as i8
@@ -764,6 +765,7 @@ impl AsmInstruction {
             Opcode::LteJmpLoop => "lte_jmp_loop",
             Opcode::NewObjInitProp => "new_obj_init_prop",
             Opcode::ProfileHotCall => "profile_hot_call",
+            Opcode::Call2SubIAdd => "call2_sub_i_add",
             Opcode::Call1SubI => "call1_sub_i",
             Opcode::JmpLteFalse => "jmp_lte_false",
             Opcode::JmpLteFalseF64 => "jmp_lte_false_f64",
@@ -1030,6 +1032,7 @@ impl AsmInstruction {
             Opcode::LteJmpLoop => "lte_jmp_loop",
             Opcode::NewObjInitProp => "new_obj_init_prop",
             Opcode::ProfileHotCall => "profile_hot_call",
+            Opcode::Call2SubIAdd => "call2_sub_i_add",
             Opcode::Call1SubI => "call1_subi",
             Opcode::JmpLteFalse => "jmp_lte_false",
             Opcode::JmpLteFalseF64 => "jmp_lte_false_f64",
@@ -1134,7 +1137,7 @@ impl AsmInstruction {
                         // A B format
                         format!("{} r{}, {}", opcode_str, self.a, self.b)
                     }
-                    Opcode::Call1SubI => {
+                    Opcode::Call1SubI | Opcode::Call2SubIAdd => {
                         format!("{} r{}, r{}, {}", opcode_str, self.a, self.b, self.c as i8)
                     }
                     Opcode::CallRet => {

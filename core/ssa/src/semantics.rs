@@ -335,7 +335,7 @@ pub fn instruction_operands(inst: &DecodedInst) -> InstructionOperands {
                 push_unique_reg(&mut uses, ACC_REG);
             }
         }
-        Opcode::Call1SubI => {
+        Opcode::Call1SubI | Opcode::Call2SubIAdd => {
             push_unique_reg(&mut defs, ACC_REG);
             push_unique_reg(&mut uses, 0);
             push_unique_reg(&mut uses, inst.a);

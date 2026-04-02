@@ -5,7 +5,9 @@ pub fn eliminate_dead_code(
     constants: Vec<JSValue>,
 ) -> (Vec<u32>, Vec<JSValue>) {
     let mut insts = decode_program(&bytecode);
-    if !run_block_pass(&mut insts, &constants, eliminate_dead_defs) {
+    let mut changed = run_block_pass(&mut insts, &constants, eliminate_dead_defs);
+    changed |= eliminate_dead_defs_global(&mut insts, &constants);
+    if !changed {
         return (bytecode, constants);
     }
     encode_program(&insts, constants)

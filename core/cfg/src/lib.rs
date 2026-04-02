@@ -19,8 +19,10 @@ pub type InstIdx = usize;
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CompareKind {
     Eq,
+    Neq,
     Lt,
     Lte,
+    LteFalse,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

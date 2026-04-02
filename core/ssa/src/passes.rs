@@ -1,21 +1,44 @@
+mod alias;
+mod block_layout;
 mod cfg_simplification;
+mod constant_eval;
 mod constant_folding;
 mod copy_propagation;
 mod dead_code_elimination;
+mod escape;
 mod global_value_numbering;
+mod induction;
+mod inlining;
 mod licm;
+mod load_elim;
+mod loop_unroll;
+mod loop_unswitch;
+mod scalar_replace;
 mod sccp;
+mod store_elim;
+mod strength_reduction;
 mod value_range_propagation;
 
 use crate::ir::IRFunction;
 
+pub use alias::{AliasAnalysis, AliasResult};
+pub use block_layout::BlockLayoutOptimization;
 pub use cfg_simplification::CfgSimplification;
 pub use constant_folding::ConstantFolding;
 pub use copy_propagation::CopyPropagation;
 pub use dead_code_elimination::DeadCodeElimination;
+pub use escape::{EscapeAnalysis, EscapeKind};
 pub use global_value_numbering::GlobalValueNumbering;
+pub use induction::{InductionVariable, InductionVariableOptimization};
+pub use inlining::{InlineHeuristics, InlineSite, Inlining, InliningSummary};
 pub use licm::LoopInvariantCodeMotion;
+pub use load_elim::LoadElimination;
+pub use loop_unroll::LoopUnrolling;
+pub use loop_unswitch::LoopUnswitching;
+pub use scalar_replace::ScalarReplacement;
 pub use sccp::SparseConditionalConstantPropagation;
+pub use store_elim::StoreElimination;
+pub use strength_reduction::StrengthReduction;
 pub use value_range_propagation::ValueRangePropagation;
 
 pub trait Pass {

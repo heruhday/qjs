@@ -1,0 +1,7884 @@
+Optimized bytecode:
+new_func r1, const[0]
+set_upval r1
+init_name r1, identifier[0]
+call0 r1, r0, r0
+new_func r2, const[1]
+set_upval r2
+init_name r2, identifier[1]
+call0 r2, r0, r0
+new_func r3, const[2]
+set_upval r3
+init_name r3, identifier[2]
+call0 r3, r0, r0
+new_func r4, const[3]
+set_upval r4
+init_name r4, identifier[3]
+call0 r4, r0, r0
+new_func r5, const[4]
+set_upval r5
+init_name r5, identifier[4]
+call0 r5, r0, r0
+new_func r6, const[5]
+set_upval r6
+init_name r6, identifier[5]
+call0 r6, r0, r0
+new_func r7, const[6]
+set_upval r7
+init_name r7, identifier[6]
+call0 r7, r0, r0
+new_func r8, const[7]
+set_upval r8
+init_name r8, identifier[7]
+call0 r8, r0, r0
+new_func r9, const[8]
+set_upval r9
+init_name r9, identifier[8]
+call_ret r9, 0
+create_env r1
+load_i r1, 0
+init_name r1, identifier[9]
+load_i r2, 0
+init_name r2, identifier[10]
+new_func r3, const[9]
+set_upval r3
+init_name r3, identifier[11]
+new_func r3, const[10]
+set_upval r3
+init_name r3, identifier[12]
+new_func r4, const[11]
+set_upval r4
+init_name r4, identifier[13]
+load_k r8, const[12]
+new_func r9, const[13]
+call2 r3, r8, r9
+load_k r9, const[14]
+new_func r10, const[15]
+call2 r3, r9, r10
+load_k r10, const[16]
+new_func r11, const[17]
+call2 r3, r10, r11
+load_k r11, const[18]
+new_func r12, const[19]
+call2 r3, r11, r12
+load_k r12, const[20]
+new_func r13, const[21]
+call2 r3, r12, r13
+load_k r13, const[22]
+new_func r14, const[23]
+call2 r3, r13, r14
+load_k r14, const[24]
+new_func r15, const[25]
+call2 r3, r14, r15
+load_k r15, const[26]
+new_func r16, const[27]
+call2 r3, r15, r16
+load_k r16, const[28]
+new_func r17, const[29]
+call2 r3, r16, r17
+load_k r17, const[30]
+new_func r18, const[31]
+call2 r3, r17, r18
+load_k r18, const[32]
+new_func r19, const[33]
+call2 r3, r18, r19
+load_k r19, const[34]
+new_func r20, const[35]
+call2 r3, r19, r20
+load_k r20, const[36]
+new_func r21, const[37]
+call2 r3, r20, r21
+load_k r21, const[38]
+new_func r22, const[39]
+call2 r3, r21, r22
+load_k r22, const[40]
+new_func r23, const[41]
+call2 r3, r22, r23
+load_k r23, const[42]
+new_func r24, const[43]
+call2 r3, r23, r24
+load_k r24, const[44]
+new_func r25, const[45]
+call2 r3, r24, r25
+load_k r25, const[46]
+new_func r26, const[47]
+call2 r3, r25, r26
+load_k r26, const[48]
+new_func r27, const[49]
+call2 r3, r26, r27
+load_k r27, const[50]
+new_func r28, const[51]
+call2 r3, r27, r28
+load_k r28, const[52]
+new_func r29, const[53]
+call2 r3, r28, r29
+load_k r29, const[54]
+new_func r30, const[55]
+call2 r3, r29, r30
+load_k r30, const[56]
+new_func r31, const[57]
+call2 r3, r30, r31
+load_k r31, const[58]
+new_func r32, const[59]
+call2 r3, r31, r32
+load_k r32, const[60]
+new_func r33, const[61]
+call2 r3, r32, r33
+load_k r33, const[62]
+new_func r34, const[63]
+call2 r3, r33, r34
+load_k r34, const[64]
+new_func r35, const[65]
+call2 r3, r34, r35
+load_k r35, const[66]
+new_func r36, const[67]
+call2 r3, r35, r36
+load_k r36, const[68]
+new_func r37, const[69]
+call2 r3, r36, r37
+load_k r37, const[70]
+new_func r38, const[71]
+call2 r3, r37, r38
+load_k r38, const[72]
+new_func r39, const[73]
+call2 r3, r38, r39
+load_k r39, const[74]
+new_func r40, const[75]
+call2 r3, r39, r40
+load_k r40, const[76]
+new_func r41, const[77]
+call2 r3, r40, r41
+load_k r41, const[78]
+new_func r42, const[79]
+call2 r3, r41, r42
+load_k r42, const[80]
+new_func r43, const[81]
+call2 r3, r42, r43
+load_k r43, const[82]
+new_func r44, const[83]
+call2 r3, r43, r44
+load_k r44, const[84]
+new_func r45, const[85]
+call2 r3, r44, r45
+load_k r45, const[86]
+new_func r46, const[87]
+call2 r3, r45, r46
+load_k r46, const[88]
+new_func r47, const[89]
+call2 r3, r46, r47
+load_k r47, const[90]
+new_func r48, const[91]
+call2 r3, r47, r48
+load_k r48, const[92]
+new_func r49, const[93]
+call2 r3, r48, r49
+load_name r48, identifier[14]
+load_k r49, const[94]
+load_k r50, const[95]
+add r49, r50
+add r255, r2
+load_k r50, const[96]
+add r255, r50
+add r255, r1
+load_k r50, const[97]
+add r255, r50
+mov r49, r255, r0
+call_method1 r48, property[0], r49
+strict_eq r2, r1
+jmp_false r255, -> L4
+load_name r50, identifier[14]
+load_k r51, const[98]
+call_method1 r50, property[0], r51
+jmp -> L12
+load_name r50, identifier[14]
+load_k r51, const[99]
+load_k r3, const[100]
+add r51, r3
+mov r51, r255, r0
+mov r255, r1, r0
+sub_acc r2
+add r51, r255
+load_k r3, const[101]
+add r255, r3
+mov r51, r255, r0
+call_method1 r50, property[1], r51
+ret_u
+create_env r1
+load_i r1, 0
+init_name r1, identifier[9]
+load_i r2, 0
+init_name r2, identifier[10]
+new_func r3, const[102]
+set_upval r3
+init_name r3, identifier[11]
+new_func r3, const[103]
+set_upval r3
+init_name r3, identifier[12]
+new_func r4, const[104]
+set_upval r4
+init_name r4, identifier[13]
+load_k r8, const[105]
+new_func r9, const[106]
+call2 r3, r8, r9
+load_k r9, const[107]
+new_func r10, const[108]
+call2 r3, r9, r10
+load_k r10, const[109]
+new_func r11, const[110]
+call2 r3, r10, r11
+load_k r11, const[111]
+new_func r12, const[112]
+call2 r3, r11, r12
+load_k r12, const[113]
+new_func r13, const[114]
+call2 r3, r12, r13
+load_k r13, const[115]
+new_func r14, const[116]
+call2 r3, r13, r14
+load_k r14, const[117]
+new_func r15, const[118]
+call2 r3, r14, r15
+load_k r15, const[119]
+new_func r16, const[120]
+call2 r3, r15, r16
+load_k r16, const[121]
+new_func r17, const[122]
+call2 r3, r16, r17
+load_k r17, const[123]
+new_func r18, const[124]
+call2 r3, r17, r18
+load_k r18, const[125]
+new_func r19, const[126]
+call2 r3, r18, r19
+load_k r19, const[127]
+new_func r20, const[128]
+call2 r3, r19, r20
+load_k r20, const[129]
+new_func r21, const[130]
+call2 r3, r20, r21
+load_k r21, const[131]
+new_func r22, const[132]
+call2 r3, r21, r22
+load_k r22, const[133]
+new_func r23, const[134]
+call2 r3, r22, r23
+load_k r23, const[135]
+new_func r24, const[136]
+call2 r3, r23, r24
+load_k r24, const[137]
+new_func r25, const[138]
+call2 r3, r24, r25
+load_k r25, const[139]
+new_func r26, const[140]
+call2 r3, r25, r26
+load_k r26, const[141]
+new_func r27, const[142]
+call2 r3, r26, r27
+load_k r27, const[143]
+new_func r28, const[144]
+call2 r3, r27, r28
+load_k r28, const[145]
+new_func r29, const[146]
+call2 r3, r28, r29
+load_k r29, const[147]
+new_func r30, const[148]
+call2 r3, r29, r30
+load_k r30, const[149]
+new_func r31, const[150]
+call2 r3, r30, r31
+load_k r31, const[151]
+new_func r32, const[152]
+call2 r3, r31, r32
+load_k r32, const[153]
+new_func r33, const[154]
+call2 r3, r32, r33
+load_k r33, const[155]
+new_func r34, const[156]
+call2 r3, r33, r34
+load_k r34, const[157]
+new_func r35, const[158]
+call2 r3, r34, r35
+load_k r35, const[159]
+new_func r36, const[160]
+call2 r3, r35, r36
+load_k r36, const[161]
+new_func r37, const[162]
+call2 r3, r36, r37
+load_k r37, const[163]
+new_func r38, const[164]
+call2 r3, r37, r38
+load_k r38, const[165]
+new_func r39, const[166]
+call2 r3, r38, r39
+load_k r39, const[167]
+new_func r40, const[168]
+call2 r3, r39, r40
+load_k r40, const[169]
+new_func r41, const[170]
+call2 r3, r40, r41
+load_k r41, const[171]
+new_func r42, const[172]
+call2 r3, r41, r42
+load_k r42, const[173]
+new_func r43, const[174]
+call2 r3, r42, r43
+load_k r43, const[175]
+new_func r44, const[176]
+call2 r3, r43, r44
+load_k r44, const[177]
+new_func r45, const[178]
+call2 r3, r44, r45
+load_name r44, identifier[14]
+load_k r45, const[179]
+load_k r46, const[180]
+add r45, r46
+add r255, r2
+load_k r46, const[181]
+add r255, r46
+add r255, r1
+load_k r46, const[182]
+add r255, r46
+mov r45, r255, r0
+call_method1 r44, property[0], r45
+strict_eq r2, r1
+jmp_false r255, -> L4
+load_name r46, identifier[14]
+load_k r47, const[183]
+call_method1 r46, property[0], r47
+jmp -> L12
+load_name r46, identifier[14]
+load_k r47, const[184]
+load_k r3, const[185]
+add r47, r3
+mov r47, r255, r0
+mov r255, r1, r0
+sub_acc r2
+add r47, r255
+load_k r3, const[186]
+add r255, r3
+mov r47, r255, r0
+call_method1 r46, property[1], r47
+ret_u
+create_env r1
+load_i r1, 0
+init_name r1, identifier[9]
+load_i r2, 0
+init_name r2, identifier[10]
+new_func r3, const[187]
+set_upval r3
+init_name r3, identifier[11]
+new_func r3, const[188]
+set_upval r3
+init_name r3, identifier[12]
+new_func r4, const[189]
+set_upval r4
+init_name r4, identifier[13]
+load_k r8, const[190]
+new_func r9, const[191]
+call2 r3, r8, r9
+load_k r9, const[192]
+new_func r10, const[193]
+call2 r3, r9, r10
+load_k r10, const[194]
+new_func r11, const[195]
+call2 r3, r10, r11
+load_k r11, const[196]
+new_func r12, const[197]
+call2 r3, r11, r12
+load_k r12, const[198]
+new_func r13, const[199]
+call2 r3, r12, r13
+load_k r13, const[200]
+new_func r14, const[201]
+call2 r3, r13, r14
+load_k r14, const[202]
+new_func r15, const[203]
+call2 r3, r14, r15
+load_k r15, const[204]
+new_func r16, const[205]
+call2 r3, r15, r16
+load_k r16, const[206]
+new_func r17, const[207]
+call2 r3, r16, r17
+load_k r17, const[208]
+new_func r18, const[209]
+call2 r3, r17, r18
+load_k r18, const[210]
+new_func r19, const[211]
+call2 r3, r18, r19
+load_k r19, const[212]
+new_func r20, const[213]
+call2 r3, r19, r20
+load_k r20, const[214]
+new_func r21, const[215]
+call2 r3, r20, r21
+load_k r21, const[216]
+new_func r22, const[217]
+call2 r3, r21, r22
+load_i r21, 42
+init_name r21, identifier[15]
+load_k r23, const[218]
+new_func r24, const[219]
+call2 r3, r23, r24
+load_k r24, const[220]
+new_func r25, const[221]
+call2 r3, r24, r25
+load_k r25, const[222]
+new_func r26, const[223]
+call2 r3, r25, r26
+load_k r26, const[224]
+new_func r27, const[225]
+call2 r3, r26, r27
+load_k r27, const[226]
+new_func r28, const[227]
+call2 r3, r27, r28
+load_k r28, const[228]
+new_func r29, const[229]
+call2 r3, r28, r29
+load_k r29, const[230]
+new_func r30, const[231]
+call2 r3, r29, r30
+load_k r30, const[232]
+new_func r31, const[233]
+call2 r3, r30, r31
+load_k r31, const[234]
+new_func r32, const[235]
+call2 r3, r31, r32
+load_k r32, const[236]
+new_func r33, const[237]
+call2 r3, r32, r33
+load_k r33, const[238]
+new_func r34, const[239]
+call2 r3, r33, r34
+load_k r34, const[240]
+new_func r35, const[241]
+call2 r3, r34, r35
+load_k r35, const[242]
+new_func r36, const[243]
+call2 r3, r35, r36
+load_k r36, const[244]
+new_func r37, const[245]
+call2 r3, r36, r37
+load_k r37, const[246]
+new_func r38, const[247]
+call2 r3, r37, r38
+load_k r38, const[248]
+new_func r39, const[249]
+call2 r3, r38, r39
+load_k r39, const[250]
+new_func r40, const[251]
+call2 r3, r39, r40
+load_k r40, const[252]
+new_func r41, const[253]
+call2 r3, r40, r41
+load_k r41, const[254]
+new_func r42, const[255]
+call2 r3, r41, r42
+load_k r42, const[256]
+new_func r43, const[257]
+call2 r3, r42, r43
+load_name r42, identifier[14]
+load_k r43, const[258]
+load_k r44, const[259]
+add r43, r44
+add r255, r2
+load_k r44, const[260]
+add r255, r44
+add r255, r1
+load_k r44, const[261]
+add r255, r44
+mov r43, r255, r0
+call_method1 r42, property[0], r43
+strict_eq r2, r1
+jmp_false r255, -> L4
+load_name r44, identifier[14]
+load_k r45, const[262]
+call_method1 r44, property[0], r45
+jmp -> L12
+load_name r44, identifier[14]
+load_k r45, const[263]
+load_k r3, const[264]
+add r45, r3
+mov r45, r255, r0
+mov r255, r1, r0
+sub_acc r2
+add r45, r255
+load_k r3, const[265]
+add r255, r3
+mov r45, r255, r0
+call_method1 r44, property[1], r45
+ret_u
+create_env r1
+load_i r1, 0
+init_name r1, identifier[9]
+load_i r2, 0
+init_name r2, identifier[10]
+new_func r3, const[266]
+set_upval r3
+init_name r3, identifier[11]
+new_func r3, const[267]
+set_upval r3
+init_name r3, identifier[12]
+new_func r4, const[268]
+set_upval r4
+init_name r4, identifier[13]
+load_k r8, const[269]
+new_func r9, const[270]
+call2 r3, r8, r9
+load_k r9, const[271]
+new_func r10, const[272]
+call2 r3, r9, r10
+load_k r10, const[273]
+new_func r11, const[274]
+call2 r3, r10, r11
+load_k r11, const[275]
+new_func r12, const[276]
+call2 r3, r11, r12
+load_k r12, const[277]
+new_func r13, const[278]
+call2 r3, r12, r13
+load_k r13, const[279]
+new_func r14, const[280]
+call2 r3, r13, r14
+load_k r14, const[281]
+new_func r15, const[282]
+call2 r3, r14, r15
+load_k r15, const[283]
+new_func r16, const[284]
+call2 r3, r15, r16
+load_k r16, const[285]
+new_func r17, const[286]
+call2 r3, r16, r17
+load_k r17, const[287]
+new_func r18, const[288]
+call2 r3, r17, r18
+load_k r18, const[289]
+new_func r19, const[290]
+call2 r3, r18, r19
+load_k r19, const[291]
+new_func r20, const[292]
+call2 r3, r19, r20
+load_k r20, const[293]
+new_func r21, const[294]
+call2 r3, r20, r21
+load_name r20, identifier[14]
+load_k_add r0, r21, r2
+load_k r22, const[296]
+add r255, r22
+add r255, r1
+load_k r22, const[297]
+add r255, r22
+mov r21, r255, r0
+call_method1 r20, property[0], r21
+strict_eq r2, r1
+jmp_false r255, -> L4
+load_name r22, identifier[14]
+load_k r23, const[298]
+call_method1 r22, property[0], r23
+jmp -> L7
+load_name r22, identifier[14]
+mov r255, r1, r0
+sub_acc r2
+load_k r1, const[299]
+add r255, r1
+mov r23, r255, r0
+call_method1 r22, property[1], r23
+ret_u
+create_env r1
+load_i r1, 0
+init_name r1, identifier[9]
+load_i r2, 0
+init_name r2, identifier[10]
+new_func r3, const[300]
+set_upval r3
+init_name r3, identifier[11]
+new_func r3, const[301]
+set_upval r3
+init_name r3, identifier[12]
+new_func r4, const[302]
+set_upval r4
+init_name r4, identifier[13]
+load_k r8, const[303]
+new_func r9, const[304]
+call2 r3, r8, r9
+load_k r9, const[305]
+new_func r10, const[306]
+call2 r3, r9, r10
+load_k r10, const[307]
+new_func r11, const[308]
+call2 r3, r10, r11
+load_k r11, const[309]
+new_func r12, const[310]
+call2 r3, r11, r12
+load_k r12, const[311]
+new_func r13, const[312]
+call2 r3, r12, r13
+load_k r13, const[313]
+new_func r14, const[314]
+call2 r3, r13, r14
+load_k r14, const[315]
+new_func r15, const[316]
+call2 r3, r14, r15
+load_k r15, const[317]
+new_func r16, const[318]
+call2 r3, r15, r16
+load_k r16, const[319]
+new_func r17, const[320]
+call2 r3, r16, r17
+load_k r17, const[321]
+new_func r18, const[322]
+call2 r3, r17, r18
+load_k r18, const[323]
+new_func r19, const[324]
+call2 r3, r18, r19
+load_k r19, const[325]
+new_func r20, const[326]
+call2 r3, r19, r20
+load_k r20, const[327]
+new_func r21, const[328]
+call2 r3, r20, r21
+load_k r21, const[329]
+new_func r22, const[330]
+call2 r3, r21, r22
+load_k r22, const[331]
+new_func r23, const[332]
+call2 r3, r22, r23
+load_k r23, const[333]
+new_func r24, const[334]
+call2 r3, r23, r24
+load_k r24, const[335]
+new_func r25, const[336]
+call2 r3, r24, r25
+load_k r25, const[337]
+new_func r26, const[338]
+call2 r3, r25, r26
+load_k r26, const[339]
+new_func r27, const[340]
+call2 r3, r26, r27
+load_k r27, const[341]
+new_func r28, const[342]
+call2 r3, r27, r28
+load_k r28, const[343]
+new_func r29, const[344]
+call2 r3, r28, r29
+load_k r29, const[345]
+new_func r30, const[346]
+call2 r3, r29, r30
+load_k r30, const[347]
+new_func r31, const[348]
+call2 r3, r30, r31
+load_k r31, const[349]
+new_func r32, const[350]
+call2 r3, r31, r32
+load_k r32, const[351]
+new_func r33, const[352]
+call2 r3, r32, r33
+load_k r33, const[353]
+new_func r34, const[354]
+call2 r3, r33, r34
+load_k r34, const[355]
+new_func r35, const[356]
+call2 r3, r34, r35
+load_k r35, const[357]
+new_func r36, const[358]
+call2 r3, r35, r36
+load_k r36, const[359]
+new_func r37, const[360]
+call2 r3, r36, r37
+load_k r37, const[361]
+new_func r38, const[362]
+call2 r3, r37, r38
+load_k r38, const[363]
+new_func r39, const[364]
+call2 r3, r38, r39
+load_k r39, const[365]
+new_func r40, const[366]
+call2 r3, r39, r40
+load_k r40, const[367]
+new_func r41, const[368]
+call2 r3, r40, r41
+load_k r41, const[369]
+new_func r42, const[370]
+call2 r3, r41, r42
+load_k r42, const[371]
+new_func r43, const[372]
+call2 r3, r42, r43
+load_k r43, const[373]
+new_func r44, const[374]
+call2 r3, r43, r44
+load_k r44, const[375]
+new_func r45, const[376]
+call2 r3, r44, r45
+load_k r45, const[377]
+new_func r46, const[378]
+call2 r3, r45, r46
+load_name r45, identifier[14]
+load_k r46, const[379]
+load_k r47, const[380]
+add r46, r47
+add r255, r2
+load_k r47, const[381]
+add r255, r47
+add r255, r1
+load_k r47, const[382]
+add r255, r47
+mov r46, r255, r0
+call_method1 r45, property[0], r46
+strict_eq r2, r1
+jmp_false r255, -> L4
+load_name r47, identifier[14]
+load_k r48, const[383]
+call_method1 r47, property[0], r48
+jmp -> L12
+load_name r47, identifier[14]
+load_k r48, const[384]
+load_k r3, const[385]
+add r48, r3
+mov r48, r255, r0
+mov r255, r1, r0
+sub_acc r2
+add r48, r255
+load_k r3, const[386]
+add r255, r3
+mov r48, r255, r0
+call_method1 r47, property[1], r48
+ret_u
+create_env r1
+load_i r1, 0
+init_name r1, identifier[9]
+load_i r2, 0
+init_name r2, identifier[10]
+new_func r3, const[387]
+set_upval r3
+init_name r3, identifier[11]
+new_func r3, const[388]
+set_upval r3
+init_name r3, identifier[12]
+new_func r4, const[389]
+set_upval r4
+init_name r4, identifier[13]
+load_k r8, const[390]
+new_func r9, const[391]
+call2 r3, r8, r9
+load_k r9, const[392]
+new_func r10, const[393]
+call2 r3, r9, r10
+load_k r10, const[394]
+new_func r11, const[395]
+call2 r3, r10, r11
+load_k r11, const[396]
+new_func r12, const[397]
+call2 r3, r11, r12
+load_k r12, const[398]
+new_func r13, const[399]
+call2 r3, r12, r13
+load_k r13, const[400]
+new_func r14, const[401]
+call2 r3, r13, r14
+load_k r14, const[402]
+new_func r15, const[403]
+call2 r3, r14, r15
+load_k r15, const[404]
+new_func r16, const[405]
+call2 r3, r15, r16
+load_k r16, const[406]
+new_func r17, const[407]
+call2 r3, r16, r17
+load_k r17, const[408]
+new_func r18, const[409]
+call2 r3, r17, r18
+load_k r18, const[410]
+new_func r19, const[411]
+call2 r3, r18, r19
+load_k r19, const[412]
+new_func r20, const[413]
+call2 r3, r19, r20
+load_k r20, const[414]
+new_func r21, const[415]
+call2 r3, r20, r21
+load_k r21, const[416]
+new_func r22, const[417]
+call2 r3, r21, r22
+load_k r22, const[418]
+new_func r23, const[419]
+call2 r3, r22, r23
+load_k r23, const[420]
+new_func r24, const[421]
+call2 r3, r23, r24
+load_k r24, const[422]
+new_func r25, const[423]
+call2 r3, r24, r25
+load_k r25, const[424]
+new_func r26, const[425]
+call2 r3, r25, r26
+load_k r26, const[426]
+new_func r27, const[427]
+call2 r3, r26, r27
+load_k r27, const[428]
+new_func r28, const[429]
+call2 r3, r27, r28
+load_k r28, const[430]
+new_func r29, const[431]
+call2 r3, r28, r29
+load_k r29, const[432]
+new_func r30, const[433]
+call2 r3, r29, r30
+load_k r30, const[434]
+new_func r31, const[435]
+call2 r3, r30, r31
+load_k r31, const[436]
+new_func r32, const[437]
+call2 r3, r31, r32
+load_k r32, const[438]
+new_func r33, const[439]
+call2 r3, r32, r33
+load_k r33, const[440]
+new_func r34, const[441]
+call2 r3, r33, r34
+load_k r34, const[442]
+new_func r35, const[443]
+call2 r3, r34, r35
+load_k r35, const[444]
+new_func r36, const[445]
+call2 r3, r35, r36
+load_k r36, const[446]
+new_func r37, const[447]
+call2 r3, r36, r37
+load_k r37, const[448]
+new_func r38, const[449]
+call2 r3, r37, r38
+load_k r38, const[450]
+new_func r39, const[451]
+call2 r3, r38, r39
+load_i r38, 42
+init_name r38, identifier[16]
+load_k r40, const[452]
+new_func r41, const[453]
+call2 r3, r40, r41
+load_i r40, 100
+store_name r40, identifier[17]
+load_k r42, const[454]
+new_func r43, const[455]
+call2 r3, r42, r43
+load_k r43, const[456]
+new_func r44, const[457]
+call2 r3, r43, r44
+load_k r44, const[458]
+new_func r45, const[459]
+call2 r3, r44, r45
+load_k r45, const[460]
+new_func r46, const[461]
+call2 r3, r45, r46
+load_k r46, const[462]
+new_func r47, const[463]
+call2 r3, r46, r47
+load_k r47, const[464]
+new_func r48, const[465]
+call2 r3, r47, r48
+load_k r48, const[466]
+new_func r49, const[467]
+call2 r3, r48, r49
+load_k r49, const[468]
+new_func r50, const[469]
+call2 r3, r49, r50
+load_k r50, const[470]
+new_func r51, const[471]
+call2 r3, r50, r51
+new_func r50, const[472]
+set_upval r50
+init_name r50, identifier[18]
+get_prop r51, r50, r2
+new_func r4, const[473]
+set_prop r4, r51, r2
+load_k r54, const[474]
+new_func r55, const[475]
+call2 r3, r54, r55
+load_k r55, const[476]
+new_func r56, const[477]
+call2 r3, r55, r56
+load_name r55, identifier[14]
+load_k r56, const[478]
+load_k r57, const[479]
+add r56, r57
+add r255, r2
+load_k r57, const[480]
+add r255, r57
+add r255, r1
+load_k r57, const[481]
+add r255, r57
+mov r56, r255, r0
+call_method1 r55, property[0], r56
+strict_eq r2, r1
+jmp_false r255, -> L4
+load_name r57, identifier[14]
+load_k r58, const[482]
+call_method1 r57, property[0], r58
+jmp -> L12
+load_name r57, identifier[14]
+load_k r58, const[483]
+load_k r3, const[484]
+add r58, r3
+mov r58, r255, r0
+mov r255, r1, r0
+sub_acc r2
+add r58, r255
+load_k r3, const[485]
+add r255, r3
+mov r58, r255, r0
+call_method1 r57, property[1], r58
+ret_u
+create_env r1
+load_i r1, 0
+init_name r1, identifier[9]
+load_i r2, 0
+init_name r2, identifier[10]
+new_func r3, const[486]
+set_upval r3
+init_name r3, identifier[11]
+new_func r3, const[487]
+set_upval r3
+init_name r3, identifier[12]
+new_func r4, const[488]
+set_upval r4
+init_name r4, identifier[13]
+load_k r8, const[489]
+new_func r9, const[490]
+call2 r3, r8, r9
+load_k r9, const[491]
+new_func r10, const[492]
+call2 r3, r9, r10
+load_k r10, const[493]
+new_func r11, const[494]
+call2 r3, r10, r11
+load_k r11, const[495]
+new_func r12, const[496]
+call2 r3, r11, r12
+load_k r12, const[497]
+new_func r13, const[498]
+call2 r3, r12, r13
+load_k r13, const[499]
+new_func r14, const[500]
+call2 r3, r13, r14
+load_k r14, const[501]
+new_func r15, const[502]
+call2 r3, r14, r15
+load_k r15, const[503]
+new_func r16, const[504]
+call2 r3, r15, r16
+load_k r16, const[505]
+new_func r17, const[506]
+call2 r3, r16, r17
+load_k r17, const[507]
+new_func r18, const[508]
+call2 r3, r17, r18
+load_k r18, const[509]
+new_func r19, const[510]
+call2 r3, r18, r19
+load_k r19, const[511]
+new_func r20, const[512]
+call2 r3, r19, r20
+load_k r20, const[513]
+new_func r21, const[514]
+call2 r3, r20, r21
+load_k r21, const[515]
+new_func r22, const[516]
+call2 r3, r21, r22
+load_k r22, const[517]
+new_func r23, const[518]
+call2 r3, r22, r23
+load_k r23, const[519]
+new_func r24, const[520]
+call2 r3, r23, r24
+load_k r24, const[521]
+new_func r25, const[522]
+call2 r3, r24, r25
+load_k r25, const[523]
+new_func r26, const[524]
+call2 r3, r25, r26
+load_k r26, const[525]
+new_func r27, const[526]
+call2 r3, r26, r27
+load_k r27, const[527]
+new_func r28, const[528]
+call2 r3, r27, r28
+load_k r28, const[529]
+new_func r29, const[530]
+call2 r3, r28, r29
+load_k r29, const[531]
+new_func r30, const[532]
+call2 r3, r29, r30
+load_k r30, const[533]
+new_func r31, const[534]
+call2 r3, r30, r31
+load_k r31, const[535]
+new_func r32, const[536]
+call2 r3, r31, r32
+load_k r32, const[537]
+new_func r33, const[538]
+call2 r3, r32, r33
+load_k r33, const[539]
+new_func r34, const[540]
+call2 r3, r33, r34
+load_k r34, const[541]
+new_func r35, const[542]
+call2 r3, r34, r35
+load_k r35, const[543]
+new_func r36, const[544]
+call2 r3, r35, r36
+load_k r36, const[545]
+new_func r37, const[546]
+call2 r3, r36, r37
+load_k r37, const[547]
+new_func r38, const[548]
+call2 r3, r37, r38
+load_k r38, const[549]
+new_func r39, const[550]
+call2 r3, r38, r39
+load_k r39, const[551]
+new_func r40, const[552]
+call2 r3, r39, r40
+load_k r40, const[553]
+new_func r41, const[554]
+call2 r3, r40, r41
+load_k r41, const[555]
+new_func r42, const[556]
+call2 r3, r41, r42
+load_k r42, const[557]
+new_func r43, const[558]
+call2 r3, r42, r43
+load_k r43, const[559]
+new_func r44, const[560]
+call2 r3, r43, r44
+load_k r44, const[561]
+new_func r45, const[562]
+call2 r3, r44, r45
+load_k r45, const[563]
+new_func r46, const[564]
+call2 r3, r45, r46
+load_k r46, const[565]
+new_func r47, const[566]
+call2 r3, r46, r47
+load_k r47, const[567]
+new_func r48, const[568]
+call2 r3, r47, r48
+load_k r48, const[569]
+new_func r49, const[570]
+call2 r3, r48, r49
+load_k r49, const[571]
+new_func r50, const[572]
+call2 r3, r49, r50
+load_k r50, const[573]
+new_func r51, const[574]
+call2 r3, r50, r51
+load_k r51, const[575]
+new_func r52, const[576]
+call2 r3, r51, r52
+load_k r52, const[577]
+new_func r53, const[578]
+call2 r3, r52, r53
+load_k r53, const[579]
+new_func r54, const[580]
+call2 r3, r53, r54
+load_k r54, const[581]
+new_func r55, const[582]
+call2 r3, r54, r55
+load_k r55, const[583]
+new_func r56, const[584]
+call2 r3, r55, r56
+load_k r56, const[585]
+new_func r57, const[586]
+call2 r3, r56, r57
+load_k r57, const[587]
+new_func r58, const[588]
+call2 r3, r57, r58
+load_k r58, const[589]
+new_func r59, const[590]
+call2 r3, r58, r59
+load_k r59, const[591]
+new_func r60, const[592]
+call2 r3, r59, r60
+load_k r60, const[593]
+new_func r61, const[594]
+call2 r3, r60, r61
+load_k r61, const[595]
+new_func r62, const[596]
+call2 r3, r61, r62
+load_k r62, const[597]
+new_func r63, const[598]
+call2 r3, r62, r63
+load_k r63, const[599]
+new_func r64, const[600]
+call2 r3, r63, r64
+load_k r64, const[601]
+new_func r65, const[602]
+call2 r3, r64, r65
+load_k r65, const[603]
+new_func r66, const[604]
+call2 r3, r65, r66
+load_k r66, const[605]
+new_func r67, const[606]
+call2 r3, r66, r67
+load_k r67, const[607]
+new_func r68, const[608]
+call2 r3, r67, r68
+load_k r68, const[609]
+new_func r69, const[610]
+call2 r3, r68, r69
+load_k r69, const[611]
+new_func r70, const[612]
+call2 r3, r69, r70
+load_k r70, const[613]
+new_func r71, const[614]
+call2 r3, r70, r71
+load_k r71, const[615]
+new_func r72, const[616]
+call2 r3, r71, r72
+load_k r72, const[617]
+new_func r73, const[618]
+call2 r3, r72, r73
+load_k r73, const[619]
+new_func r74, const[620]
+call2 r3, r73, r74
+load_k r74, const[621]
+new_func r75, const[622]
+call2 r3, r74, r75
+load_k r75, const[623]
+new_func r76, const[624]
+call2 r3, r75, r76
+load_k r76, const[625]
+new_func r77, const[626]
+call2 r3, r76, r77
+load_k r77, const[627]
+new_func r78, const[628]
+call2 r3, r77, r78
+load_k r78, const[629]
+new_func r79, const[630]
+call2 r3, r78, r79
+load_k r79, const[631]
+new_func r80, const[632]
+call2 r3, r79, r80
+load_k r80, const[633]
+new_func r81, const[634]
+call2 r3, r80, r81
+load_k r81, const[635]
+new_func r82, const[636]
+call2 r3, r81, r82
+load_k r82, const[637]
+new_func r83, const[638]
+call2 r3, r82, r83
+load_k r83, const[639]
+new_func r84, const[640]
+call2 r3, r83, r84
+load_k r84, const[641]
+new_func r85, const[642]
+call2 r3, r84, r85
+load_k r85, const[643]
+new_func r86, const[644]
+call2 r3, r85, r86
+load_k r86, const[645]
+new_func r87, const[646]
+call2 r3, r86, r87
+load_k r87, const[647]
+new_func r88, const[648]
+call2 r3, r87, r88
+load_k r88, const[649]
+new_func r89, const[650]
+call2 r3, r88, r89
+load_k r89, const[651]
+new_func r90, const[652]
+call2 r3, r89, r90
+load_k r90, const[653]
+new_func r91, const[654]
+call2 r3, r90, r91
+load_k r91, const[655]
+new_func r92, const[656]
+call2 r3, r91, r92
+load_k r92, const[657]
+new_func r93, const[658]
+call2 r3, r92, r93
+load_k r93, const[659]
+new_func r94, const[660]
+call2 r3, r93, r94
+load_k r94, const[661]
+new_func r95, const[662]
+call2 r3, r94, r95
+load_k r95, const[663]
+new_func r96, const[664]
+call2 r3, r95, r96
+load_k r96, const[665]
+new_func r97, const[666]
+call2 r3, r96, r97
+load_k r97, const[667]
+new_func r98, const[668]
+call2 r3, r97, r98
+load_k r98, const[669]
+new_func r99, const[670]
+call2 r3, r98, r99
+load_k r99, const[671]
+new_func r100, const[672]
+call2 r3, r99, r100
+load_k r100, const[673]
+new_func r101, const[674]
+call2 r3, r100, r101
+load_k r101, const[675]
+new_func r102, const[676]
+call2 r3, r101, r102
+load_k r102, const[677]
+new_func r103, const[678]
+call2 r3, r102, r103
+load_k r103, const[679]
+new_func r104, const[680]
+call2 r3, r103, r104
+load_k r104, const[681]
+new_func r105, const[682]
+call2 r3, r104, r105
+load_k r105, const[683]
+new_func r106, const[684]
+call2 r3, r105, r106
+load_k r106, const[685]
+new_func r107, const[686]
+call2 r3, r106, r107
+load_k r107, const[687]
+new_func r108, const[688]
+call2 r3, r107, r108
+load_name r107, identifier[14]
+load_k r108, const[689]
+load_k r109, const[690]
+add r108, r109
+add r255, r2
+load_k r109, const[691]
+add r255, r109
+add r255, r1
+load_k r109, const[692]
+add r255, r109
+mov r108, r255, r0
+call_method1 r107, property[0], r108
+strict_eq r2, r1
+jmp_false r255, -> L4
+load_name r109, identifier[14]
+load_k r110, const[693]
+call_method1 r109, property[0], r110
+jmp -> L12
+load_name r109, identifier[14]
+load_k r110, const[694]
+load_k r3, const[695]
+add r110, r3
+mov r110, r255, r0
+mov r255, r1, r0
+sub_acc r2
+add r110, r255
+load_k r3, const[696]
+add r255, r3
+mov r110, r255, r0
+call_method1 r109, property[1], r110
+ret_u
+create_env r1
+load_i r1, 0
+init_name r1, identifier[9]
+load_i r2, 0
+init_name r2, identifier[10]
+new_func r3, const[697]
+set_upval r3
+init_name r3, identifier[11]
+new_func r3, const[698]
+set_upval r3
+init_name r3, identifier[12]
+new_func r4, const[699]
+set_upval r4
+init_name r4, identifier[13]
+load_k r8, const[700]
+new_func r9, const[701]
+call2 r3, r8, r9
+load_k r9, const[702]
+new_func r10, const[703]
+call2 r3, r9, r10
+load_k r10, const[704]
+new_func r11, const[705]
+call2 r3, r10, r11
+load_k r11, const[706]
+new_func r12, const[707]
+call2 r3, r11, r12
+load_k r12, const[708]
+new_func r13, const[709]
+call2 r3, r12, r13
+load_k r13, const[710]
+new_func r14, const[711]
+call2 r3, r13, r14
+load_k r14, const[712]
+new_func r15, const[713]
+call2 r3, r14, r15
+load_k r15, const[714]
+new_func r16, const[715]
+call2 r3, r15, r16
+load_k r16, const[716]
+new_func r17, const[717]
+call2 r3, r16, r17
+load_k r17, const[718]
+new_func r18, const[719]
+call2 r3, r17, r18
+load_k r18, const[720]
+new_func r19, const[721]
+call2 r3, r18, r19
+load_k r19, const[722]
+new_func r20, const[723]
+call2 r3, r19, r20
+load_k r20, const[724]
+new_func r21, const[725]
+call2 r3, r20, r21
+load_k r21, const[726]
+new_func r22, const[727]
+call2 r3, r21, r22
+load_k r22, const[728]
+new_func r23, const[729]
+call2 r3, r22, r23
+load_k r23, const[730]
+new_func r24, const[731]
+call2 r3, r23, r24
+load_k r24, const[732]
+new_func r25, const[733]
+call2 r3, r24, r25
+load_k r25, const[734]
+new_func r26, const[735]
+call2 r3, r25, r26
+load_k r26, const[736]
+new_func r27, const[737]
+call2 r3, r26, r27
+load_k r27, const[738]
+new_func r28, const[739]
+call2 r3, r27, r28
+load_k r28, const[740]
+new_func r29, const[741]
+call2 r3, r28, r29
+load_k r29, const[742]
+new_func r30, const[743]
+call2 r3, r29, r30
+load_k r30, const[744]
+new_func r31, const[745]
+call2 r3, r30, r31
+load_k r31, const[746]
+new_func r32, const[747]
+call2 r3, r31, r32
+load_k r32, const[748]
+new_func r33, const[749]
+call2 r3, r32, r33
+load_k r33, const[750]
+new_func r34, const[751]
+call2 r3, r33, r34
+load_k r34, const[752]
+new_func r35, const[753]
+call2 r3, r34, r35
+load_k r35, const[754]
+new_func r36, const[755]
+call2 r3, r35, r36
+load_k r36, const[756]
+new_func r37, const[757]
+call2 r3, r36, r37
+load_k r37, const[758]
+new_func r38, const[759]
+call2 r3, r37, r38
+load_k r38, const[760]
+new_func r39, const[761]
+call2 r3, r38, r39
+load_k r39, const[762]
+new_func r40, const[763]
+call2 r3, r39, r40
+load_k r40, const[764]
+new_func r41, const[765]
+call2 r3, r40, r41
+load_k r41, const[766]
+new_func r42, const[767]
+call2 r3, r41, r42
+load_k r42, const[768]
+new_func r43, const[769]
+call2 r3, r42, r43
+load_k r43, const[770]
+new_func r44, const[771]
+call2 r3, r43, r44
+load_k r44, const[772]
+new_func r45, const[773]
+call2 r3, r44, r45
+load_k r45, const[774]
+new_func r46, const[775]
+call2 r3, r45, r46
+load_k r46, const[776]
+new_func r47, const[777]
+call2 r3, r46, r47
+load_k r47, const[778]
+new_func r48, const[779]
+call2 r3, r47, r48
+load_k r48, const[780]
+new_func r49, const[781]
+call2 r3, r48, r49
+load_k r49, const[782]
+new_func r50, const[783]
+call2 r3, r49, r50
+load_k r50, const[784]
+new_func r51, const[785]
+call2 r3, r50, r51
+load_name r50, identifier[14]
+load_k r51, const[786]
+load_k r52, const[787]
+add r51, r52
+add r255, r2
+load_k r52, const[788]
+add r255, r52
+add r255, r1
+load_k r52, const[789]
+add r255, r52
+mov r51, r255, r0
+call_method1 r50, property[0], r51
+strict_eq r2, r1
+jmp_false r255, -> L4
+load_name r52, identifier[14]
+load_k r53, const[790]
+call_method1 r52, property[0], r53
+jmp -> L12
+load_name r52, identifier[14]
+load_k r53, const[791]
+load_k r3, const[792]
+add r53, r3
+mov r53, r255, r0
+mov r255, r1, r0
+sub_acc r2
+add r53, r255
+load_k r3, const[793]
+add r255, r3
+mov r53, r255, r0
+call_method1 r52, property[1], r53
+ret_u
+load_i r4, 2
+load_name r3, identifier[14]
+call_method1 r3, property[0], r4
+ret_u
+load_arg r1, r0, r0
+load_arg r2, r1, r0
+mov r3, r1, r0
+jmp_false r1, -> L2
+load_false
+jmp -> L1
+load_true
+jmp_false r3, -> L4
+load_name r4, identifier[23]
+mov r5, r2, r0
+construct r4, 1
+throw r255, r0, r0
+ret_u
+load_arg r1, r0, r0
+load_arg r2, r1, r0
+load_name r3, identifier[9]
+inc r3
+store_name r255, identifier[9]
+try r0, -> L13
+call0 r2, r0, r0
+load_name r2, identifier[10]
+inc r2
+store_name r255, identifier[10]
+load_name r6, identifier[14]
+load_k r7, const[794]
+load_k r2, const[795]
+add r7, r2
+add r255, r1
+mov r7, r255, r0
+call_method1 r6, property[0], r7
+end_try
+jmp -> L17
+enter r0, r0, r1
+create_env r7
+catch r8, r0, r0
+init_name r2, identifier[26]
+load_name r9, identifier[14]
+load_k r10, const[796]
+load_k r3, const[797]
+add r10, r3
+add r255, r1
+load_k r3, const[798]
+add r255, r3
+get_prop r3, r2, r4
+add r255, r3
+mov r10, r255, r0
+call_method1 r9, property[1], r10
+leave
+finally
+ret_u
+create_env r1
+load_i r1, 0
+init_name r1, identifier[27]
+new_func r1, const[799]
+init_name r1, identifier[25]
+new_func r2, const[800]
+set_prop r2, r1, r2
+new_func r2, const[801]
+set_prop r2, r1, r6
+ret_reg r1
+ret_u
+load_i r1, 50
+load_i r3, 0
+lte r3, r1
+mov r2, r255, r0
+load_i r4, 100
+load_true
+logical_and r2, r255
+jmp_false r255, -> L8
+load_i r4, 1
+add r1, r4
+mov r3, r255, r0
+load_name r4, identifier[11]
+load_i r1, 51
+strict_eq r3, r1
+call1 r4, r255, r0
+jmp -> L4
+load_name r3, identifier[11]
+load_false
+load_k r5, const[802]
+call2 r3, r4, r5
+ret_u
+load_i r1, 20
+load_true
+jmp_false r255, -> L8
+load_i r4, 5
+add r1, r4
+load_cmp_lt r0, r4, r255
+mov r2, r255, r0
+load_name r4, identifier[11]
+load_true
+strict_eq r2, r1
+call1 r4, r255, r0
+ret_u
+load_i r1, 15
+load_i r4, 5
+mov r255, r1, r0
+sub_acc r4
+mov r1, r255, r0
+load_name r4, identifier[11]
+load_i r2, 10
+strict_eq r1, r2
+call1 r4, r255, r0
+ret_u
+load_true
+load_name r4, identifier[11]
+load_true
+load_false
+call1 r4, r255, r0
+ret_u
+load_i r1, 5
+load_name r2, identifier[13]
+call0 r2, r0, r0
+mov r2, r255, r0
+load_cmp_lt r0, r4, r1
+jmp_false r255, -> L4
+load_i r5, 0
+lt r1, r5
+jmp_false r255, -> L1
+call0 r2, r0, r0
+load_name r3, identifier[11]
+call_method_ic r2, r5, r0
+load_i r5, 0
+strict_eq r255, r5
+call1 r3, r255, r0
+ret_u
+load_i r1, 15
+load_i r2, 10
+lte r2, r1
+jmp_false r255, -> L6
+load_cmp_lt r0, r4, r1
+mov r2, r255, r0
+load_name r4, identifier[11]
+load_true
+strict_eq r2, r1
+call1 r4, r255, r0
+ret_u
+load_i r1, 25
+load_true
+mov r2, r255, r0
+load_true
+logical_and r2, r255
+jmp_false r255, -> L10
+load_cmp_lt r0, r4, r1
+mov r2, r255, r0
+load_i r5, 50
+lt r1, r5
+logical_and r2, r255
+mov r2, r255, r0
+load_name r4, identifier[11]
+load_true
+strict_eq r2, r1
+call1 r4, r255, r0
+ret_u
+load_i r1, 5
+load_false
+mov r2, r255, r0
+load_i r4, 10
+load_false
+logical_or r2, r255
+jmp_false r255, -> L5
+load_name r3, identifier[11]
+load_false
+load_k r5, const[803]
+call2 r3, r4, r5
+jmp -> L11
+load_i r4, 0
+lte r4, r1
+mov r3, r255, r0
+load_i r5, 10
+lte r1, r5
+logical_and r3, r255
+mov r3, r255, r0
+load_name r4, identifier[11]
+load_true
+strict_eq r3, r1
+call1 r4, r255, r0
+ret_u
+new_arr
+load_i r255, 1
+array_push_acc r1
+load_i r255, 2
+array_push_acc r1
+load_i r255, 3
+array_push_acc r1
+load_i r255, 4
+array_push_acc r1
+load_i r255, 5
+array_push_acc r1
+load_i r2, 2
+mov r3, r1, r0
+mov r4, r2, r0
+get_prop_acc r3, r4
+mov r3, r255, r0
+load_name r4, identifier[11]
+load_i r1, 3
+strict_eq r3, r1
+call1 r4, r255, r0
+ret_u
+new_arr
+load_i r255, 1
+array_push_acc r1
+load_i r255, 2
+array_push_acc r1
+load_i r255, 3
+array_push_acc r1
+load_name r2, identifier[37]
+call_method_ic r2, r7, r0
+load_i r3, 10
+mul_acc r3
+mov r2, r255, r0
+load_i r4, 0
+lte r4, r255
+mov r3, r255, r0
+get_prop r5, r1, r8
+lt r2, r5
+logical_and r3, r255
+jmp_false r255, -> L6
+mov r4, r1, r0
+mov r5, r2, r0
+get_prop_acc r4, r5
+load_name r5, identifier[11]
+load_true
+call1 r5, r6, r0
+ret_u
+load_i r1, 0
+load_i r2, 0
+load_i r4, 100
+lt r2, r4
+jmp_false r255, -> L17
+load_i r5, 0
+lte r5, r2
+mov r4, r255, r0
+load_i r6, 100
+lt r2, r6
+logical_and r4, r255
+jmp_false r255, -> L3
+add r1, r2
+mov r1, r255, r0
+jmp -> L4
+load_name r5, identifier[11]
+load_false
+load_k r7, const[804]
+call2 r5, r6, r7
+inc r2
+mov r2, r255, r0
+jmp -> L-20
+load_name r3, identifier[11]
+load_i r5, 4950
+strict_eq r1, r5
+call1 r3, r255, r0
+ret_u
+load_i r1, 0
+load_i r2, 0
+load_i r4, 10
+lt r2, r4
+jmp_false r255, -> L14
+mov r4, r2, r0
+load_i r5, 10
+lt r4, r5
+jmp_false r255, -> L7
+lte r2, r4
+jmp_false r255, -> L2
+inc r1
+mov r1, r255, r0
+inc r4
+mov r4, r255, r0
+jmp -> L-10
+inc r2
+mov r2, r255, r0
+jmp -> L-17
+load_name r3, identifier[11]
+load_i r2, 55
+strict_eq r1, r2
+call1 r3, r255, r0
+ret_u
+load_i r1, 5
+load_i r7, 10
+load_name r3, identifier[37]
+mov r4, r1, r0
+mov r5, r7, r0
+call_method2 r3, property[9], r4, r5
+mov r3, r255, r0
+lte r255, r1
+mov r4, r255, r0
+lte r3, r7
+logical_and r4, r255
+mov r4, r255, r0
+load_name r5, identifier[11]
+load_true
+strict_eq r4, r2
+call1 r5, r255, r0
+ret_u
+load_i r1, 5
+load_i r7, 10
+load_name r3, identifier[37]
+mov r4, r1, r0
+mov r5, r7, r0
+call_method2 r3, property[10], r4, r5
+mov r3, r255, r0
+lte r1, r255
+mov r4, r255, r0
+lte r7, r3
+logical_and r4, r255
+mov r4, r255, r0
+load_name r5, identifier[11]
+load_true
+strict_eq r4, r2
+call1 r5, r255, r0
+ret_u
+load_i r1, 15
+load_i r2, 7
+bit_and r1, r2
+mov r1, r255, r0
+load_i r4, 0
+lte r4, r255
+mov r2, r255, r0
+load_i r5, 7
+lte r1, r5
+logical_and r2, r255
+mov r2, r255, r0
+load_name r4, identifier[11]
+load_true
+strict_eq r2, r1
+call1 r4, r255, r0
+ret_u
+load_i r1, 10
+load_name r2, identifier[37]
+load_i r4, 3
+mov r255, r1, r0
+div_acc r4
+mov r3, r255, r0
+call_method1 r2, property[11], r3
+mov r2, r255, r0
+load_i r4, 0
+lte r4, r255
+mov r3, r255, r0
+load_i r5, 3
+lte r2, r5
+logical_and r3, r255
+mov r3, r255, r0
+load_name r4, identifier[11]
+load_true
+strict_eq r3, r6
+call1 r4, r255, r0
+ret_u
+load_i r1, 5
+neg r1
+load_i r4, 0
+lt r255, r4
+mov r1, r255, r0
+load_name r4, identifier[11]
+load_true
+strict_eq r1, r2
+call1 r4, r255, r0
+ret_u
+load_get_prop r3, r1, r8
+load_cmp_lt r0, r4, r3
+mov r1, r255, r0
+load_i r5, 10
+lt r3, r5
+logical_and r1, r255
+mov r1, r255, r0
+load_name r4, identifier[11]
+load_true
+strict_eq r1, r2
+call1 r4, r255, r0
+ret_u
+load_i r1, 50
+load_name r2, identifier[13]
+call0 r2, r0, r0
+mov r2, r255, r0
+load_cmp_lt r0, r4, r1
+mov r3, r255, r0
+load_i r5, 100
+lt r1, r5
+logical_and r3, r255
+jmp_false r255, -> L4
+load_cmp_lt r0, r5, r1
+jmp_false r255, -> L1
+jmp -> L1
+call0 r2, r0, r0
+load_name r3, identifier[11]
+call_method_ic r2, r5, r0
+load_i r5, 0
+strict_eq r255, r5
+call1 r3, r255, r0
+ret_u
+load_i r1, 5
+neg r1
+mov r1, r255, r0
+load_i r2, 0
+lt r255, r2
+jmp_false r255, -> L8
+load_i r2, 10
+add r1, r2
+load_cmp_lt r0, r5, r255
+mov r2, r255, r0
+load_name r5, identifier[11]
+load_true
+strict_eq r2, r1
+call1 r5, r255, r0
+ret_u
+create_env r1
+new_func r1, const[806]
+set_upval r1
+init_name r1, identifier[44]
+load_i r2, 5
+init_name r2, identifier[28]
+call1 r1, r2, r0
+init_name r255, identifier[29]
+load_i r6, 6
+strict_eq r255, r6
+mov r5, r255, r0
+init_name r255, identifier[30]
+load_name r6, identifier[11]
+load_true
+strict_eq r5, r1
+call1 r6, r255, r0
+ret_u
+load_i r1, 0
+load_i r2, 10
+lt r1, r2
+mov r3, r255, r0
+jmp_false r255, -> L14
+load_i r4, 0
+lte r4, r1
+mov r2, r255, r0
+load_i r5, 10
+lt r1, r5
+logical_and r2, r255
+mov r2, r255, r0
+load_name r4, identifier[11]
+load_true
+strict_eq r2, r3
+call1 r4, r255, r0
+inc r1
+mov r1, r255, r0
+jmp -> L-18
+ret_u
+load_i r1, 0
+load_i r3, 0
+lte r3, r1
+mov r5, r255, r0
+load_name r3, identifier[11]
+load_true
+strict_eq r5, r2
+call1 r3, r255, r0
+inc r1
+mov r1, r255, r0
+load_i r3, 5
+lt r255, r3
+jmp_true r255, -> L-12
+ret_u
+new_arr
+load_i r255, 1
+array_push_acc r1
+load_i r255, 2
+array_push_acc r1
+load_i r255, 3
+array_push_acc r1
+load_i r255, 4
+array_push_acc r1
+get_prop r3, r1, r8
+load_i r4, 4
+strict_eq r3, r4
+mov r1, r255, r0
+load_name r4, identifier[11]
+load_true
+strict_eq r1, r2
+call1 r4, r255, r0
+ret_u
+load_true
+jmp_false r255, -> L3
+load_i r1, 100
+load_i r2, 100
+jmp -> L2
+load_i r4, 0
+load_i r2, 0
+load_i r4, 100
+strict_eq r2, r4
+mov r1, r255, r0
+load_name r4, identifier[11]
+load_true
+strict_eq r1, r2
+call1 r4, r255, r0
+ret_u
+load_k r1, const[807]
+mov r2, r1, r0
+load_k r1, const[808]
+add r2, r1
+mov r2, r255, r0
+load_cmp_lt r0, r4, r255
+mov r1, r255, r0
+load_i r5, 5
+lt r2, r5
+logical_and r1, r255
+mov r1, r255, r0
+load_name r4, identifier[11]
+load_true
+strict_eq r1, r2
+call1 r4, r255, r0
+ret_u
+load_name r1, identifier[45]
+load_i r3, 5
+add r1, r3
+mov r2, r255, r0
+load_name r3, identifier[11]
+load_name r4, identifier[46]
+mov r5, r2, r0
+call1 r4, r2, r0
+call1 r3, r255, r0
+load_cmp_lt r0, r5, r2
+mov r4, r255, r0
+load_name r5, identifier[11]
+load_false
+strict_eq r4, r1
+call1 r5, r255, r0
+ret_u
+load_name r1, identifier[47]
+load_i r3, 1
+add r1, r3
+mov r2, r255, r0
+load_name r3, identifier[11]
+load_name r5, identifier[47]
+strict_eq r2, r5
+call1 r3, r255, r0
+load_k r5, const[809]
+lt r5, r2
+mov r4, r255, r0
+load_name r5, identifier[11]
+load_true
+strict_eq r4, r1
+call1 r5, r255, r0
+ret_u
+new_arr
+load_i r255, 0
+array_push_acc r1
+load_i r255, 1
+array_push_acc r1
+load_i r255, 2
+array_push_acc r1
+load_i r255, 3
+array_push_acc r1
+load_i r255, 4
+array_push_acc r1
+load_i r2, 0
+load_i r3, 0
+get_prop r5, r1, r8
+lt r3, r5
+jmp_false r255, -> L8
+mov r5, r1, r0
+mov r6, r3, r0
+get_prop_acc r5, r6
+add r2, r255
+mov r2, r255, r0
+inc r3
+mov r3, r255, r0
+jmp -> L-11
+load_name r4, identifier[11]
+load_i r6, 10
+strict_eq r2, r6
+call1 r4, r255, r0
+ret_u
+load_i r1, 2
+load_i r3, 2
+load_false
+jmp_false r255, -> L1
+jmp -> L5
+load_i r4, 2
+strict_eq r3, r4
+jmp_false r255, -> L1
+jmp -> L4
+jmp -> L6
+load_i r4, 10
+load_i r2, 10
+jmp -> L5
+load_i r1, 20
+load_i r2, 20
+jmp -> L2
+load_i r5, 0
+load_i r2, 0
+load_name r3, identifier[11]
+load_i r1, 20
+strict_eq r2, r1
+call1 r3, r255, r0
+ret_u
+new_obj
+load_i r3, 42
+set_prop r3, r1, r12
+load_true
+mov r1, r255, r0
+load_true
+logical_and r1, r255
+mov r1, r255, r0
+load_name r4, identifier[11]
+load_true
+strict_eq r1, r2
+call1 r4, r255, r0
+ret_u
+load_k r3, const[811]
+load_name r2, identifier[37]
+call_method1 r2, property[11], r3
+mov r2, r255, r0
+load_i r4, 3
+lte r4, r255
+mov r3, r255, r0
+lte r2, r4
+logical_and r3, r255
+mov r3, r255, r0
+load_name r4, identifier[11]
+load_true
+strict_eq r3, r1
+call1 r4, r255, r0
+ret_u
+load_k r3, const[812]
+load_name r2, identifier[37]
+call_method1 r2, property[13], r3
+mov r2, r255, r0
+load_i r4, 4
+lte r4, r255
+mov r3, r255, r0
+lte r2, r4
+logical_and r3, r255
+mov r3, r255, r0
+load_name r4, identifier[11]
+load_true
+strict_eq r3, r1
+call1 r4, r255, r0
+ret_u
+load_i r1, 5
+neg r1
+mov r1, r255, r0
+load_name r2, identifier[37]
+mov r3, r1, r0
+call_method1 r2, property[14], r3
+load_i r4, 0
+lte r4, r255
+mov r3, r255, r0
+load_name r4, identifier[11]
+load_true
+strict_eq r3, r6
+call1 r4, r255, r0
+ret_u
+load_i r1, 10
+load_true
+jmp_false r2, -> L7
+load_i r4, 5
+add r1, r4
+mov r2, r255, r0
+load_name r4, identifier[11]
+load_i r1, 15
+strict_eq r2, r1
+call1 r4, r255, r0
+ret_u
+load_i r1, 100
+load_i r2, 2
+ushr r1, r2
+mov r1, r255, r0
+load_i r4, 0
+lte r4, r255
+mov r2, r255, r0
+load_i r5, 25
+lte r1, r5
+logical_and r2, r255
+mov r2, r255, r0
+load_name r4, identifier[11]
+load_true
+strict_eq r2, r1
+call1 r4, r255, r0
+ret_u
+load_i r1, 5
+load_i r2, 10
+load_true
+jmp_false r255, -> L8
+load_i r5, 1
+add r1, r5
+lte r255, r2
+mov r2, r255, r0
+load_name r5, identifier[11]
+load_true
+strict_eq r2, r1
+call1 r5, r255, r0
+ret_u
+load_name r1, identifier[37]
+call_method_ic r1, r7, r0
+mov r1, r255, r0
+load_i r3, 0
+lte r3, r255
+mov r5, r255, r0
+load_i r4, 1
+lt r1, r4
+logical_and r5, r255
+mov r5, r255, r0
+load_name r3, identifier[11]
+load_true
+strict_eq r5, r2
+call1 r3, r255, r0
+ret_u
+load_name r1, identifier[50]
+call_method_ic r1, r15, r0
+load_cmp_lt r0, r3, r255
+mov r1, r255, r0
+load_name r3, identifier[11]
+load_true
+strict_eq r1, r2
+call1 r3, r255, r0
+ret_u
+new_arr
+load_i r255, 10
+array_push_acc r1
+load_i r255, 20
+array_push_acc r1
+load_i r255, 30
+array_push_acc r1
+load_i r2, 1
+load_i r3, 0
+lte r3, r2
+mov r4, r255, r0
+get_prop r5, r1, r8
+lt r2, r5
+logical_and r4, r255
+jmp_false r255, -> L8
+mov r3, r1, r0
+mov r5, r2, r0
+get_prop_acc r3, r5
+mov r3, r255, r0
+load_name r5, identifier[11]
+load_i r1, 20
+strict_eq r3, r1
+call1 r5, r255, r0
+ret_u
+load_i r1, 7
+load_true
+jmp_false r255, -> L12
+load_i r2, 10
+lt r1, r2
+jmp_false r255, -> L9
+load_cmp_lt r0, r2, r1
+jmp_false r255, -> L7
+load_i r6, 0
+strict_neq r1, r6
+mov r2, r255, r0
+load_name r6, identifier[11]
+load_true
+strict_eq r2, r1
+call1 r6, r255, r0
+ret_u
+load_arg r1, r0, r0
+load_arg r2, r1, r0
+mov r3, r1, r0
+jmp_false r1, -> L2
+load_false
+jmp -> L1
+load_true
+jmp_false r3, -> L4
+load_name r4, identifier[23]
+mov r5, r2, r0
+construct r4, 1
+throw r255, r0, r0
+ret_u
+load_arg r1, r0, r0
+load_arg r2, r1, r0
+load_name r3, identifier[9]
+inc r3
+store_name r255, identifier[9]
+try r0, -> L13
+call0 r2, r0, r0
+load_name r2, identifier[10]
+inc r2
+store_name r255, identifier[10]
+load_name r6, identifier[14]
+load_k r7, const[813]
+load_k r2, const[814]
+add r7, r2
+add r255, r1
+mov r7, r255, r0
+call_method1 r6, property[0], r7
+end_try
+jmp -> L17
+enter r0, r0, r1
+create_env r7
+catch r8, r0, r0
+init_name r2, identifier[26]
+load_name r9, identifier[14]
+load_k r10, const[815]
+load_k r3, const[816]
+add r10, r3
+add r255, r1
+load_k r3, const[817]
+add r255, r3
+get_prop r3, r2, r4
+add r255, r3
+mov r10, r255, r0
+call_method1 r9, property[1], r10
+leave
+finally
+ret_u
+create_env r1
+load_i r1, 0
+init_name r1, identifier[27]
+new_func r1, const[818]
+init_name r1, identifier[25]
+new_func r2, const[819]
+set_prop r2, r1, r2
+new_func r2, const[820]
+set_prop r2, r1, r6
+ret_reg r1
+ret_u
+load_name r1, identifier[13]
+call0 r1, r0, r0
+mov r1, r255, r0
+load_true
+jmp_false r255, -> L1
+jmp -> L1
+call0 r1, r0, r0
+load_name r5, identifier[11]
+call_method_ic r1, r5, r0
+load_i r2, 0
+strict_eq r255, r2
+call1 r5, r255, r0
+ret_u
+load_name r1, identifier[13]
+call0 r1, r0, r0
+mov r1, r255, r0
+load_false
+jmp_false r255, -> L1
+call0 r1, r0, r0
+load_name r3, identifier[11]
+call_method_ic r1, r5, r0
+load_i r2, 0
+strict_eq r255, r2
+call1 r3, r255, r0
+ret_u
+load_true
+jmp_false r255, -> L3
+load_i r7, 100
+load_i r1, 100
+jmp -> L2
+load_i r7, 200
+load_i r1, 200
+load_name r6, identifier[11]
+load_i r2, 100
+strict_eq r1, r2
+call1 r6, r255, r0
+ret_u
+load_true
+jmp_false r255, -> L3
+load_i r4, 10
+load_i r1, 10
+jmp -> L2
+load_i r4, 20
+load_i r1, 20
+load_i r4, 2
+mov r255, r1, r0
+mul_acc r4
+mov r1, r255, r0
+load_name r4, identifier[11]
+load_i r2, 20
+strict_eq r1, r2
+call1 r4, r255, r0
+ret_u
+load_name r1, identifier[13]
+call0 r1, r0, r0
+mov r1, r255, r0
+load_false
+call0 r1, r0, r0
+load_true
+logical_and r2, r5
+mov r2, r255, r0
+load_name r3, identifier[11]
+load_false
+strict_eq r2, r5
+mov r4, r255, r0
+call_method_ic r1, r5, r0
+load_i r2, 0
+strict_eq r255, r2
+logical_and r4, r255
+call1 r3, r255, r0
+ret_u
+load_name r1, identifier[13]
+call0 r1, r0, r0
+mov r1, r255, r0
+load_true
+call0 r1, r0, r0
+load_false
+logical_or r2, r5
+mov r2, r255, r0
+load_name r3, identifier[11]
+load_true
+strict_eq r2, r5
+mov r4, r255, r0
+call_method_ic r1, r5, r0
+load_i r2, 0
+strict_eq r255, r2
+logical_and r4, r255
+call1 r3, r255, r0
+ret_u
+load_i r1, 5
+load_i r2, 10
+load_true
+jmp_false r255, -> L8
+lt r2, r1
+jmp_false r255, -> L3
+load_i r1, 1
+load_i r2, 1
+jmp -> L5
+load_i r1, 2
+load_i r2, 2
+jmp -> L2
+load_i r5, 3
+load_i r2, 3
+load_name r4, identifier[11]
+load_i r1, 2
+strict_eq r2, r1
+call1 r4, r255, r0
+ret_u
+load_i r1, 2
+load_name r2, identifier[13]
+call0 r2, r0, r0
+mov r2, r255, r0
+mov r3, r1, r0
+load_i r4, 1
+strict_eq r1, r4
+jmp_false r255, -> L1
+jmp -> L9
+load_i r4, 2
+strict_eq r3, r4
+jmp_false r255, -> L1
+jmp -> L11
+load_i r4, 3
+strict_eq r3, r4
+jmp_false r255, -> L1
+jmp -> L4
+jmp -> L5
+call0 r2, r0, r0
+jmp -> L4
+jmp -> L3
+call0 r2, r0, r0
+jmp -> L1
+call0 r2, r0, r0
+load_name r3, identifier[11]
+call_method_ic r2, r5, r0
+load_i r5, 0
+strict_eq r255, r5
+call1 r3, r255, r0
+ret_u
+load_true
+jmp_false r255, -> L3
+load_i r4, 10
+load_i r1, 10
+jmp -> L2
+load_i r5, 20
+load_i r1, 20
+load_name r4, identifier[11]
+load_i r2, 10
+strict_eq r1, r2
+call1 r4, r255, r0
+ret_u
+load_i r255, 25
+load_i r1, 5
+div_acc r1
+strict_eq r255, r1
+jmp_false r255, -> L3
+load_i r8, 42
+load_i r2, 42
+jmp -> L2
+load_i r9, 0
+load_i r2, 0
+load_name r8, identifier[11]
+load_i r1, 42
+strict_eq r2, r1
+call1 r8, r255, r0
+ret_u
+create_env r1
+load_i r1, 0
+init_name r1, identifier[27]
+new_func r2, const[821]
+set_upval r2
+init_name r2, identifier[54]
+load_i r3, 2
+init_name r3, identifier[28]
+load_i r4, 3
+init_name r4, identifier[29]
+call2 r2, r3, r4
+init_name r255, identifier[38]
+load_i r8, 5
+strict_eq r255, r8
+init_name r255, identifier[30]
+jmp_false r255, -> L3
+load_i r9, 100
+load_i r8, 100
+jmp -> L2
+load_i r10, 200
+load_i r8, 200
+init_name r8, identifier[48]
+load_name r9, identifier[11]
+load_i r2, 100
+strict_eq r8, r2
+mov r10, r255, r0
+load_i r3, 1
+strict_eq r1, r3
+logical_and r10, r255
+call1 r9, r255, r0
+ret_u
+load_name r1, identifier[13]
+call0 r1, r0, r0
+mov r1, r255, r0
+load_i r2, 20
+load_i r3, 30
+load_true
+jmp_false r255, -> L5
+lt r2, r3
+jmp_false r255, -> L1
+jmp -> L3
+call0 r1, r0, r0
+jmp -> L1
+call0 r1, r0, r0
+load_name r5, identifier[11]
+call_method_ic r1, r5, r0
+load_i r7, 0
+strict_eq r255, r7
+call1 r5, r255, r0
+ret_u
+load_true
+jmp_false r255, -> L3
+load_i r4, 10
+load_i r1, 10
+jmp -> L2
+load_i r4, 20
+load_i r1, 20
+load_i r4, 5
+add r1, r4
+mov r1, r255, r0
+load_name r4, identifier[11]
+load_i r2, 15
+strict_eq r1, r2
+call1 r4, r255, r0
+ret_u
+load_name r1, identifier[13]
+call0 r1, r0, r0
+mov r1, r255, r0
+load_true
+load_i r3, 0
+load_i r5, 100
+lt r3, r5
+jmp_false r255, -> L6
+jmp_false r2, -> L1
+jmp -> L1
+call0 r1, r0, r0
+inc r3
+mov r3, r255, r0
+jmp -> L-9
+load_name r4, identifier[11]
+call_method_ic r1, r5, r0
+load_i r6, 0
+strict_eq r255, r6
+call1 r4, r255, r0
+ret_u
+load_i r1, 5
+load_i r2, 3
+mov r3, r1, r0
+mov r1, r2, r0
+bit_and r3, r2
+load_i r2, 2
+bit_or r255, r2
+strict_eq r255, r1
+mov r2, r255, r0
+load_name r6, identifier[11]
+load_true
+strict_eq r2, r1
+call1 r6, r255, r0
+ret_u
+load_k r1, const[822]
+load_k r2, const[823]
+mov r3, r1, r0
+load_k r1, const[824]
+add r3, r1
+add r255, r2
+load_k r5, const[825]
+strict_eq r255, r5
+mov r1, r255, r0
+load_name r5, identifier[11]
+load_true
+strict_eq r1, r2
+call1 r5, r255, r0
+ret_u
+load_k r1, const[826]
+load_i r2, 3
+mov r255, r1, r0
+mul_acc r2
+load_i r5, 15
+strict_eq r255, r5
+mov r1, r255, r0
+load_name r5, identifier[11]
+load_true
+strict_eq r1, r2
+call1 r5, r255, r0
+ret_u
+load_name r1, identifier[45]
+load_i r3, 5
+add r1, r3
+mov r1, r255, r0
+load_name r3, identifier[11]
+load_name r4, identifier[46]
+call1 r4, r1, r0
+call1 r3, r255, r0
+ret_u
+load_name r1, identifier[47]
+load_i r3, 1
+add r1, r3
+mov r2, r255, r0
+load_name r3, identifier[11]
+load_name r1, identifier[47]
+strict_eq r2, r1
+call1 r3, r255, r0
+ret_u
+new_obj
+load_i r2, 5
+set_prop r2, r1, r16
+load_i r2, 10
+set_prop r2, r1, r17
+load_true
+load_name r4, identifier[11]
+load_true
+load_true
+call1 r4, r255, r0
+ret_u
+new_arr
+load_i r255, 1
+array_push_acc r1
+load_i r255, 2
+array_push_acc r1
+load_i r255, 3
+array_push_acc r1
+mov r3, r1, r0
+load_i r1, 0
+get_prop_acc r3, r1
+load_i r4, 1
+strict_eq r255, r4
+mov r1, r255, r0
+load_name r4, identifier[11]
+load_true
+strict_eq r1, r2
+call1 r4, r255, r0
+ret_u
+create_env r1
+new_func r1, const[827]
+set_upval r1
+init_name r1, identifier[59]
+load_i r2, 5
+init_name r2, identifier[19]
+call1 r1, r2, r0
+init_name r255, identifier[20]
+load_i r6, 10
+strict_eq r255, r6
+mov r5, r255, r0
+init_name r255, identifier[30]
+load_name r6, identifier[11]
+load_true
+strict_eq r5, r1
+call1 r6, r255, r0
+ret_u
+load_name r1, identifier[13]
+call0 r1, r0, r0
+mov r1, r255, r0
+load_false
+jmp_false r2, -> L2
+call0 r1, r0, r0
+jmp -> L-4
+load_name r2, identifier[11]
+call_method_ic r1, r5, r0
+load_i r4, 0
+strict_eq r255, r4
+call1 r2, r255, r0
+ret_u
+load_k r1, const[828]
+load_name r2, identifier[13]
+call0 r2, r0, r0
+mov r2, r255, r0
+mov r3, r1, r0
+load_k r4, const[829]
+strict_eq r1, r4
+jmp_false r255, -> L1
+jmp -> L5
+load_k r4, const[830]
+strict_eq r3, r4
+jmp_false r255, -> L1
+jmp -> L5
+jmp -> L3
+call0 r2, r0, r0
+jmp -> L2
+jmp -> L1
+call0 r2, r0, r0
+load_name r3, identifier[11]
+call_method_ic r2, r5, r0
+load_i r5, 0
+strict_eq r255, r5
+call1 r3, r255, r0
+ret_u
+load_i r2, 10
+load_k_add r0, r3, r1
+load_k r4, const[832]
+add r255, r4
+add r255, r2
+load_k r4, const[833]
+add r255, r4
+load_i r4, 15
+add r255, r4
+mov r3, r255, r0
+load_name r4, identifier[11]
+load_k r1, const[834]
+strict_eq r3, r1
+call1 r4, r255, r0
+ret_u
+new_obj
+load_i r2, 1
+set_prop r2, r1, r16
+load_i r2, 2
+set_prop r2, r1, r17
+load_name r5, identifier[11]
+load_true
+call1 r5, r255, r0
+ret_u
+new_arr
+load_i r255, 1
+array_push_acc r1
+load_i r255, 2
+array_push_acc r1
+new_arr
+load_i r255, 3
+array_push_acc r1
+load_i r255, 4
+array_push_acc r1
+new_arr
+load_i r255, 1
+array_push_acc r1
+load_i r255, 2
+array_push_acc r1
+load_i r255, 3
+array_push_acc r1
+load_i r255, 4
+array_push_acc r1
+load_name r4, identifier[11]
+mov r5, r1, r0
+load_i r1, 2
+get_prop_acc r5, r1
+load_i r1, 3
+strict_eq r255, r1
+call1 r4, r255, r0
+ret_u
+load_i r1, 5
+load_i r2, 5
+load_true
+strict_neq r1, r2
+mov r1, r255, r0
+load_name r5, identifier[11]
+load_true
+load_true
+mov r6, r255, r0
+load_false
+strict_eq r1, r2
+logical_and r6, r255
+call1 r5, r255, r0
+ret_u
+load_true
+load_false
+logical_and r1, r2
+mov r3, r255, r0
+logical_or r1, r2
+mov r4, r255, r0
+mov r5, r1, r0
+jmp_false r1, -> L2
+load_false
+jmp -> L1
+load_true
+load_name r6, identifier[11]
+load_false
+strict_eq r3, r1
+mov r7, r255, r0
+load_true
+strict_eq r4, r2
+logical_and r7, r255
+mov r7, r255, r0
+load_false
+strict_eq r5, r2
+logical_and r7, r255
+call1 r6, r255, r0
+ret_u
+load_name r1, identifier[13]
+call0 r1, r0, r0
+mov r1, r255, r0
+load_true
+jmp_false r255, -> L1
+jmp -> L1
+call0 r1, r0, r0
+load_name r3, identifier[11]
+call_method_ic r1, r5, r0
+load_i r2, 0
+strict_eq r255, r2
+call1 r3, r255, r0
+ret_u
+new_obj
+load_i r2, 5
+set_prop r2, r1, r16
+load_i r2, 10
+set_prop r2, r1, r17
+load_true
+mov r2, r255, r0
+load_i r3, 20
+set_prop r3, r1, r17
+jmp_false r2, -> L3
+load_i r6, 1
+load_i r1, 1
+jmp -> L2
+load_i r7, 2
+load_i r1, 2
+load_name r6, identifier[11]
+load_i r2, 1
+strict_eq r1, r2
+call1 r6, r255, r0
+ret_u
+load_name r1, identifier[37]
+get_prop r1, r1, r18
+load_cmp_lt r0, r3, r1
+mov r1, r255, r0
+load_name r3, identifier[11]
+load_true
+strict_eq r1, r2
+call1 r3, r255, r0
+ret_u
+create_env r1
+load_name r2, identifier[13]
+call0 r2, r0, r0
+init_name r255, identifier[32]
+load_i r1, 5
+init_name r1, identifier[28]
+new_func r1, const[835]
+set_upval r1
+init_name r1, identifier[69]
+call0 r1, r0, r0
+init_name r255, identifier[29]
+load_i r3, 5
+strict_eq r255, r3
+init_name r255, identifier[30]
+load_i r3, 10
+init_name r3, identifier[70]
+new_func r1, const[836]
+set_upval r1
+init_name r1, identifier[71]
+call0 r1, r0, r0
+init_name r3, identifier[31]
+load_name r11, identifier[11]
+load_i r1, 20
+strict_eq r3, r1
+call1 r11, r255, r0
+ret_u
+new_arr
+load_i r255, 1
+array_push_acc r1
+mov r2, r1, r0
+load_i r3, 0
+get_prop_acc r2, r3
+mov r2, r255, r0
+mov r3, r1, r0
+load_i r4, 1
+get_prop_acc r3, r4
+mov r3, r255, r0
+load_name r4, identifier[72]
+strict_eq r3, r4
+jmp_false r255, -> L3
+load_i r4, 2
+load_i r3, 2
+jmp -> L4
+mov r5, r1, r0
+load_i r6, 1
+get_prop_acc r5, r6
+mov r3, r255, r0
+add r2, r3
+mov r4, r255, r0
+load_name r5, identifier[11]
+load_i r1, 3
+strict_eq r4, r1
+call1 r5, r255, r0
+ret_u
+new_obj
+load_i r2, 5
+set_prop r2, r1, r19
+load_i r2, 5
+get_prop r3, r1, r20
+load_name r4, identifier[72]
+strict_eq r3, r4
+jmp_false r255, -> L3
+load_i r4, 10
+load_i r3, 10
+jmp -> L2
+get_prop r5, r1, r20
+mov r3, r5, r0
+add r2, r3
+mov r4, r255, r0
+load_name r5, identifier[11]
+load_i r1, 15
+strict_eq r4, r1
+call1 r5, r255, r0
+ret_u
+load_name r1, identifier[73]
+load_k r2, const[837]
+call1 r1, r2, r0
+mov r1, r255, r0
+load_name r2, identifier[11]
+load_i r4, 5
+strict_eq r1, r4
+call1 r2, r255, r0
+ret_u
+load_name r1, identifier[74]
+load_i r2, 42
+construct r1, 1
+mov r1, r255, r0
+load_name r2, identifier[11]
+call_method_ic r1, r21, r0
+load_i r4, 42
+strict_eq r255, r4
+call1 r2, r255, r0
+ret_u
+load_arg r1, r0, r0
+load_arg r2, r1, r0
+mov r3, r1, r0
+jmp_false r1, -> L2
+load_false
+jmp -> L1
+load_true
+jmp_false r3, -> L4
+load_name r4, identifier[23]
+mov r5, r2, r0
+construct r4, 1
+throw r255, r0, r0
+ret_u
+load_arg r1, r0, r0
+load_arg r2, r1, r0
+load_name r3, identifier[9]
+inc r3
+store_name r255, identifier[9]
+try r0, -> L13
+call0 r2, r0, r0
+load_name r2, identifier[10]
+inc r2
+store_name r255, identifier[10]
+load_name r6, identifier[14]
+load_k r7, const[838]
+load_k r2, const[839]
+add r7, r2
+add r255, r1
+mov r7, r255, r0
+call_method1 r6, property[0], r7
+end_try
+jmp -> L17
+enter r0, r0, r1
+create_env r7
+catch r8, r0, r0
+init_name r2, identifier[26]
+load_name r9, identifier[14]
+load_k r10, const[840]
+load_k r3, const[841]
+add r10, r3
+add r255, r1
+load_k r3, const[842]
+add r255, r3
+get_prop r3, r2, r4
+add r255, r3
+mov r10, r255, r0
+call_method1 r9, property[1], r10
+leave
+finally
+ret_u
+create_env r1
+load_i r1, 0
+init_name r1, identifier[27]
+new_func r1, const[843]
+init_name r1, identifier[25]
+new_func r2, const[844]
+set_prop r2, r1, r2
+new_func r2, const[845]
+set_prop r2, r1, r6
+ret_reg r1
+ret_u
+create_env r1
+load_name r2, identifier[13]
+call0 r2, r0, r0
+mov r2, r255, r0
+init_name r255, identifier[32]
+new_func r1, const[846]
+set_upval r1
+init_name r1, identifier[76]
+load_i r3, 0
+init_name r3, identifier[38]
+load_i r4, 0
+load_i r7, 100
+lt r4, r7
+jmp_false r255, -> L7
+call0 r1, r0, r0
+add r3, r255
+mov r3, r255, r0
+store_name r255, identifier[38]
+inc r4
+mov r4, r255, r0
+jmp -> L-10
+load_name r6, identifier[11]
+call_method_ic r2, r5, r0
+load_i r8, 1
+strict_eq r255, r8
+mov r7, r255, r0
+load_k r8, const[847]
+load_k r1, const[848]
+add r8, r1
+mov r8, r255, r0
+call_method_ic r2, r5, r0
+add r8, r255
+call2 r6, r7, r255
+ret_u
+create_env r1
+load_name r2, identifier[13]
+call0 r2, r0, r0
+mov r2, r255, r0
+init_name r255, identifier[32]
+new_func r1, const[849]
+set_upval r1
+init_name r1, identifier[77]
+load_i r3, 0
+init_name r3, identifier[48]
+load_i r4, 0
+load_i r7, 50
+lt r4, r7
+jmp_false r255, -> L7
+call0 r1, r0, r0
+add r3, r255
+mov r3, r255, r0
+store_name r255, identifier[48]
+inc r4
+mov r4, r255, r0
+jmp -> L-10
+load_name r6, identifier[11]
+call_method_ic r2, r5, r0
+load_i r1, 1
+strict_eq r255, r1
+call1 r6, r255, r0
+ret_u
+create_env r1
+load_name r2, identifier[13]
+call0 r2, r0, r0
+mov r2, r255, r0
+init_name r255, identifier[32]
+new_obj
+load_i r3, 100
+set_prop r3, r1, r22
+init_name r1, identifier[49]
+new_func r3, const[850]
+set_upval r3
+init_name r3, identifier[78]
+load_i r1, 0
+init_name r1, identifier[38]
+load_i r4, 0
+load_i r8, 200
+lt r4, r8
+jmp_false r255, -> L7
+call0 r3, r0, r0
+add r1, r255
+mov r1, r255, r0
+store_name r255, identifier[38]
+inc r4
+mov r4, r255, r0
+jmp -> L-10
+load_name r7, identifier[11]
+call_method_ic r2, r5, r0
+load_i r9, 1
+strict_eq r255, r9
+load_k r9, const[851]
+call2 r7, r255, r9
+ret_u
+create_env r1
+load_name r2, identifier[13]
+call0 r2, r0, r0
+mov r2, r255, r0
+init_name r255, identifier[32]
+new_arr
+load_i r255, 1
+array_push_acc r1
+load_i r255, 2
+array_push_acc r1
+load_i r255, 3
+array_push_acc r1
+load_i r255, 4
+array_push_acc r1
+load_i r255, 5
+array_push_acc r1
+init_name r1, identifier[34]
+new_func r1, const[852]
+set_upval r1
+init_name r1, identifier[79]
+load_i r3, 0
+init_name r3, identifier[80]
+load_i r4, 0
+load_i r8, 100
+lt r4, r8
+jmp_false r255, -> L7
+call0 r1, r0, r0
+add r3, r255
+mov r3, r255, r0
+store_name r255, identifier[80]
+inc r4
+mov r4, r255, r0
+jmp -> L-10
+load_name r7, identifier[11]
+call_method_ic r2, r5, r0
+load_i r1, 1
+strict_eq r255, r1
+call1 r7, r255, r0
+ret_u
+create_env r1
+load_name r2, identifier[13]
+call0 r2, r0, r0
+mov r2, r255, r0
+init_name r255, identifier[32]
+new_func r1, const[853]
+set_upval r1
+init_name r1, identifier[81]
+load_i r3, 0
+init_name r3, identifier[38]
+load_i r4, 0
+load_i r7, 100
+lt r4, r7
+jmp_false r255, -> L7
+call1 r1, r4, r0
+add r3, r255
+mov r3, r255, r0
+store_name r255, identifier[38]
+inc r4
+mov r4, r255, r0
+jmp -> L-10
+load_name r6, identifier[11]
+call_method_ic r2, r5, r0
+load_i r8, 100
+strict_eq r255, r8
+call1 r6, r255, r0
+ret_u
+create_env r1
+load_name r2, identifier[13]
+call0 r2, r0, r0
+mov r2, r255, r0
+init_name r255, identifier[32]
+load_true
+init_name r3, identifier[82]
+new_func r1, const[854]
+set_upval r1
+init_name r1, identifier[83]
+load_i r3, 0
+init_name r3, identifier[38]
+load_i r4, 0
+load_i r8, 50
+lt r4, r8
+jmp_false r255, -> L9
+call0 r1, r0, r0
+jmp_false r255, -> L4
+load_i r9, 1
+add r3, r9
+mov r3, r255, r0
+store_name r255, identifier[38]
+inc r4
+mov r4, r255, r0
+jmp -> L-12
+load_name r7, identifier[11]
+call_method_ic r2, r5, r0
+load_i r9, 1
+strict_eq r255, r9
+load_k r9, const[855]
+call2 r7, r255, r9
+ret_u
+create_env r1
+load_name r2, identifier[13]
+call0 r2, r0, r0
+mov r2, r255, r0
+init_name r255, identifier[32]
+new_func r1, const[856]
+set_upval r1
+init_name r1, identifier[84]
+load_i r3, 5
+init_name r3, identifier[28]
+load_i r4, 10
+init_name r4, identifier[29]
+load_i r5, 0
+init_name r5, identifier[38]
+load_i r6, 0
+load_i r9, 100
+lt r6, r9
+jmp_false r255, -> L7
+call2 r1, r3, r4
+add r5, r255
+mov r5, r255, r0
+store_name r255, identifier[38]
+inc r6
+mov r6, r255, r0
+jmp -> L-10
+load_name r8, identifier[11]
+call_method_ic r2, r5, r0
+load_i r10, 1
+strict_eq r255, r10
+call1 r8, r255, r0
+ret_u
+create_env r1
+load_name r2, identifier[13]
+call0 r2, r0, r0
+mov r2, r255, r0
+init_name r255, identifier[32]
+new_func r1, const[857]
+set_upval r1
+init_name r1, identifier[85]
+load_i r3, 0
+init_name r3, identifier[38]
+load_i r4, 0
+load_i r7, 100
+lt r4, r7
+jmp_false r255, -> L7
+call0 r1, r0, r0
+add r3, r255
+mov r3, r255, r0
+store_name r255, identifier[38]
+inc r4
+mov r4, r255, r0
+jmp -> L-10
+load_name r6, identifier[11]
+call_method_ic r2, r5, r0
+load_i r1, 100
+strict_eq r255, r1
+call1 r6, r255, r0
+ret_u
+create_env r1
+load_name r2, identifier[13]
+call0 r2, r0, r0
+mov r2, r255, r0
+init_name r255, identifier[86]
+load_name r3, identifier[13]
+call0 r3, r0, r0
+mov r3, r255, r0
+init_name r255, identifier[87]
+new_func r1, const[858]
+set_upval r1
+init_name r1, identifier[88]
+new_func r4, const[859]
+set_upval r4
+init_name r4, identifier[89]
+load_i r5, 0
+init_name r5, identifier[38]
+load_i r6, 0
+load_i r9, 100
+lt r6, r9
+jmp_false r255, -> L12
+call0 r1, r0, r0
+mov r9, r255, r0
+call0 r4, r0, r0
+mov r10, r255, r0
+mov r255, r9, r0
+mul_acc r10
+add r5, r255
+mov r5, r255, r0
+store_name r255, identifier[38]
+inc r6
+mov r6, r255, r0
+jmp -> L-15
+load_name r8, identifier[11]
+call_method_ic r2, r5, r0
+load_i r10, 1
+strict_eq r255, r10
+mov r9, r255, r0
+call_method_ic r3, r5, r0
+load_i r1, 1
+strict_eq r255, r1
+logical_and r9, r255
+call1 r8, r255, r0
+ret_u
+create_env r1
+load_name r2, identifier[13]
+call0 r2, r0, r0
+mov r2, r255, r0
+init_name r255, identifier[32]
+new_func r1, const[860]
+set_upval r1
+init_name r1, identifier[90]
+load_i r3, 0
+init_name r3, identifier[38]
+load_i r4, 0
+load_i r7, 10
+lt r4, r7
+jmp_false r255, -> L14
+load_i r7, 0
+load_i r9, 10
+lt r7, r9
+jmp_false r255, -> L7
+call0 r1, r0, r0
+add r3, r255
+mov r3, r255, r0
+store_name r255, identifier[38]
+inc r7
+mov r7, r255, r0
+jmp -> L-10
+inc r4
+mov r4, r255, r0
+jmp -> L-17
+load_name r6, identifier[11]
+call_method_ic r2, r5, r0
+load_i r1, 1
+strict_eq r255, r1
+call1 r6, r255, r0
+ret_u
+create_env r1
+load_name r2, identifier[13]
+call0 r2, r0, r0
+mov r2, r255, r0
+init_name r255, identifier[32]
+new_func r1, const[861]
+set_upval r1
+init_name r1, identifier[81]
+load_i r3, 0
+init_name r3, identifier[38]
+load_i r4, 0
+load_i r7, 10
+lt r4, r7
+jmp_false r255, -> L14
+load_i r7, 0
+load_i r9, 10
+lt r7, r9
+jmp_false r255, -> L7
+call1 r1, r7, r0
+add r3, r255
+mov r3, r255, r0
+store_name r255, identifier[38]
+inc r7
+mov r7, r255, r0
+jmp -> L-10
+inc r4
+mov r4, r255, r0
+jmp -> L-17
+load_name r6, identifier[11]
+call_method_ic r2, r5, r0
+load_i r1, 100
+strict_eq r255, r1
+call1 r6, r255, r0
+ret_u
+create_env r1
+load_name r2, identifier[13]
+call0 r2, r0, r0
+mov r2, r255, r0
+init_name r255, identifier[32]
+new_obj
+load_i r3, 10
+set_prop r3, r1, r16
+load_i r3, 20
+set_prop r3, r1, r17
+init_name r1, identifier[49]
+new_func r3, const[862]
+set_upval r3
+init_name r3, identifier[91]
+load_i r4, 0
+init_name r4, identifier[38]
+load_i r5, 0
+load_i r8, 100
+lt r5, r8
+jmp_false r255, -> L8
+call0 r3, r0, r0
+add r4, r255
+mov r4, r255, r0
+store_name r255, identifier[38]
+set_prop r5, r1, r17
+inc r5
+mov r5, r255, r0
+jmp -> L-11
+load_name r7, identifier[11]
+call_method_ic r2, r5, r0
+load_i r1, 1
+strict_eq r255, r1
+call1 r7, r255, r0
+ret_u
+create_env r1
+load_name r2, identifier[13]
+call0 r2, r0, r0
+mov r2, r255, r0
+init_name r255, identifier[32]
+new_obj
+load_i r3, 10
+set_prop r3, r1, r16
+init_name r1, identifier[49]
+new_func r3, const[863]
+set_upval r3
+init_name r3, identifier[91]
+load_i r4, 0
+init_name r4, identifier[38]
+load_i r5, 0
+load_i r8, 100
+lt r5, r8
+jmp_false r255, -> L8
+call0 r3, r0, r0
+add r4, r255
+mov r4, r255, r0
+store_name r255, identifier[38]
+set_prop r5, r1, r16
+inc r5
+mov r5, r255, r0
+jmp -> L-11
+load_name r7, identifier[11]
+call_method_ic r2, r5, r0
+load_i r1, 100
+strict_eq r255, r1
+call1 r7, r255, r0
+ret_u
+create_env r1
+load_name r2, identifier[13]
+call0 r2, r0, r0
+mov r2, r255, r0
+init_name r255, identifier[32]
+new_func r1, const[864]
+set_upval r1
+init_name r1, identifier[92]
+load_i r3, 0
+init_name r3, identifier[38]
+load_i r4, 0
+load_i r7, 1000
+lt r4, r7
+jmp_false r255, -> L7
+call0 r1, r0, r0
+add r3, r255
+mov r3, r255, r0
+store_name r255, identifier[38]
+inc r4
+mov r4, r255, r0
+jmp -> L-10
+load_name r6, identifier[11]
+call_method_ic r2, r5, r0
+load_i r1, 1
+strict_eq r255, r1
+call1 r6, r255, r0
+ret_u
+create_env r1
+load_name r2, identifier[13]
+call0 r2, r0, r0
+mov r2, r255, r0
+init_name r255, identifier[32]
+new_func r1, const[865]
+set_upval r1
+init_name r1, identifier[93]
+load_i r3, 0
+init_name r3, identifier[38]
+load_i r4, 0
+load_i r7, 100
+lt r4, r7
+jmp_false r255, -> L7
+call0 r1, r0, r0
+add r3, r255
+mov r3, r255, r0
+store_name r255, identifier[38]
+inc r4
+mov r4, r255, r0
+jmp -> L-10
+load_name r6, identifier[11]
+call_method_ic r2, r5, r0
+load_i r1, 1
+strict_eq r255, r1
+call1 r6, r255, r0
+ret_u
+create_env r1
+load_name r2, identifier[13]
+call0 r2, r0, r0
+mov r2, r255, r0
+init_name r255, identifier[32]
+new_func r1, const[866]
+set_upval r1
+init_name r1, identifier[93]
+load_i r3, 0
+init_name r3, identifier[38]
+load_i r4, 0
+load_i r7, 100
+lt r4, r7
+jmp_false r255, -> L8
+call0 r1, r0, r0
+add r3, r255
+mov r3, r255, r0
+store_name r255, identifier[38]
+store_name r4, identifier[15]
+inc r4
+mov r4, r255, r0
+jmp -> L-11
+load_name r6, identifier[11]
+call_method_ic r2, r5, r0
+load_i r1, 100
+strict_eq r255, r1
+call1 r6, r255, r0
+load_i r7, 42
+store_name r7, identifier[15]
+ret_u
+create_env r1
+load_name r2, identifier[13]
+call0 r2, r0, r0
+mov r2, r255, r0
+init_name r255, identifier[32]
+new_arr
+load_i r255, 10
+array_push_acc r1
+load_i r255, 20
+array_push_acc r1
+load_i r255, 30
+array_push_acc r1
+init_name r1, identifier[34]
+new_func r1, const[867]
+set_upval r1
+init_name r1, identifier[94]
+load_i r3, 0
+init_name r3, identifier[38]
+load_i r4, 0
+load_i r8, 100
+lt r4, r8
+jmp_false r255, -> L7
+call0 r1, r0, r0
+add r3, r255
+mov r3, r255, r0
+store_name r255, identifier[38]
+inc r4
+mov r4, r255, r0
+jmp -> L-10
+load_name r7, identifier[11]
+call_method_ic r2, r5, r0
+load_i r1, 1
+strict_eq r255, r1
+call1 r7, r255, r0
+ret_u
+create_env r1
+load_name r2, identifier[13]
+call0 r2, r0, r0
+mov r2, r255, r0
+init_name r255, identifier[32]
+new_arr
+load_i r255, 10
+array_push_acc r1
+init_name r1, identifier[34]
+new_func r3, const[868]
+set_upval r3
+init_name r3, identifier[94]
+load_i r4, 0
+init_name r4, identifier[38]
+load_i r5, 0
+load_i r8, 100
+lt r5, r8
+jmp_false r255, -> L11
+call0 r3, r0, r0
+add r4, r255
+mov r4, r255, r0
+store_name r255, identifier[38]
+mov r7, r1, r0
+load_i r8, 0
+mov r255, r5, r0
+set_prop_acc r7, r8
+inc r5
+mov r5, r255, r0
+jmp -> L-14
+load_name r7, identifier[11]
+call_method_ic r2, r5, r0
+load_i r1, 100
+strict_eq r255, r1
+call1 r7, r255, r0
+ret_u
+create_env r1
+load_name r2, identifier[13]
+call0 r2, r0, r0
+mov r2, r255, r0
+init_name r255, identifier[32]
+new_func r1, const[869]
+set_upval r1
+init_name r1, identifier[90]
+load_i r3, 0
+init_name r3, identifier[39]
+load_i r4, 0
+init_name r4, identifier[38]
+load_i r7, 100
+lt r3, r7
+jmp_false r255, -> L8
+call0 r1, r0, r0
+add r4, r255
+mov r4, r255, r0
+store_name r255, identifier[38]
+inc r3
+store_name r255, identifier[39]
+mov r3, r255, r0
+jmp -> L-11
+load_name r6, identifier[11]
+call_method_ic r2, r5, r0
+load_i r1, 1
+strict_eq r255, r1
+call1 r6, r255, r0
+ret_u
+create_env r1
+load_name r2, identifier[13]
+call0 r2, r0, r0
+mov r2, r255, r0
+init_name r255, identifier[32]
+new_func r1, const[870]
+set_upval r1
+init_name r1, identifier[90]
+load_i r3, 0
+init_name r3, identifier[39]
+load_i r4, 0
+init_name r4, identifier[38]
+call0 r1, r0, r0
+add r4, r255
+mov r4, r255, r0
+store_name r255, identifier[38]
+inc r3
+store_name r255, identifier[39]
+mov r3, r255, r0
+load_i r7, 100
+lt r255, r7
+jmp_true r255, -> L-10
+load_name r6, identifier[11]
+call_method_ic r2, r5, r0
+load_i r1, 1
+strict_eq r255, r1
+call1 r6, r255, r0
+ret_u
+create_env r1
+load_name r2, identifier[13]
+call0 r2, r0, r0
+mov r2, r255, r0
+init_name r255, identifier[32]
+load_true
+init_name r3, identifier[30]
+new_func r1, const[871]
+set_upval r1
+init_name r1, identifier[95]
+load_i r3, 0
+init_name r3, identifier[38]
+load_i r4, 0
+load_i r8, 100
+lt r4, r8
+jmp_false r255, -> L7
+call0 r1, r0, r0
+add r3, r255
+mov r3, r255, r0
+store_name r255, identifier[38]
+inc r4
+mov r4, r255, r0
+jmp -> L-10
+load_name r7, identifier[11]
+call_method_ic r2, r5, r0
+load_i r1, 1
+strict_eq r255, r1
+call1 r7, r255, r0
+ret_u
+create_env r1
+load_name r2, identifier[13]
+call0 r2, r0, r0
+mov r2, r255, r0
+init_name r255, identifier[32]
+load_i r1, 10
+init_name r1, identifier[19]
+load_i r1, 20
+init_name r1, identifier[20]
+new_func r1, const[872]
+set_upval r1
+init_name r1, identifier[96]
+load_i r3, 0
+init_name r3, identifier[38]
+load_i r4, 0
+load_i r9, 100
+lt r4, r9
+jmp_false r255, -> L9
+call0 r1, r0, r0
+jmp_false r255, -> L4
+load_i r5, 1
+add r3, r5
+mov r3, r255, r0
+store_name r255, identifier[38]
+inc r4
+mov r4, r255, r0
+jmp -> L-12
+load_name r8, identifier[11]
+call_method_ic r2, r5, r0
+load_i r5, 1
+strict_eq r255, r5
+call1 r8, r255, r0
+ret_u
+create_env r1
+load_name r2, identifier[13]
+call0 r2, r0, r0
+mov r2, r255, r0
+init_name r255, identifier[32]
+new_func r1, const[873]
+set_upval r1
+init_name r1, identifier[97]
+load_i r3, 0
+init_name r3, identifier[38]
+load_i r4, 0
+load_i r7, 100
+lt r4, r7
+jmp_false r255, -> L9
+load_i r7, 5
+call0 r1, r0, r0
+add r7, r255
+add r3, r255
+mov r3, r255, r0
+store_name r255, identifier[38]
+inc r4
+mov r4, r255, r0
+jmp -> L-12
+load_name r6, identifier[11]
+call_method_ic r2, r5, r0
+load_i r8, 100
+strict_eq r255, r8
+call1 r6, r255, r0
+ret_u
+create_env r1
+load_name r2, identifier[13]
+call0 r2, r0, r0
+mov r2, r255, r0
+init_name r255, identifier[32]
+new_func r1, const[874]
+set_upval r1
+init_name r1, identifier[98]
+load_i r3, 0
+init_name r3, identifier[38]
+load_i r4, 0
+load_i r7, 100
+lt r4, r7
+jmp_false r255, -> L8
+call0 r1, r0, r0
+get_prop r5, r255, r19
+add r3, r5
+mov r3, r255, r0
+store_name r255, identifier[38]
+inc r4
+mov r4, r255, r0
+jmp -> L-11
+load_name r6, identifier[11]
+call_method_ic r2, r5, r0
+load_i r5, 100
+strict_eq r255, r5
+call1 r6, r255, r0
+ret_u
+create_env r1
+load_name r2, identifier[13]
+call0 r2, r0, r0
+mov r2, r255, r0
+init_name r255, identifier[32]
+new_func r1, const[875]
+set_upval r1
+init_name r1, identifier[99]
+load_i r3, 0
+init_name r3, identifier[80]
+load_i r4, 0
+load_i r7, 100
+lt r4, r7
+jmp_false r255, -> L8
+call0 r1, r0, r0
+call0 r255, r0, r0
+add r3, r255
+mov r3, r255, r0
+store_name r255, identifier[80]
+inc r4
+mov r4, r255, r0
+jmp -> L-11
+load_name r6, identifier[11]
+call_method_ic r2, r5, r0
+load_i r8, 1
+strict_eq r255, r8
+call1 r6, r255, r0
+ret_u
+create_env r1
+load_name r2, identifier[13]
+call0 r2, r0, r0
+mov r2, r255, r0
+init_name r255, identifier[32]
+new_obj
+load_i r3, 5
+set_prop r3, r1, r16
+load_i r3, 6
+set_prop r3, r1, r17
+init_name r1, identifier[49]
+new_func r3, const[876]
+set_upval r3
+init_name r3, identifier[100]
+load_i r1, 0
+init_name r1, identifier[38]
+load_i r4, 0
+load_i r8, 100
+lt r4, r8
+jmp_false r255, -> L7
+call0 r3, r0, r0
+add r1, r255
+mov r1, r255, r0
+store_name r255, identifier[38]
+inc r4
+mov r4, r255, r0
+jmp -> L-10
+load_name r7, identifier[11]
+call_method_ic r2, r5, r0
+load_i r1, 1
+strict_eq r255, r1
+call1 r7, r255, r0
+ret_u
+create_env r1
+load_name r2, identifier[13]
+call0 r2, r0, r0
+mov r2, r255, r0
+init_name r255, identifier[32]
+new_arr
+load_i r255, 1
+array_push_acc r1
+load_i r255, 2
+array_push_acc r1
+init_name r1, identifier[34]
+new_func r1, const[877]
+set_upval r1
+init_name r1, identifier[101]
+load_i r3, 0
+init_name r3, identifier[38]
+load_i r4, 0
+load_i r8, 100
+lt r4, r8
+jmp_false r255, -> L10
+call0 r1, r0, r0
+mov r5, r255, r0
+load_i r6, 0
+get_prop_acc r5, r6
+add r3, r255
+mov r3, r255, r0
+store_name r255, identifier[38]
+inc r4
+mov r4, r255, r0
+jmp -> L-13
+load_name r7, identifier[11]
+call_method_ic r2, r5, r0
+load_i r5, 1
+strict_eq r255, r5
+call1 r7, r255, r0
+ret_u
+create_env r1
+load_name r2, identifier[13]
+call0 r2, r0, r0
+mov r2, r255, r0
+init_name r255, identifier[32]
+new_func r1, const[878]
+set_upval r1
+init_name r1, identifier[90]
+load_i r3, 0
+init_name r3, identifier[38]
+load_i r4, 0
+load_i r7, 100
+lt r4, r7
+jmp_false r255, -> L11
+call0 r1, r0, r0
+add r3, r255
+mov r3, r255, r0
+store_name r255, identifier[38]
+load_i r7, 50
+strict_eq r4, r7
+jmp_false r255, -> L1
+jmp -> L3
+inc r4
+mov r4, r255, r0
+jmp -> L-14
+load_name r6, identifier[11]
+call_method_ic r2, r5, r0
+load_i r1, 1
+strict_eq r255, r1
+call1 r6, r255, r0
+ret_u
+create_env r1
+load_name r2, identifier[13]
+call0 r2, r0, r0
+mov r2, r255, r0
+init_name r255, identifier[32]
+new_arr
+load_i r255, 1
+array_push_acc r1
+load_i r255, 2
+array_push_acc r1
+load_i r255, 3
+array_push_acc r1
+load_i r255, 4
+array_push_acc r1
+load_i r255, 5
+array_push_acc r1
+init_name r1, identifier[34]
+new_func r3, const[879]
+set_upval r3
+init_name r3, identifier[94]
+load_i r4, 0
+init_name r4, identifier[38]
+mov r5, r1, r0
+load_i r1, 0
+get_length_ic r8, r5, r0
+lt r1, r6
+jmp_false r255, -> L8
+get_prop_acc r5, r1
+call0 r3, r0, r0
+add r4, r255
+mov r4, r255, r0
+store_name r255, identifier[38]
+inc r1
+mov r1, r255, r0
+jmp -> L-11
+load_name r11, identifier[11]
+call_method_ic r2, r5, r0
+load_i r1, 1
+strict_eq r255, r1
+call1 r11, r255, r0
+ret_u
+create_env r1
+load_name r2, identifier[13]
+call0 r2, r0, r0
+mov r2, r255, r0
+init_name r255, identifier[32]
+new_obj
+load_i r3, 1
+set_prop r3, r1, r16
+load_i r3, 2
+set_prop r3, r1, r17
+init_name r1, identifier[49]
+new_func r3, const[880]
+set_upval r3
+init_name r3, identifier[103]
+load_i r1, 0
+init_name r1, identifier[80]
+new_arr
+load_k r255, const[881]
+array_push_acc r4
+load_k r255, const[882]
+array_push_acc r4
+init_name r4, identifier[104]
+load_i r5, 0
+get_prop r9, r4, r8
+lt r5, r9
+jmp_false r255, -> L10
+mov r9, r4, r0
+mov r10, r5, r0
+get_prop_acc r9, r10
+call0 r3, r0, r0
+add r1, r255
+mov r1, r255, r0
+store_name r255, identifier[80]
+inc r5
+mov r5, r255, r0
+jmp -> L-13
+load_name r8, identifier[11]
+call_method_ic r2, r5, r0
+load_i r10, 1
+strict_eq r255, r10
+call1 r8, r255, r0
+ret_u
+create_env r1
+load_name r2, identifier[13]
+call0 r2, r0, r0
+mov r2, r255, r0
+init_name r255, identifier[32]
+load_i r1, 2
+init_name r1, identifier[19]
+load_i r1, 3
+init_name r1, identifier[20]
+load_i r1, 4
+init_name r1, identifier[52]
+new_func r1, const[883]
+set_upval r1
+init_name r1, identifier[106]
+load_i r3, 0
+init_name r3, identifier[38]
+load_i r4, 0
+load_i r10, 100
+lt r4, r10
+jmp_false r255, -> L7
+call0 r1, r0, r0
+add r3, r255
+mov r3, r255, r0
+store_name r255, identifier[38]
+inc r4
+mov r4, r255, r0
+jmp -> L-10
+load_name r9, identifier[11]
+call_method_ic r2, r5, r0
+load_i r1, 1
+strict_eq r255, r1
+call1 r9, r255, r0
+ret_u
+create_env r1
+load_name r2, identifier[13]
+call0 r2, r0, r0
+init_name r255, identifier[32]
+load_i r1, 10
+init_name r1, identifier[70]
+new_func r1, const[884]
+set_upval r1
+init_name r1, identifier[107]
+new_func r1, const[885]
+set_upval r1
+init_name r1, identifier[108]
+load_i r3, 0
+init_name r3, identifier[38]
+load_i r4, 0
+load_i r9, 100
+lt r4, r9
+jmp_false r255, -> L7
+call0 r1, r0, r0
+add r3, r255
+mov r3, r255, r0
+store_name r255, identifier[38]
+inc r4
+mov r4, r255, r0
+jmp -> L-10
+load_i r4, 0
+init_name r4, identifier[97]
+new_func r9, const[886]
+set_upval r9
+init_name r9, identifier[85]
+load_i r1, 0
+init_name r1, identifier[109]
+load_i r3, 0
+load_i r13, 100
+lt r3, r13
+jmp_false r255, -> L7
+call0 r9, r0, r0
+add r1, r255
+mov r1, r255, r0
+store_name r255, identifier[109]
+inc r3
+mov r3, r255, r0
+jmp -> L-10
+load_name r12, identifier[11]
+load_i r1, 100
+strict_eq r4, r1
+call1 r12, r255, r0
+ret_u
+create_env r1
+load_name r2, identifier[13]
+call0 r2, r0, r0
+mov r2, r255, r0
+init_name r255, identifier[32]
+new_func r1, const[887]
+set_upval r1
+init_name r1, identifier[110]
+load_i r3, 0
+init_name r3, identifier[38]
+load_i r4, 0
+load_i r7, 100
+lt r4, r7
+jmp_false r255, -> L7
+call0 r1, r0, r0
+add r3, r255
+mov r3, r255, r0
+store_name r255, identifier[38]
+inc r4
+mov r4, r255, r0
+jmp -> L-10
+load_name r6, identifier[11]
+call_method_ic r2, r5, r0
+load_i r1, 1
+strict_eq r255, r1
+call1 r6, r255, r0
+ret_u
+create_env r1
+load_name r2, identifier[13]
+call0 r2, r0, r0
+mov r2, r255, r0
+init_name r255, identifier[32]
+new_obj
+load_i r3, 10
+set_prop r3, r1, r12
+init_name r1, identifier[49]
+new_func r3, const[888]
+set_upval r3
+init_name r3, identifier[111]
+load_i r4, 0
+init_name r4, identifier[38]
+load_i r5, 0
+load_i r8, 100
+lt r5, r8
+jmp_false r255, -> L8
+call0 r3, r0, r0
+add r4, r255
+mov r4, r255, r0
+store_name r255, identifier[38]
+set_prop r5, r1, r12
+inc r5
+mov r5, r255, r0
+jmp -> L-11
+load_name r7, identifier[11]
+call_method_ic r2, r5, r0
+load_i r1, 100
+strict_eq r255, r1
+call1 r7, r255, r0
+ret_u
+load_arg r1, r0, r0
+load_arg r2, r1, r0
+mov r3, r1, r0
+jmp_false r1, -> L2
+load_false
+jmp -> L1
+load_true
+jmp_false r3, -> L6
+load_name r4, identifier[23]
+load_k r1, const[889]
+logical_or r2, r1
+mov r5, r255, r0
+construct r4, 1
+throw r255, r0, r0
+ret_u
+load_arg r1, r0, r0
+load_arg r2, r1, r0
+load_name r3, identifier[9]
+inc r3
+store_name r255, identifier[9]
+try r0, -> L10
+call0 r2, r0, r0
+load_name r2, identifier[10]
+inc r2
+store_name r255, identifier[10]
+load_name r6, identifier[14]
+load_k_add r0, r7, r1
+mov r7, r255, r0
+call_method1 r6, property[0], r7
+end_try
+jmp -> L14
+enter r0, r0, r1
+create_env r7
+catch r8, r0, r0
+init_name r2, identifier[26]
+load_name r9, identifier[14]
+load_k_add r0, r10, r1
+load_k r1, const[892]
+add r255, r1
+get_prop r1, r2, r4
+add r255, r1
+mov r10, r255, r0
+call_method1 r9, property[1], r10
+leave
+finally
+ret_u
+create_env r1
+load_i r1, 0
+init_name r1, identifier[27]
+new_func r1, const[893]
+set_upval r1
+init_name r1, identifier[112]
+new_func r2, const[894]
+set_prop r2, r1, r2
+ret_reg r1
+ret_u
+load_name r5, identifier[11]
+load_true
+load_k r7, const[895]
+call2 r5, r255, r7
+ret_u
+load_name r5, identifier[11]
+load_true
+load_k r7, const[896]
+call2 r5, r255, r7
+ret_u
+load_name r5, identifier[11]
+load_true
+load_k r7, const[897]
+call2 r5, r255, r7
+ret_u
+load_true
+load_true
+load_name r5, identifier[11]
+load_true
+load_k r7, const[898]
+call2 r5, r255, r7
+ret_u
+load_i r1, 10
+load_i r2, 20
+load_true
+jmp_false r255, -> L3
+add r1, r2
+mov r3, r255, r0
+jmp -> L2
+load_i r6, 0
+load_i r3, 0
+lt r1, r2
+jmp_false r255, -> L3
+add r1, r2
+mov r1, r255, r0
+jmp -> L2
+load_i r6, 0
+load_i r1, 0
+load_name r5, identifier[11]
+strict_eq r3, r1
+load_k r7, const[899]
+call2 r5, r255, r7
+ret_u
+load_name r8, identifier[11]
+load_true
+load_k r10, const[900]
+call2 r8, r255, r10
+ret_u
+create_env r1
+load_name r2, identifier[13]
+call0 r2, r0, r0
+mov r2, r255, r0
+init_name r255, identifier[32]
+new_func r1, const[901]
+set_upval r1
+init_name r1, identifier[121]
+load_i r5, 5
+call1 r1, r5, r0
+mov r4, r255, r0
+init_name r255, identifier[113]
+load_i r6, 5
+call1 r1, r6, r0
+mov r5, r255, r0
+init_name r255, identifier[114]
+load_name r6, identifier[11]
+strict_eq r4, r5
+load_k r8, const[902]
+call2 r6, r255, r8
+load_name r7, identifier[11]
+call_method_ic r2, r5, r0
+load_i r9, 2
+strict_eq r255, r9
+load_k r9, const[903]
+call2 r7, r255, r9
+ret_u
+new_obj
+load_i r2, 42
+set_prop r2, r1, r19
+load_i r2, 9
+set_prop r2, r1, r20
+load_name r4, identifier[11]
+load_true
+load_k r6, const[904]
+call2 r4, r255, r6
+ret_u
+new_arr
+load_i r255, 1
+array_push_acc r1
+load_i r255, 2
+array_push_acc r1
+load_i r255, 3
+array_push_acc r1
+mov r2, r1, r0
+load_i r3, 0
+get_prop_acc r2, r3
+mov r2, r255, r0
+mov r3, r1, r0
+load_i r4, 1
+get_prop_acc r3, r4
+add r2, r255
+mov r2, r255, r0
+mov r3, r1, r0
+load_i r4, 0
+get_prop_acc r3, r4
+mov r3, r255, r0
+mov r4, r1, r0
+load_i r5, 1
+get_prop_acc r4, r5
+add r3, r255
+mov r3, r255, r0
+load_name r4, identifier[11]
+strict_eq r2, r3
+load_k r6, const[905]
+call2 r4, r255, r6
+ret_u
+load_i r1, 2
+load_i r2, 3
+load_i r3, 0
+load_i r4, 0
+mov r5, r3, r0
+load_i r7, 8
+lt r5, r7
+jmp_false r255, -> L9
+add r1, r2
+add r3, r255
+mov r3, r255, r0
+add r1, r2
+add r4, r255
+mov r4, r255, r0
+inc r5
+mov r5, r255, r0
+jmp -> L-12
+load_name r6, identifier[11]
+strict_eq r3, r4
+load_k r8, const[906]
+call2 r6, r255, r8
+ret_u
+new_obj
+load_i r2, 1
+set_prop r2, r1, r22
+load_i r2, 2
+set_prop r2, r1, r22
+load_i r1, 2
+load_name r6, identifier[11]
+load_true
+load_k r8, const[907]
+call2 r6, r255, r8
+load_name r7, identifier[11]
+load_i r9, 2
+strict_eq r1, r9
+load_k r9, const[908]
+call2 r7, r255, r9
+ret_u
+create_env r2
+load_i r2, 0
+init_name r2, identifier[97]
+new_func r3, const[909]
+set_upval r3
+init_name r3, identifier[125]
+load_false
+mov r5, r3, r0
+call0 r3, r0, r0
+logical_and r1, r255
+mov r1, r255, r0
+init_name r255, identifier[19]
+load_false
+call0 r3, r0, r0
+logical_and r5, r255
+mov r5, r255, r0
+init_name r255, identifier[20]
+load_name r6, identifier[11]
+load_false
+strict_eq r1, r8
+load_k r8, const[910]
+call2 r6, r255, r8
+load_name r7, identifier[11]
+load_false
+strict_eq r5, r9
+load_k r9, const[911]
+call2 r7, r255, r9
+load_name r8, identifier[11]
+load_i r10, 0
+strict_eq r2, r10
+load_k r10, const[912]
+call2 r8, r255, r10
+ret_u
+load_true
+jmp_false r1, -> L3
+load_i r8, 8
+load_i r2, 8
+jmp -> L2
+load_i r8, 10
+load_i r2, 10
+jmp_false r1, -> L3
+load_i r8, 8
+load_i r1, 8
+jmp -> L2
+load_i r8, 10
+load_i r1, 10
+load_name r6, identifier[11]
+strict_eq r2, r1
+load_k r8, const[913]
+call2 r6, r255, r8
+ret_u
+load_arg r1, r0, r0
+load_arg r2, r1, r0
+mov r3, r1, r0
+jmp_false r1, -> L2
+load_false
+jmp -> L1
+load_true
+jmp_false r3, -> L4
+load_name r4, identifier[23]
+mov r5, r2, r0
+construct r4, 1
+throw r255, r0, r0
+ret_u
+load_arg r1, r0, r0
+load_arg r2, r1, r0
+load_name r3, identifier[9]
+inc r3
+store_name r255, identifier[9]
+try r0, -> L13
+call0 r2, r0, r0
+load_name r2, identifier[10]
+inc r2
+store_name r255, identifier[10]
+load_name r6, identifier[14]
+load_k r7, const[914]
+load_k r2, const[915]
+add r7, r2
+add r255, r1
+mov r7, r255, r0
+call_method1 r6, property[0], r7
+end_try
+jmp -> L17
+enter r0, r0, r1
+create_env r7
+catch r8, r0, r0
+init_name r2, identifier[26]
+load_name r9, identifier[14]
+load_k r10, const[916]
+load_k r3, const[917]
+add r10, r3
+add r255, r1
+load_k r3, const[918]
+add r255, r3
+get_prop r3, r2, r4
+add r255, r3
+mov r10, r255, r0
+call_method1 r9, property[1], r10
+leave
+finally
+ret_u
+create_env r1
+load_i r1, 0
+init_name r1, identifier[27]
+new_func r1, const[919]
+init_name r1, identifier[25]
+new_func r2, const[920]
+set_prop r2, r1, r2
+new_func r2, const[921]
+set_prop r2, r1, r6
+ret_reg r1
+ret_u
+create_env r1
+load_name r2, identifier[13]
+call0 r2, r0, r0
+mov r2, r255, r0
+init_name r255, identifier[32]
+new_func r1, const[922]
+set_upval r1
+init_name r1, identifier[12]
+call0 r1, r0, r0
+load_name r5, identifier[11]
+call_method_ic r2, r5, r0
+load_i r1, 0
+strict_eq r255, r1
+call1 r5, r255, r0
+ret_u
+create_env r1
+load_name r2, identifier[13]
+call0 r2, r0, r0
+mov r2, r255, r0
+init_name r255, identifier[32]
+new_func r1, const[923]
+set_upval r1
+init_name r1, identifier[12]
+mov r4, r1, r0
+load_true
+call1 r4, r5, r0
+load_name r5, identifier[11]
+call_method_ic r2, r5, r0
+load_i r1, 0
+strict_eq r255, r1
+call1 r5, r255, r0
+ret_u
+create_env r1
+load_name r2, identifier[13]
+call0 r2, r0, r0
+mov r2, r255, r0
+init_name r255, identifier[32]
+new_func r1, const[924]
+set_upval r1
+init_name r1, identifier[12]
+try r0, -> L3
+call0 r1, r0, r0
+end_try
+jmp -> L6
+enter r0, r0, r1
+create_env r5
+catch r6, r0, r0
+init_name r6, identifier[26]
+leave
+finally
+load_name r5, identifier[11]
+call_method_ic r2, r5, r0
+load_i r1, 0
+strict_eq r255, r1
+call1 r5, r255, r0
+ret_u
+load_name r1, identifier[13]
+call0 r1, r0, r0
+mov r1, r255, r0
+load_i r2, 0
+load_i r4, 10
+lt r2, r4
+jmp_false r255, -> L5
+jmp -> L4
+call0 r1, r0, r0
+inc r2
+mov r2, r255, r0
+jmp -> L-8
+load_name r3, identifier[11]
+call_method_ic r1, r5, r0
+load_i r2, 0
+strict_eq r255, r2
+call1 r3, r255, r0
+ret_u
+load_name r1, identifier[13]
+call0 r1, r0, r0
+mov r1, r255, r0
+load_true
+jmp_false r255, -> L1
+jmp -> L4
+jmp -> L2
+jmp -> L2
+call0 r1, r0, r0
+call0 r1, r0, r0
+load_name r3, identifier[11]
+call_method_ic r1, r5, r0
+load_i r5, 0
+strict_eq r255, r5
+call1 r3, r255, r0
+ret_u
+load_name r1, identifier[13]
+call0 r1, r0, r0
+mov r1, r255, r0
+load_i r2, 0
+load_i r4, 5
+lt r2, r4
+jmp_false r255, -> L5
+jmp -> L1
+call0 r1, r0, r0
+inc r2
+mov r2, r255, r0
+jmp -> L-8
+load_name r3, identifier[11]
+call_method_ic r1, r5, r0
+load_i r2, 0
+strict_eq r255, r2
+call1 r3, r255, r0
+ret_u
+load_name r1, identifier[13]
+call0 r1, r0, r0
+mov r1, r255, r0
+load_false
+jmp_false r2, -> L1
+call0 r1, r0, r0
+load_name r2, identifier[11]
+call_method_ic r1, r5, r0
+load_i r4, 0
+strict_eq r255, r4
+call1 r2, r255, r0
+ret_u
+load_name r1, identifier[13]
+call0 r1, r0, r0
+mov r1, r255, r0
+load_true
+jmp_false r2, -> L1
+jmp -> L1
+call0 r1, r0, r0
+load_name r2, identifier[11]
+call_method_ic r1, r5, r0
+load_i r4, 0
+strict_eq r255, r4
+call1 r2, r255, r0
+ret_u
+load_name r1, identifier[13]
+call0 r1, r0, r0
+mov r1, r255, r0
+load_true
+jmp_false r2, -> L3
+load_i r3, 42
+load_i r2, 42
+jmp -> L3
+call0 r1, r0, r0
+load_i r6, 0
+load_i r2, 0
+load_name r3, identifier[11]
+load_i r5, 42
+strict_eq r2, r5
+mov r4, r255, r0
+call_method_ic r1, r5, r0
+load_i r6, 0
+strict_eq r255, r6
+logical_and r4, r255
+call1 r3, r255, r0
+ret_u
+load_name r1, identifier[13]
+call0 r1, r0, r0
+mov r1, r255, r0
+load_false
+jmp_false r2, -> L2
+call0 r1, r0, r0
+jmp -> L-4
+load_name r2, identifier[11]
+call_method_ic r1, r5, r0
+load_i r4, 0
+strict_eq r255, r4
+call1 r2, r255, r0
+ret_u
+load_name r1, identifier[13]
+call0 r1, r0, r0
+mov r1, r255, r0
+load_i r2, 0
+load_false
+jmp_false r3, -> L4
+call0 r1, r0, r0
+inc r2
+mov r2, r255, r0
+jmp -> L-6
+load_name r3, identifier[11]
+call_method_ic r1, r5, r0
+load_i r2, 0
+strict_eq r255, r2
+call1 r3, r255, r0
+ret_u
+load_name r1, identifier[13]
+call0 r1, r0, r0
+mov r1, r255, r0
+mov r2, r1, r0
+call0 r1, r0, r0
+load_false
+jmp_true r2, -> L-4
+load_name r2, identifier[11]
+call_method_ic r1, r5, r0
+load_i r4, 1
+strict_eq r255, r4
+call1 r2, r255, r0
+ret_u
+create_env r1
+load_name r2, identifier[13]
+call0 r2, r0, r0
+mov r2, r255, r0
+init_name r255, identifier[32]
+new_func r1, const[925]
+set_upval r1
+init_name r1, identifier[12]
+call0 r1, r0, r0
+load_name r5, identifier[11]
+call_method_ic r2, r5, r0
+load_i r1, 1
+strict_eq r255, r1
+call1 r5, r255, r0
+ret_u
+create_env r1
+load_name r2, identifier[13]
+call0 r2, r0, r0
+mov r2, r255, r0
+init_name r255, identifier[32]
+new_func r1, const[926]
+set_upval r1
+init_name r1, identifier[12]
+call0 r1, r0, r0
+load_name r5, identifier[11]
+call_method_ic r2, r5, r0
+load_i r1, 1
+strict_eq r255, r1
+call1 r5, r255, r0
+ret_u
+create_env r1
+load_name r2, identifier[13]
+call0 r2, r0, r0
+mov r2, r255, r0
+init_name r255, identifier[32]
+new_func r1, const[927]
+set_upval r1
+init_name r1, identifier[130]
+new_func r1, const[928]
+set_upval r1
+init_name r1, identifier[131]
+load_name r5, identifier[11]
+call0 r1, r0, r0
+load_i r7, 42
+strict_eq r255, r7
+call1 r5, r255, r0
+load_name r6, identifier[11]
+call_method_ic r2, r5, r0
+load_i r1, 0
+strict_eq r255, r1
+call1 r6, r255, r0
+ret_u
+create_env r1
+load_name r2, identifier[13]
+call0 r2, r0, r0
+init_name r255, identifier[32]
+new_func r1, const[929]
+set_upval r1
+init_name r1, identifier[12]
+load_name r4, identifier[11]
+load_true
+call1 r4, r5, r0
+ret_u
+load_name r1, identifier[13]
+call0 r1, r0, r0
+mov r1, r255, r0
+load_false
+call0 r1, r0, r0
+load_true
+logical_and r2, r5
+mov r2, r255, r0
+load_name r3, identifier[11]
+load_false
+strict_eq r2, r5
+mov r4, r255, r0
+call_method_ic r1, r5, r0
+load_i r2, 0
+strict_eq r255, r2
+logical_and r4, r255
+call1 r3, r255, r0
+ret_u
+load_name r1, identifier[13]
+call0 r1, r0, r0
+mov r1, r255, r0
+load_true
+call0 r1, r0, r0
+load_false
+logical_or r2, r5
+mov r2, r255, r0
+load_name r3, identifier[11]
+load_true
+strict_eq r2, r5
+mov r4, r255, r0
+call_method_ic r1, r5, r0
+load_i r2, 0
+strict_eq r255, r2
+logical_and r4, r255
+call1 r3, r255, r0
+ret_u
+load_name r1, identifier[13]
+call0 r1, r0, r0
+mov r1, r255, r0
+load_i r2, 2
+load_i r3, 2
+load_false
+jmp_false r255, -> L1
+jmp -> L9
+load_i r4, 2
+strict_eq r3, r4
+jmp_false r255, -> L1
+jmp -> L11
+load_i r4, 3
+strict_eq r3, r4
+jmp_false r255, -> L1
+jmp -> L4
+jmp -> L5
+call0 r1, r0, r0
+jmp -> L4
+jmp -> L3
+call0 r1, r0, r0
+jmp -> L1
+call0 r1, r0, r0
+load_name r3, identifier[11]
+call_method_ic r1, r5, r0
+load_i r5, 0
+strict_eq r255, r5
+call1 r3, r255, r0
+ret_u
+load_name r1, identifier[13]
+call0 r1, r0, r0
+mov r1, r255, r0
+call0 r255, r0, r0
+load_name r2, identifier[11]
+call_method_ic r1, r5, r0
+load_i r4, 1
+strict_eq r255, r4
+call1 r2, r255, r0
+ret_u
+load_name r1, identifier[13]
+call0 r1, r0, r0
+mov r1, r255, r0
+try r0, -> L5
+load_name r2, identifier[23]
+construct r2, 0
+throw r255, r0, r0
+end_try
+jmp -> L7
+enter r0, r0, r1
+create_env r2
+catch r3, r0, r0
+init_name r3, identifier[26]
+call0 r1, r0, r0
+leave
+finally
+load_name r2, identifier[11]
+call_method_ic r1, r5, r0
+load_i r4, 1
+strict_eq r255, r4
+call1 r2, r255, r0
+ret_u
+create_env r1
+load_name r2, identifier[13]
+call0 r2, r0, r0
+mov r2, r255, r0
+init_name r255, identifier[32]
+new_func r1, const[930]
+set_upval r1
+init_name r1, identifier[132]
+get_prop r3, r1, r2
+new_func r4, const[931]
+set_prop r4, r3, r23
+get_prop r3, r1, r2
+new_func r4, const[932]
+set_prop r4, r3, r24
+mov r8, r1, r0
+construct r8, 0
+mov r8, r255, r0
+init_name r255, identifier[51]
+load_name r9, identifier[11]
+call_method_ic r8, r24, r0
+load_i r11, 1
+strict_eq r255, r11
+call1 r9, r255, r0
+load_name r10, identifier[11]
+call_method_ic r2, r5, r0
+load_i r1, 0
+strict_eq r255, r1
+call1 r10, r255, r0
+ret_u
+create_env r1
+load_name r2, identifier[13]
+call0 r2, r0, r0
+mov r2, r255, r0
+init_name r255, identifier[32]
+new_func r1, const[933]
+init_name r1, identifier[59]
+call0 r1, r0, r0
+load_name r5, identifier[11]
+call_method_ic r2, r5, r0
+load_i r1, 0
+strict_eq r255, r1
+call1 r5, r255, r0
+ret_u
+create_env r1
+load_name r2, identifier[13]
+call0 r2, r0, r0
+mov r2, r255, r0
+init_name r255, identifier[32]
+new_func r1, const[934]
+set_upval r1
+init_name r1, identifier[12]
+call0 r1, r0, r0
+load_name r5, identifier[11]
+call_method_ic r2, r5, r0
+load_i r1, 1
+strict_eq r255, r1
+call1 r5, r255, r0
+ret_u
+create_env r1
+load_name r2, identifier[13]
+call0 r2, r0, r0
+mov r2, r255, r0
+init_name r255, identifier[32]
+new_func r1, const[935]
+set_upval r1
+init_name r1, identifier[12]
+call0 r1, r0, r0
+load_name r5, identifier[11]
+call_method_ic r2, r5, r0
+load_i r1, 1
+strict_eq r255, r1
+call1 r5, r255, r0
+ret_u
+create_env r1
+load_name r2, identifier[13]
+call0 r2, r0, r0
+mov r2, r255, r0
+init_name r255, identifier[32]
+new_func r1, const[936]
+set_upval r1
+init_name r1, identifier[12]
+call0 r1, r0, r0
+load_name r5, identifier[11]
+call_method_ic r2, r5, r0
+load_i r1, 1
+strict_eq r255, r1
+call1 r5, r255, r0
+ret_u
+create_env r1
+load_name r2, identifier[13]
+call0 r2, r0, r0
+mov r2, r255, r0
+init_name r255, identifier[32]
+new_func r1, const[937]
+set_upval r1
+init_name r1, identifier[133]
+call0 r1, r0, r0
+init_name r255, identifier[25]
+load_name r5, identifier[11]
+call_method_ic r2, r5, r0
+load_i r1, 1
+strict_eq r255, r1
+call1 r5, r255, r0
+ret_u
+load_true
+mov r1, r255, r0
+load_name r4, identifier[13]
+call0 r4, r0, r0
+mov r4, r255, r0
+jmp_false r1, -> L1
+jmp -> L1
+call0 r4, r0, r0
+load_name r5, identifier[11]
+call_method_ic r4, r5, r0
+load_i r1, 0
+strict_eq r255, r1
+call1 r5, r255, r0
+ret_u
+create_env r1
+load_name r2, identifier[13]
+call0 r2, r0, r0
+mov r2, r255, r0
+init_name r255, identifier[32]
+new_func r1, const[938]
+set_upval r1
+init_name r1, identifier[12]
+try r0, -> L3
+call0 r1, r0, r0
+end_try
+jmp -> L6
+enter r0, r0, r1
+create_env r5
+catch r6, r0, r0
+init_name r6, identifier[26]
+leave
+finally
+load_name r5, identifier[11]
+call_method_ic r2, r5, r0
+load_i r1, 0
+strict_eq r255, r1
+call1 r5, r255, r0
+ret_u
+create_env r1
+load_name r2, identifier[13]
+call0 r2, r0, r0
+init_name r255, identifier[32]
+new_func r1, const[939]
+set_upval r1
+init_name r1, identifier[12]
+load_name r4, identifier[11]
+load_i r6, 1
+load_i r7, 42
+call2 r1, r6, r7
+load_i r6, 42
+strict_eq r255, r6
+call1 r4, r255, r0
+load_name r5, identifier[11]
+load_true
+call1 r5, r6, r0
+ret_u
+create_env r1
+load_name r2, identifier[13]
+call0 r2, r0, r0
+mov r2, r255, r0
+init_name r255, identifier[32]
+new_func r1, const[940]
+set_upval r1
+init_name r1, identifier[12]
+call0 r1, r0, r0
+load_name r5, identifier[11]
+call_method_ic r2, r5, r0
+load_i r1, 1
+strict_eq r255, r1
+call1 r5, r255, r0
+ret_u
+create_env r1
+load_name r2, identifier[13]
+call0 r2, r0, r0
+mov r2, r255, r0
+init_name r255, identifier[32]
+new_func r1, const[941]
+set_upval r1
+init_name r1, identifier[12]
+call0 r1, r0, r0
+load_name r5, identifier[11]
+call_method_ic r2, r5, r0
+load_i r1, 1
+strict_eq r255, r1
+call1 r5, r255, r0
+ret_u
+load_name r1, identifier[13]
+call0 r1, r0, r0
+mov r1, r255, r0
+call0 r255, r0, r0
+load_name r2, identifier[11]
+call_method_ic r1, r5, r0
+load_i r4, 1
+strict_eq r255, r4
+call1 r2, r255, r0
+ret_u
+create_env r1
+load_name r2, identifier[13]
+call0 r2, r0, r0
+mov r2, r255, r0
+init_name r255, identifier[32]
+new_func r1, const[942]
+set_upval r1
+init_name r1, identifier[134]
+mov r4, r1, r0
+load_false
+call1 r4, r5, r0
+load_name r5, identifier[11]
+call_method_ic r2, r5, r0
+load_i r7, 0
+strict_eq r255, r7
+call1 r5, r255, r0
+mov r6, r1, r0
+load_true
+call1 r6, r7, r0
+load_name r7, identifier[11]
+call_method_ic r2, r5, r0
+load_i r1, 1
+strict_eq r255, r1
+call1 r7, r255, r0
+ret_u
+create_env r1
+load_name r2, identifier[13]
+call0 r2, r0, r0
+mov r2, r255, r0
+init_name r255, identifier[32]
+new_func r1, const[943]
+set_upval r1
+init_name r1, identifier[12]
+call0 r1, r0, r0
+load_name r5, identifier[11]
+call_method_ic r2, r5, r0
+load_i r1, 1
+strict_eq r255, r1
+call1 r5, r255, r0
+ret_u
+create_env r1
+load_name r2, identifier[13]
+call0 r2, r0, r0
+mov r2, r255, r0
+init_name r255, identifier[32]
+new_func r1, const[944]
+set_upval r1
+init_name r1, identifier[59]
+call0 r1, r0, r0
+init_name r255, identifier[28]
+load_name r5, identifier[11]
+call_method_ic r2, r5, r0
+load_i r1, 1
+strict_eq r255, r1
+call1 r5, r255, r0
+ret_u
+create_env r1
+new_obj
+load_i r2, 0
+set_prop r2, r1, r19
+init_name r1, identifier[49]
+new_func r2, const[945]
+set_upval r2
+init_name r2, identifier[12]
+call0 r2, r0, r0
+load_name r5, identifier[11]
+get_prop r6, r1, r19
+load_i r1, 5
+strict_eq r6, r1
+call1 r5, r255, r0
+ret_u
+create_env r1
+load_i r1, 0
+init_name r1, identifier[19]
+new_func r2, const[946]
+set_upval r2
+init_name r2, identifier[12]
+call0 r2, r0, r0
+load_name r5, identifier[11]
+load_i r2, 1
+strict_eq r1, r2
+call1 r5, r255, r0
+ret_u
+load_arg r1, r0, r0
+load_arg r2, r1, r0
+mov r3, r1, r0
+jmp_false r1, -> L2
+load_false
+jmp -> L1
+load_true
+jmp_false r3, -> L4
+load_name r4, identifier[23]
+mov r5, r2, r0
+construct r4, 1
+throw r255, r0, r0
+ret_u
+load_arg r1, r0, r0
+load_arg r2, r1, r0
+load_name r3, identifier[9]
+inc r3
+store_name r255, identifier[9]
+try r0, -> L13
+call0 r2, r0, r0
+load_name r2, identifier[10]
+inc r2
+store_name r255, identifier[10]
+load_name r6, identifier[14]
+load_k r7, const[947]
+load_k r2, const[948]
+add r7, r2
+add r255, r1
+mov r7, r255, r0
+call_method1 r6, property[0], r7
+end_try
+jmp -> L17
+enter r0, r0, r1
+create_env r7
+catch r8, r0, r0
+init_name r2, identifier[26]
+load_name r9, identifier[14]
+load_k r10, const[949]
+load_k r3, const[950]
+add r10, r3
+add r255, r1
+load_k r3, const[951]
+add r255, r3
+get_prop r3, r2, r4
+add r255, r3
+mov r10, r255, r0
+call_method1 r9, property[1], r10
+leave
+finally
+ret_u
+create_env r1
+load_i r1, 0
+init_name r1, identifier[27]
+new_func r1, const[952]
+init_name r1, identifier[25]
+new_func r2, const[953]
+set_prop r2, r1, r2
+new_func r2, const[954]
+set_prop r2, r1, r6
+ret_reg r1
+ret_u
+load_name r4, identifier[11]
+load_true
+call1 r4, r255, r0
+ret_u
+load_name r6, identifier[11]
+load_true
+call1 r6, r255, r0
+ret_u
+load_k r1, const[955]
+load_k r4, const[956]
+add r1, r4
+mov r1, r255, r0
+load_name r4, identifier[11]
+load_k r2, const[957]
+strict_eq r1, r2
+call1 r4, r255, r0
+ret_u
+load_true
+mov r2, r1, r0
+load_false
+logical_and r1, r4
+mov r1, r255, r0
+load_name r4, identifier[11]
+load_false
+strict_eq r1, r2
+call1 r4, r255, r0
+ret_u
+new_obj
+load_i r2, 1
+set_prop r2, r1, r19
+load_name r4, identifier[11]
+load_true
+call1 r4, r255, r0
+ret_u
+load_i r1, 10
+load_true
+jmp_false r4, -> L4
+load_i r2, 5
+add r1, r2
+mov r1, r255, r0
+jmp -> L2
+load_i r5, 0
+load_i r1, 0
+load_name r4, identifier[11]
+load_i r2, 15
+strict_eq r1, r2
+call1 r4, r255, r0
+ret_u
+load_i r1, 20
+load_name r4, identifier[37]
+call_method_ic r4, r7, r0
+load_k r5, const[958]
+lt r255, r5
+jmp_false r255, -> L5
+load_i r2, 2
+mov r255, r1, r0
+mul_acc r2
+mov r5, r255, r0
+jmp -> L4
+load_i r2, 2
+mov r255, r1, r0
+div_acc r2
+mov r5, r255, r0
+load_name r4, identifier[11]
+load_true
+call1 r4, r5, r0
+ret_u
+load_name r5, identifier[11]
+load_true
+call1 r5, r255, r0
+ret_u
+load_name r5, identifier[11]
+load_true
+call1 r5, r255, r0
+ret_u
+load_i r1, 2
+load_i r2, 0
+load_i r3, 0
+load_i r6, 10
+lt r3, r6
+jmp_false r255, -> L5
+add r2, r1
+mov r2, r255, r0
+inc r3
+mov r3, r255, r0
+jmp -> L-8
+load_name r5, identifier[11]
+load_i r1, 20
+strict_eq r2, r1
+call1 r5, r255, r0
+ret_u
+load_i r1, 0
+load_i r2, 0
+mov r3, r1, r0
+load_i r5, 5
+lt r3, r5
+jmp_false r255, -> L7
+mov r5, r1, r0
+mov r1, r3, r0
+add r2, r5
+mov r2, r255, r0
+inc r3
+mov r3, r255, r0
+jmp -> L-10
+load_name r4, identifier[11]
+load_i r1, 6
+strict_eq r2, r1
+call1 r4, r255, r0
+ret_u
+create_env r1
+new_func r1, const[959]
+set_upval r1
+init_name r1, identifier[59]
+load_name r3, identifier[11]
+load_i r5, 5
+call1 r1, r5, r0
+load_i r5, 15
+strict_eq r255, r5
+call1 r3, r255, r0
+ret_u
+create_env r1
+new_func r1, const[960]
+set_upval r1
+init_name r1, identifier[59]
+load_name r3, identifier[11]
+load_i r5, 5
+call1 r1, r5, r0
+load_i r5, 5
+strict_eq r255, r5
+call1 r3, r255, r0
+ret_u
+new_arr
+load_i r255, 1
+array_push_acc r1
+load_i r255, 2
+array_push_acc r1
+mov r2, r1, r0
+load_i r3, 0
+get_prop_acc r2, r3
+mov r2, r255, r0
+mov r3, r1, r0
+load_i r1, 1
+get_prop_acc r3, r1
+add r2, r255
+mov r1, r255, r0
+load_name r5, identifier[11]
+load_i r2, 3
+strict_eq r1, r2
+call1 r5, r255, r0
+ret_u
+new_obj
+load_i r2, 10
+set_prop r2, r1, r19
+load_i r2, 20
+set_prop r2, r1, r20
+load_name r5, identifier[11]
+load_true
+call1 r5, r255, r0
+ret_u
+create_env r1
+new_func r1, const[961]
+set_upval r1
+init_name r1, identifier[111]
+call0 r1, r0, r0
+init_name r255, identifier[19]
+init_name r255, identifier[20]
+load_i r6, 2
+mul_acc r6
+mov r1, r255, r0
+init_name r255, identifier[48]
+load_name r6, identifier[11]
+load_i r2, 84
+strict_eq r1, r2
+call1 r6, r255, r0
+ret_u
+load_true
+load_i r4, 8
+logical_and r1, r4
+mov r1, r255, r0
+load_name r4, identifier[11]
+load_i r2, 8
+strict_eq r1, r2
+call1 r4, r255, r0
+ret_u
+load_false
+load_i r4, 42
+logical_or r1, r4
+mov r1, r255, r0
+load_name r4, identifier[11]
+load_i r2, 42
+strict_eq r1, r2
+call1 r4, r255, r0
+ret_u
+load_i r1, 10
+load_true
+jmp_false r2, -> L4
+load_i r5, 5
+add r1, r5
+mov r2, r255, r0
+jmp -> L4
+load_i r3, 5
+mov r255, r1, r0
+sub_acc r3
+mov r2, r255, r0
+load_name r4, identifier[11]
+load_i r3, 15
+strict_eq r2, r3
+call1 r4, r255, r0
+ret_u
+new_obj
+load_i r2, 5
+set_prop r2, r1, r22
+load_name r4, identifier[11]
+load_true
+call1 r4, r255, r0
+ret_u
+new_obj
+load_i r2, 1
+set_prop r2, r1, r19
+load_i r2, 2
+set_prop r2, r1, r19
+load_name r5, identifier[11]
+load_true
+call1 r5, r255, r0
+ret_u
+new_arr
+load_i r255, 1
+array_push_acc r1
+load_i r255, 2
+array_push_acc r1
+load_i r255, 3
+array_push_acc r1
+mov r2, r1, r0
+mov r3, r1, r0
+load_i r4, 0
+get_prop_acc r3, r4
+mov r3, r255, r0
+mov r4, r2, r0
+load_i r5, 1
+get_prop_acc r4, r5
+add r3, r255
+mov r3, r255, r0
+load_name r4, identifier[11]
+load_i r1, 3
+strict_eq r3, r1
+call1 r4, r255, r0
+ret_u
+load_k r1, const[962]
+load_i r4, 3
+add r1, r4
+mov r1, r255, r0
+load_name r4, identifier[11]
+load_k r2, const[963]
+strict_eq r1, r2
+call1 r4, r255, r0
+ret_u
+load_i r1, 2
+load_i r4, 2
+load_false
+jmp_false r255, -> L1
+jmp -> L5
+load_i r5, 2
+strict_eq r4, r5
+jmp_false r255, -> L1
+jmp -> L4
+jmp -> L6
+load_i r5, 10
+load_i r2, 10
+jmp -> L5
+load_i r1, 20
+load_i r2, 20
+jmp -> L2
+load_i r3, 0
+load_i r2, 0
+load_name r4, identifier[11]
+load_i r1, 20
+strict_eq r2, r1
+call1 r4, r255, r0
+ret_u
+load_i r1, 100
+load_k r2, const[810]
+try r0, -> L6
+load_i r5, 10
+mov r255, r1, r0
+div_acc r5
+mov r2, r255, r0
+end_try
+jmp -> L6
+enter r0, r0, r1
+create_env r5
+catch r6, r0, r0
+init_name r6, identifier[26]
+leave
+finally
+load_name r5, identifier[11]
+load_i r1, 10
+strict_eq r2, r1
+call1 r5, r255, r0
+ret_u
+load_name r3, identifier[11]
+load_true
+call1 r3, r255, r0
+ret_u
+create_env r1
+new_obj
+load_i r2, 5
+set_prop r2, r1, r12
+init_name r1, identifier[19]
+mov r2, r1, r0
+init_name r1, identifier[20]
+new_func r3, const[964]
+set_upval r3
+init_name r3, identifier[138]
+call1 r3, r1, r0
+get_prop r6, r2, r12
+init_name r6, identifier[52]
+load_name r7, identifier[11]
+load_i r1, 10
+strict_eq r6, r1
+call1 r7, r255, r0
+ret_u
+load_name r4, identifier[11]
+load_true
+call1 r4, r255, r0
+ret_u
+load_i r1, 5
+inc r1
+mov r1, r255, r0
+load_name r3, identifier[11]
+load_i r2, 5
+strict_eq r1, r2
+mov r4, r255, r0
+load_i r2, 6
+strict_eq r1, r2
+logical_and r4, r255
+call1 r3, r255, r0
+ret_u
+load_i r1, 5
+inc r1
+mov r1, r255, r0
+load_name r3, identifier[11]
+load_i r2, 6
+strict_eq r1, r2
+mov r4, r255, r0
+load_true
+logical_and r4, r255
+call1 r3, r255, r0
+ret_u
+load_i r1, 2
+load_i r2, 0
+load_i r3, 0
+load_i r6, 10
+lt r3, r6
+jmp_false r255, -> L9
+add r2, r1
+mov r2, r255, r0
+load_i r6, 2
+strict_eq r3, r6
+jmp_false r255, -> L1
+jmp -> L3
+inc r3
+mov r3, r255, r0
+jmp -> L-12
+load_name r5, identifier[11]
+load_i r1, 6
+strict_eq r2, r1
+call1 r5, r255, r0
+ret_u
+load_name r1, identifier[16]
+load_i r3, 2
+mov r255, r1, r0
+mul_acc r3
+mov r2, r255, r0
+load_name r3, identifier[11]
+load_i r1, 84
+strict_eq r2, r1
+call1 r3, r255, r0
+ret_u
+load_name r1, identifier[17]
+load_i r3, 1
+add r1, r3
+mov r2, r255, r0
+load_name r3, identifier[11]
+load_i r1, 101
+strict_eq r2, r1
+call1 r3, r255, r0
+ret_u
+load_k r1, const[965]
+load_i r4, 10
+mov r255, r1, r0
+mul_acc r4
+mov r1, r255, r0
+load_name r4, identifier[11]
+load_k r2, const[966]
+strict_eq r1, r2
+call1 r4, r255, r0
+ret_u
+create_env r1
+load_i r1, 5
+init_name r1, identifier[19]
+init_name r1, identifier[20]
+new_func r1, const[967]
+init_name r1, identifier[25]
+load_name r5, identifier[11]
+call0 r1, r0, r0
+load_i r1, 10
+strict_eq r255, r1
+call1 r5, r255, r0
+ret_u
+create_env r1
+load_i r1, 7
+init_name r1, identifier[19]
+init_name r1, identifier[20]
+new_func r1, const[968]
+set_upval r1
+init_name r1, identifier[133]
+call0 r1, r0, r0
+mov r5, r255, r0
+init_name r255, identifier[25]
+load_name r6, identifier[11]
+call0 r5, r0, r0
+load_i r1, 10
+strict_eq r255, r1
+call1 r6, r255, r0
+ret_u
+load_name r5, identifier[11]
+load_true
+call1 r5, r255, r0
+ret_u
+load_name r5, identifier[11]
+load_true
+call1 r5, r255, r0
+ret_u
+load_i r1, 5
+load_name r3, identifier[73]
+load_k r4, const[969]
+call1 r3, r4, r0
+load_name r5, identifier[11]
+load_i r2, 5
+strict_eq r1, r2
+call1 r5, r255, r0
+ret_u
+new_obj
+load_i r2, 100
+set_prop r2, r1, r16
+load_name r5, identifier[11]
+load_true
+call1 r5, r255, r0
+ret_u
+create_env r1
+new_func r1, const[970]
+set_upval r1
+init_name r1, identifier[12]
+new_obj
+load_i r4, 42
+set_prop r4, r2, r22
+set_prop r1, r2, r25
+init_name r2, identifier[49]
+load_name r4, identifier[11]
+call_method_ic r2, r25, r0
+load_i r1, 42
+strict_eq r255, r1
+call1 r4, r255, r0
+ret_u
+load_arg r1, r0, r0
+load_this
+set_prop r1, r255, r12
+ret_u
+load_this
+get_prop r1, r255, r12
+load_i r2, 2
+mov r255, r1, r0
+mul_acc r2
+ret_reg r255
+ret_u
+load_name r1, identifier[18]
+load_i r2, 5
+construct r1, 1
+mov r1, r255, r0
+load_name r2, identifier[11]
+call_method_ic r1, r3, r0
+load_i r4, 10
+strict_eq r255, r4
+call1 r2, r255, r0
+ret_u
+load_name r1, identifier[145]
+load_k r2, const[971]
+call1 r1, r2, r0
+mov r1, r255, r0
+new_obj
+load_i r4, 123
+mov r5, r255, r0
+mov r255, r4, r0
+set_prop_acc r3, r5
+load_name r4, identifier[11]
+mov r5, r3, r0
+mov r3, r1, r0
+get_prop_acc r5, r3
+load_i r3, 123
+strict_eq r255, r3
+call1 r4, r255, r0
+ret_u
+load_arg r1, r0, r0
+load_arg r2, r1, r0
+mov r3, r1, r0
+jmp_false r1, -> L2
+load_false
+jmp -> L1
+load_true
+jmp_false r3, -> L4
+load_name r4, identifier[23]
+mov r5, r2, r0
+construct r4, 1
+throw r255, r0, r0
+ret_u
+load_arg r1, r0, r0
+load_arg r2, r1, r0
+load_name r3, identifier[9]
+inc r3
+store_name r255, identifier[9]
+try r0, -> L13
+call0 r2, r0, r0
+load_name r2, identifier[10]
+inc r2
+store_name r255, identifier[10]
+load_name r6, identifier[14]
+load_k r7, const[972]
+load_k r2, const[973]
+add r7, r2
+add r255, r1
+mov r7, r255, r0
+call_method1 r6, property[0], r7
+end_try
+jmp -> L17
+enter r0, r0, r1
+create_env r7
+catch r8, r0, r0
+init_name r2, identifier[26]
+load_name r9, identifier[14]
+load_k r10, const[974]
+load_k r3, const[975]
+add r10, r3
+add r255, r1
+load_k r3, const[976]
+add r255, r3
+get_prop r3, r2, r4
+add r255, r3
+mov r10, r255, r0
+call_method1 r9, property[1], r10
+leave
+finally
+ret_u
+create_env r1
+load_i r1, 0
+init_name r1, identifier[27]
+new_func r1, const[977]
+init_name r1, identifier[25]
+new_func r2, const[978]
+set_prop r2, r1, r2
+ret_reg r1
+ret_u
+load_name r1, identifier[11]
+load_true
+mov r2, r255, r0
+call_ret r1, 1
+load_name r1, identifier[11]
+load_i r2, 10
+load_i r3, 4
+mov r255, r2, r0
+sub_acc r3
+load_i r3, 6
+strict_eq r255, r3
+mov r2, r255, r0
+call_ret r1, 1
+load_name r1, identifier[11]
+load_true
+mov r2, r255, r0
+call_ret r1, 1
+load_name r1, identifier[11]
+load_i r2, 20
+load_i r3, 4
+mov r255, r2, r0
+div_acc r3
+load_i r3, 5
+strict_eq r255, r3
+mov r2, r255, r0
+call_ret r1, 1
+load_name r1, identifier[11]
+load_i r2, 17
+load_i r3, 5
+mod r2, r3
+load_i r3, 2
+strict_eq r255, r3
+mov r2, r255, r0
+call_ret r1, 1
+load_name r1, identifier[11]
+load_i r2, 2
+load_i r3, 3
+pow r2, r3
+load_i r3, 8
+strict_eq r255, r3
+mov r2, r255, r0
+call_ret r1, 1
+load_name r1, identifier[11]
+load_i r2, 5
+neg r2
+mov r2, r255, r0
+load_i r3, 5
+neg r3
+strict_eq r2, r255
+mov r2, r255, r0
+call_ret r1, 1
+load_name r1, identifier[11]
+load_i r2, 5
+to_num r2, r2, r0
+load_i r3, 5
+strict_eq r2, r3
+mov r2, r255, r0
+call_ret r1, 1
+load_i r1, 5
+load_name r2, identifier[11]
+inc r1
+load_i r3, 6
+strict_eq r255, r3
+call1 r2, r255, r0
+ret_u
+load_i r1, 5
+load_name r2, identifier[11]
+dec r1
+load_i r3, 4
+strict_eq r255, r3
+call1 r2, r255, r0
+ret_u
+load_name r1, identifier[11]
+load_i r2, 5
+load_i r3, 3
+bit_and r2, r3
+load_i r3, 1
+strict_eq r255, r3
+mov r2, r255, r0
+call_ret r1, 1
+load_name r1, identifier[11]
+load_i r2, 5
+load_i r3, 3
+bit_or r2, r3
+load_i r3, 7
+strict_eq r255, r3
+mov r2, r255, r0
+call_ret r1, 1
+load_name r1, identifier[11]
+load_i r2, 5
+load_i r3, 3
+bit_xor r2, r3
+load_i r3, 6
+strict_eq r255, r3
+mov r2, r255, r0
+call_ret r1, 1
+load_name r1, identifier[11]
+load_i r2, 5
+bit_not r0
+mov r2, r255, r0
+load_i r3, 6
+neg r3
+strict_eq r2, r255
+mov r2, r255, r0
+call_ret r1, 1
+load_name r1, identifier[11]
+load_i r2, 5
+load_i r3, 1
+shl r2, r3
+load_i r3, 10
+strict_eq r255, r3
+mov r2, r255, r0
+call_ret r1, 1
+load_name r1, identifier[11]
+load_i r2, 10
+neg r2
+load_i r3, 1
+shr r255, r3
+mov r2, r255, r0
+load_i r3, 5
+neg r3
+strict_eq r2, r255
+mov r2, r255, r0
+call_ret r1, 1
+load_name r1, identifier[11]
+load_i r2, 10
+neg r2
+load_i r3, 1
+ushr r255, r3
+load_k r3, const[979]
+strict_eq r255, r3
+mov r2, r255, r0
+call_ret r1, 1
+load_name r1, identifier[11]
+load_true
+load_true
+logical_and r2, r3
+mov r2, r255, r0
+load_true
+strict_eq r2, r3
+mov r2, r255, r0
+call_ret r1, 1
+load_name r1, identifier[11]
+load_true
+load_false
+logical_and r2, r3
+mov r2, r255, r0
+load_false
+strict_eq r2, r3
+mov r2, r255, r0
+call_ret r1, 1
+load_false
+load_false
+load_true
+logical_and r1, r3
+mov r1, r255, r0
+load_name r3, identifier[11]
+load_false
+strict_eq r1, r2
+mov r4, r255, r0
+load_false
+load_false
+logical_and r4, r255
+call1 r3, r255, r0
+ret_u
+load_false
+load_true
+load_true
+logical_or r1, r3
+mov r1, r255, r0
+load_name r3, identifier[11]
+load_true
+strict_eq r1, r2
+mov r4, r255, r0
+load_false
+load_false
+logical_and r4, r255
+call1 r3, r255, r0
+ret_u
+load_name r1, identifier[11]
+load_false
+load_true
+logical_or r2, r3
+mov r2, r255, r0
+load_true
+strict_eq r2, r3
+mov r2, r255, r0
+call_ret r1, 1
+load_name r1, identifier[11]
+load_true
+jmp_false r2, -> L2
+load_false
+jmp -> L1
+load_true
+load_false
+strict_eq r2, r3
+mov r2, r255, r0
+load_false
+jmp_false r3, -> L2
+load_false
+jmp -> L1
+load_true
+load_true
+strict_eq r3, r4
+logical_and r2, r255
+mov r2, r255, r0
+call_ret r1, 1
+load_name r1, identifier[11]
+load_false
+load_false
+load_false
+mov r2, r255, r0
+call_ret r1, 1
+load_name r1, identifier[11]
+load_i r2, 3
+load_i r3, 3
+lte r2, r2
+mov r2, r255, r0
+load_true
+strict_eq r2, r3
+mov r2, r255, r0
+call_ret r1, 1
+load_name r1, identifier[11]
+load_true
+load_true
+load_false
+mov r2, r255, r0
+call_ret r1, 1
+load_name r1, identifier[11]
+load_i r2, 2
+load_i r3, 5
+lte r3, r2
+mov r2, r255, r0
+load_false
+strict_eq r2, r3
+mov r2, r255, r0
+call_ret r1, 1
+load_name r1, identifier[11]
+load_i r2, 5
+load_k r3, const[980]
+eq r2, r3
+mov r2, r255, r0
+load_true
+strict_eq r2, r3
+mov r2, r255, r0
+call_ret r1, 1
+load_name r1, identifier[11]
+load_i r2, 5
+load_k r3, const[981]
+strict_eq r2, r3
+mov r2, r255, r0
+load_false
+strict_eq r2, r3
+mov r2, r255, r0
+call_ret r1, 1
+load_name r1, identifier[11]
+load_i r2, 5
+load_k r3, const[982]
+eq r2, r3
+mov r2, r255, r0
+jmp_false r255, -> L2
+load_false
+jmp -> L1
+load_true
+load_true
+strict_eq r2, r3
+mov r2, r255, r0
+call_ret r1, 1
+load_name r1, identifier[11]
+load_i r2, 5
+load_i r3, 5
+strict_neq r2, r2
+mov r2, r255, r0
+load_false
+strict_eq r2, r3
+mov r2, r255, r0
+call_ret r1, 1
+load_name r1, identifier[11]
+load_k r2, const[983]
+load_k r3, const[984]
+add r2, r3
+load_k r3, const[985]
+add r255, r3
+load_k r3, const[986]
+strict_eq r255, r3
+mov r2, r255, r0
+call_ret r1, 1
+load_name r1, identifier[11]
+load_k r2, const[987]
+load_i r3, 42
+add r2, r3
+load_k r3, const[988]
+strict_eq r255, r3
+mov r2, r255, r0
+call_ret r1, 1
+load_name r1, identifier[11]
+load_i r2, 42
+load_k r3, const[989]
+add r2, r3
+load_k r3, const[990]
+strict_eq r255, r3
+mov r2, r255, r0
+call_ret r1, 1
+load_k r1, const[991]
+load_k r2, const[992]
+add r1, r2
+mov r1, r255, r0
+load_name r2, identifier[11]
+load_k r4, const[993]
+strict_eq r1, r4
+call1 r2, r255, r0
+ret_u
+load_name r1, identifier[11]
+load_k r2, const[994]
+load_i r3, 3
+add r2, r3
+load_k r3, const[995]
+strict_eq r255, r3
+call1 r1, r255, r0
+ret_u
+load_name r1, identifier[11]
+load_k r2, const[996]
+load_i r3, 5
+mov r255, r2, r0
+sub_acc r3
+load_i r3, 5
+strict_eq r255, r3
+mov r2, r255, r0
+call_ret r1, 1
+load_name r1, identifier[11]
+load_k r2, const[997]
+load_k r3, const[998]
+mov r255, r2, r0
+mul_acc r3
+load_i r3, 8
+strict_eq r255, r3
+mov r2, r255, r0
+call_ret r1, 1
+load_name r1, identifier[11]
+load_k r2, const[999]
+load_k r3, const[1000]
+mov r255, r2, r0
+div_acc r3
+load_i r3, 5
+strict_eq r255, r3
+mov r2, r255, r0
+call_ret r1, 1
+load_name r1, identifier[11]
+load_true
+load_false
+add r2, r3
+load_i r3, 1
+strict_eq r255, r3
+mov r2, r255, r0
+call_ret r1, 1
+load_name r1, identifier[11]
+load_name r2, identifier[46]
+load_name r3, identifier[45]
+load_i r4, 5
+add r3, r4
+call1 r2, r255, r0
+mov r2, r255, r0
+load_name r3, identifier[46]
+load_name r4, identifier[45]
+load_i r5, 2
+mov r255, r4, r0
+mul_acc r5
+call1 r3, r255, r0
+logical_and r2, r255
+mov r2, r255, r0
+call_ret r1, 1
+load_name r1, identifier[11]
+load_name r2, identifier[47]
+load_i r3, 1
+add r2, r3
+mov r2, r255, r0
+load_name r3, identifier[47]
+strict_eq r2, r3
+mov r2, r255, r0
+call_ret r1, 1
+load_name r1, identifier[11]
+load_name r2, identifier[46]
+load_name r3, identifier[47]
+load_i r4, 0
+mov r255, r3, r0
+mul_acc r4
+call1 r2, r255, r0
+mov r2, r255, r0
+call_ret r1, 1
+load_name r1, identifier[11]
+load_name r2, identifier[148]
+load_i r3, 0
+neg r3
+mov r3, r255, r0
+load_i r4, 0
+neg r4
+mov r4, r255, r0
+call_method2 r2, property[26], r3, r4
+mov r2, r255, r0
+call_ret r1, 1
+load_name r1, identifier[11]
+load_name r2, identifier[148]
+load_i r3, 0
+neg r3
+add r255, r3
+mov r3, r255, r0
+load_i r4, 0
+call_method2 r2, property[26], r3, r4
+mov r2, r255, r0
+call_ret r1, 1
+load_name r1, identifier[11]
+load_i r2, 1
+load_i r3, 0
+neg r3
+mov r3, r255, r0
+mov r255, r2, r0
+div_acc r3
+mov r2, r255, r0
+load_name r3, identifier[47]
+neg r3
+strict_eq r2, r255
+mov r2, r255, r0
+call_ret r1, 1
+load_name r1, identifier[11]
+load_name r2, identifier[45]
+load_name r3, identifier[45]
+strict_eq r2, r3
+mov r2, r255, r0
+load_false
+strict_eq r2, r3
+mov r2, r255, r0
+call_ret r1, 1
+load_name r1, identifier[11]
+load_name r2, identifier[45]
+load_name r3, identifier[45]
+strict_neq r2, r3
+mov r2, r255, r0
+load_true
+strict_eq r2, r3
+mov r2, r255, r0
+call_ret r1, 1
+load_name r1, identifier[11]
+load_name r2, identifier[47]
+load_k r3, const[1001]
+lt r3, r2
+mov r2, r255, r0
+load_true
+strict_eq r2, r3
+mov r2, r255, r0
+call_ret r1, 1
+load_name r1, identifier[11]
+load_i r2, 0
+neg r2
+mov r3, r2, r0
+strict_eq r255, r2
+mov r2, r255, r0
+load_true
+strict_eq r2, r3
+mov r2, r255, r0
+call_ret r1, 1
+load_name r1, identifier[11]
+load_name r2, identifier[148]
+load_i r3, 0
+neg r3
+mov r3, r255, r0
+load_i r4, 0
+call_method2 r2, property[26], r3, r4
+mov r2, r255, r0
+load_false
+strict_eq r2, r3
+mov r2, r255, r0
+call_ret r1, 1
+load_name r1, identifier[11]
+load_true
+jmp_false r2, -> L3
+load_i r3, 1
+load_i r2, 1
+jmp -> L2
+load_i r4, 2
+load_i r2, 2
+load_i r3, 1
+strict_eq r2, r3
+mov r2, r255, r0
+call_ret r1, 1
+load_name r1, identifier[11]
+load_false
+jmp_false r2, -> L3
+load_i r3, 1
+load_i r2, 1
+jmp -> L2
+load_i r4, 2
+load_i r2, 2
+load_i r3, 2
+strict_eq r2, r3
+mov r2, r255, r0
+call_ret r1, 1
+load_true
+jmp_false r1, -> L9
+load_false
+jmp_false r2, -> L3
+load_i r3, 10
+load_i r2, 10
+jmp -> L2
+load_i r4, 20
+load_i r2, 20
+mov r1, r2, r0
+jmp -> L2
+load_i r3, 30
+load_i r1, 30
+load_name r2, identifier[11]
+load_i r4, 20
+strict_eq r1, r4
+call1 r2, r255, r0
+ret_u
+load_i r1, 2
+load_i r3, 2
+load_false
+jmp_false r255, -> L1
+jmp -> L5
+load_i r4, 2
+strict_eq r3, r4
+jmp_false r255, -> L1
+jmp -> L4
+jmp -> L6
+load_i r4, 100
+load_i r2, 100
+jmp -> L5
+load_i r1, 200
+load_i r2, 200
+jmp -> L2
+load_i r5, 0
+load_i r2, 0
+load_name r3, identifier[11]
+load_i r1, 200
+strict_eq r2, r1
+call1 r3, r255, r0
+ret_u
+load_name r1, identifier[13]
+call0 r1, r0, r0
+mov r1, r255, r0
+load_false
+jmp_false r2, -> L2
+call0 r1, r0, r0
+jmp -> L-4
+load_name r2, identifier[11]
+call_method_ic r1, r5, r0
+load_i r4, 0
+strict_eq r255, r4
+call1 r2, r255, r0
+ret_u
+load_name r1, identifier[13]
+call0 r1, r0, r0
+mov r1, r255, r0
+load_i r2, 0
+load_false
+jmp_false r3, -> L4
+call0 r1, r0, r0
+inc r2
+mov r2, r255, r0
+jmp -> L-6
+load_name r3, identifier[11]
+call_method_ic r1, r5, r0
+load_i r2, 0
+strict_eq r255, r2
+call1 r3, r255, r0
+ret_u
+load_name r1, identifier[13]
+call0 r1, r0, r0
+mov r1, r255, r0
+mov r2, r1, r0
+call0 r1, r0, r0
+load_false
+jmp_true r2, -> L-4
+load_name r2, identifier[11]
+call_method_ic r1, r5, r0
+load_i r4, 1
+strict_eq r255, r4
+call1 r2, r255, r0
+ret_u
+load_i r1, 5
+load_true
+logical_and r2, r1
+mov r2, r255, r0
+load_name r3, identifier[11]
+load_i r1, 5
+strict_eq r2, r1
+call1 r3, r255, r0
+ret_u
+load_name r1, identifier[11]
+load_false
+load_i r3, 42
+logical_or r2, r3
+load_i r3, 42
+strict_eq r255, r3
+mov r2, r255, r0
+call_ret r1, 1
+load_name r1, identifier[11]
+load_i r2, 5
+load_i r3, 4
+load_i r4, 1
+mov r255, r3, r0
+sub_acc r4
+mov r3, r255, r0
+mov r255, r2, r0
+mul_acc r3
+load_i r3, 2
+div_acc r3
+load_k r3, const[1002]
+strict_eq r255, r3
+mov r2, r255, r0
+call_ret r1, 1
+load_name r1, identifier[11]
+load_k r2, const[1003]
+load_k r3, const[1004]
+add r2, r3
+load_k r3, const[1005]
+add r255, r3
+load_k r3, const[1006]
+strict_eq r255, r3
+mov r2, r255, r0
+call_ret r1, 1
+load_name r1, identifier[11]
+load_i r2, 3
+load_k r3, const[1007]
+add r2, r3
+load_k r3, const[1008]
+strict_eq r255, r3
+mov r2, r255, r0
+call_ret r1, 1
+load_name r1, identifier[11]
+load_k r2, const[1009]
+load_i r3, 2
+add r2, r3
+load_i r3, 3
+add r255, r3
+load_k r3, const[1010]
+strict_eq r255, r3
+mov r2, r255, r0
+call_ret r1, 1
+load_name r1, identifier[11]
+load_i r2, 5
+load_i r3, 3
+bit_and r2, r3
+mov r2, r255, r0
+load_i r3, 2
+load_i r4, 1
+bit_xor r3, r4
+bit_or r2, r255
+load_i r3, 3
+strict_eq r255, r3
+mov r2, r255, r0
+call_ret r1, 1
+load_name r1, identifier[11]
+load_k r2, const[1011]
+to_num r2, r2, r0
+load_i r3, 42
+strict_eq r2, r3
+mov r2, r255, r0
+call_ret r1, 1
+load_name r1, identifier[11]
+load_k r2, const[1012]
+neg r2
+mov r2, r255, r0
+load_i r3, 42
+neg r3
+strict_eq r2, r255
+mov r2, r255, r0
+call_ret r1, 1
+load_name r1, identifier[11]
+load_i r2, 42
+typeof r2, r2, r0
+load_k r3, const[1013]
+strict_eq r2, r3
+mov r2, r255, r0
+call_ret r1, 1
+load_name r1, identifier[11]
+load_k r3, const[810]
+mov r2, r3, r0
+load_name r3, identifier[72]
+strict_eq r2, r3
+mov r2, r255, r0
+call_ret r1, 1
+load_name r1, identifier[11]
+load_k r2, const[1014]
+new_arr
+in r2, r3
+mov r2, r255, r0
+load_true
+strict_eq r2, r3
+mov r2, r255, r0
+call_ret r1, 1
+load_name r1, identifier[11]
+load_k r2, const[1015]
+new_obj
+in r2, r3
+mov r2, r255, r0
+load_false
+strict_eq r2, r3
+mov r2, r255, r0
+call_ret r1, 1
+load_name r1, identifier[11]
+new_arr
+load_name r3, identifier[149]
+instanceof r2, r3
+mov r2, r255, r0
+load_true
+strict_eq r2, r3
+mov r2, r255, r0
+call_ret r1, 1
+load_name r1, identifier[11]
+new_obj
+load_name r3, identifier[148]
+instanceof r2, r3
+mov r2, r255, r0
+load_true
+strict_eq r2, r3
+mov r2, r255, r0
+call_ret r1, 1
+new_arr
+load_i r255, 1
+array_push_acc r1
+load_i r255, 2
+array_push_acc r1
+load_i r255, 3
+array_push_acc r1
+load_name r2, identifier[11]
+get_prop r3, r1, r8
+load_i r4, 3
+strict_eq r3, r4
+mov r3, r255, r0
+mov r4, r1, r0
+load_i r1, 0
+get_prop_acc r4, r1
+load_i r1, 1
+strict_eq r255, r1
+logical_and r3, r255
+call1 r2, r255, r0
+ret_u
+new_obj
+load_i r2, 1
+set_prop r2, r1, r16
+load_i r2, 2
+set_prop r2, r1, r17
+load_name r2, identifier[11]
+load_true
+mov r3, r255, r0
+load_true
+logical_and r3, r255
+call1 r2, r255, r0
+ret_u
+load_name r4, identifier[11]
+load_true
+call1 r4, r255, r0
+ret_u
+load_name r4, identifier[11]
+load_true
+call1 r4, r255, r0
+ret_u
+load_name r1, identifier[11]
+load_name r2, identifier[37]
+load_i r3, 5
+neg r3
+mov r3, r255, r0
+call_method1 r2, property[14], r3
+load_i r3, 5
+strict_eq r255, r3
+mov r2, r255, r0
+call_ret r1, 1
+load_name r1, identifier[11]
+load_name r2, identifier[37]
+load_i r3, 2
+load_i r4, 3
+call_method2 r2, property[27], r3, r4
+load_i r3, 8
+strict_eq r255, r3
+mov r2, r255, r0
+call_ret r1, 1
+load_name r1, identifier[11]
+load_name r2, identifier[37]
+get_prop r2, r2, r10
+load_i r3, 1
+load_i r4, 5
+load_i r5, 2
+call r2, 3
+load_i r3, 5
+strict_eq r255, r3
+mov r2, r255, r0
+call_ret r1, 1
+load_name r1, identifier[11]
+load_name r2, identifier[37]
+get_prop r2, r2, r9
+load_i r3, 1
+load_i r4, 5
+load_i r5, 2
+call r2, 3
+load_i r3, 1
+strict_eq r255, r3
+mov r2, r255, r0
+call_ret r1, 1
+load_name r1, identifier[11]
+load_name r2, identifier[37]
+load_k r3, const[1016]
+call_method1 r2, property[11], r3
+load_i r3, 3
+strict_eq r255, r3
+mov r2, r255, r0
+call_ret r1, 1
+load_name r1, identifier[11]
+load_name r2, identifier[37]
+load_k r3, const[1017]
+call_method1 r2, property[13], r3
+load_i r3, 4
+strict_eq r255, r3
+mov r2, r255, r0
+call_ret r1, 1
+load_name r1, identifier[11]
+load_name r2, identifier[37]
+load_k r3, const[1018]
+call_method1 r2, property[28], r3
+load_i r3, 3
+strict_eq r255, r3
+mov r2, r255, r0
+call_ret r1, 1
+load_name r1, identifier[11]
+load_name r2, identifier[37]
+load_i r3, 16
+call_method1 r2, property[29], r3
+load_i r3, 4
+strict_eq r255, r3
+mov r2, r255, r0
+call_ret r1, 1
+load_name r1, identifier[150]
+load_k r2, const[1019]
+construct r1, 1
+mov r1, r255, r0
+load_name r2, identifier[11]
+mov r3, r1, r0
+load_k r4, const[1020]
+call_method1 r3, property[25], r4
+mov r3, r255, r0
+load_true
+strict_eq r3, r4
+call1 r2, r255, r0
+ret_u
+new_obj
+load_i r2, 10
+set_prop r2, r1, r19
+load_k r2, const[1021]
+load_name r3, identifier[11]
+mov r4, r1, r0
+mov r1, r2, r0
+get_prop_acc r4, r1
+load_i r1, 10
+strict_eq r255, r1
+call1 r3, r255, r0
+ret_u
+load_name r1, identifier[37]
+call_method_ic r1, r7, r0
+mov r1, r255, r0
+load_name r2, identifier[37]
+call_method_ic r2, r7, r0
+mov r2, r255, r0
+load_name r3, identifier[11]
+strict_neq r1, r2
+call1 r3, r255, r0
+ret_u
+load_name r1, identifier[50]
+call_method_ic r1, r15, r0
+mov r1, r255, r0
+load_name r2, identifier[50]
+call_method_ic r2, r15, r0
+mov r2, r255, r0
+load_name r3, identifier[11]
+strict_neq r1, r2
+call1 r3, r255, r0
+ret_u
+create_env r1
+load_i r1, 0
+init_name r1, identifier[27]
+new_func r2, const[1022]
+set_upval r2
+init_name r2, identifier[59]
+call0 r2, r0, r0
+init_name r255, identifier[19]
+call0 r2, r0, r0
+init_name r255, identifier[20]
+load_name r6, identifier[11]
+load_i r2, 2
+strict_eq r1, r2
+call1 r6, r255, r0
+ret_u
+load_i r1, 5
+load_i r2, 2
+shl r1, r2
+mov r1, r255, r0
+load_i r2, 12
+load_i r3, 1
+shr r2, r3
+add r1, r255
+load_i r2, 3
+bit_xor r255, r2
+mov r1, r255, r0
+load_name r2, identifier[11]
+load_i r4, 25
+strict_eq r1, r4
+call1 r2, r255, r0
+ret_u
+new_arr
+load_i r255, 1
+array_push_acc r1
+load_i r255, 2
+array_push_acc r1
+mov r2, r1, r0
+load_i r3, 0
+get_prop_acc r2, r3
+mov r2, r255, r0
+mov r3, r1, r0
+load_i r4, 1
+get_prop_acc r3, r4
+mov r3, r255, r0
+load_name r4, identifier[11]
+load_i r1, 1
+strict_eq r2, r1
+mov r5, r255, r0
+load_i r1, 2
+strict_eq r3, r1
+logical_and r5, r255
+call1 r4, r255, r0
+ret_u
+new_obj
+load_i r2, 10
+set_prop r2, r1, r19
+load_i r2, 20
+set_prop r2, r1, r20
+load_name r4, identifier[11]
+load_true
+mov r5, r255, r0
+load_true
+logical_and r5, r255
+call1 r4, r255, r0
+ret_u
+new_arr
+load_i r255, 1
+array_push_acc r1
+load_i r255, 2
+array_push_acc r1
+load_i r255, 3
+array_push_acc r1
+load_i r255, 4
+array_push_acc r1
+load_name r2, identifier[11]
+get_prop r3, r1, r8
+load_i r4, 4
+strict_eq r3, r4
+mov r3, r255, r0
+mov r4, r1, r0
+load_i r1, 1
+get_prop_acc r4, r1
+load_i r1, 2
+strict_eq r255, r1
+logical_and r3, r255
+call1 r2, r255, r0
+ret_u
+create_env r1
+new_func r1, const[1023]
+set_upval r1
+init_name r1, identifier[154]
+mov r3, r1, r0
+new_arr
+load_k r255, const[1024]
+array_push_acc r4
+load_k r255, const[1025]
+array_push_acc r4
+load_k r5, const[1026]
+call2 r3, r4, r5
+mov r3, r255, r0
+init_name r255, identifier[48]
+load_name r4, identifier[11]
+load_k r1, const[1027]
+strict_eq r3, r1
+call1 r4, r255, r0
+ret_u
+load_name r1, identifier[73]
+load_k r2, const[1028]
+call1 r1, r2, r0
+mov r1, r255, r0
+load_name r2, identifier[11]
+load_i r4, 5
+strict_eq r1, r4
+call1 r2, r255, r0
+ret_u
+create_env r1
+new_func r1, const[1029]
+set_upval r1
+init_name r1, identifier[132]
+load_i r2, 5
+set_prop r2, r1, r19
+load_name r5, identifier[11]
+load_true
+call1 r5, r255, r0
+ret_u
+create_env r1
+new_func r1, const[1030]
+set_upval r1
+init_name r1, identifier[59]
+load_name r3, identifier[11]
+call0 r1, r0, r0
+load_i r1, 8
+strict_eq r255, r1
+call1 r3, r255, r0
+ret_u
+load_name r1, identifier[74]
+load_i r2, 42
+construct r1, 1
+mov r1, r255, r0
+load_name r2, identifier[11]
+call_method_ic r1, r21, r0
+load_i r4, 42
+strict_eq r255, r4
+call1 r2, r255, r0
+ret_u
+load_name r1, identifier[155]
+load_k r2, const[1031]
+construct r1, 1
+mov r1, r255, r0
+load_name r2, identifier[11]
+call_method_ic r1, r21, r0
+load_k r4, const[1032]
+strict_eq r255, r4
+call1 r2, r255, r0
+ret_u
+load_arg r1, r0, r0
+load_arg r2, r1, r0
+mov r3, r1, r0
+jmp_false r1, -> L2
+load_false
+jmp -> L1
+load_true
+jmp_false r3, -> L4
+load_name r4, identifier[23]
+mov r5, r2, r0
+construct r4, 1
+throw r255, r0, r0
+ret_u
+load_arg r1, r0, r0
+load_arg r2, r1, r0
+load_name r3, identifier[9]
+inc r3
+store_name r255, identifier[9]
+try r0, -> L13
+call0 r2, r0, r0
+load_name r2, identifier[10]
+inc r2
+store_name r255, identifier[10]
+load_name r6, identifier[14]
+load_k r7, const[1033]
+load_k r2, const[1034]
+add r7, r2
+add r255, r1
+mov r7, r255, r0
+call_method1 r6, property[0], r7
+end_try
+jmp -> L17
+enter r0, r0, r1
+create_env r7
+catch r8, r0, r0
+init_name r2, identifier[26]
+load_name r9, identifier[14]
+load_k r10, const[1035]
+load_k r3, const[1036]
+add r10, r3
+add r255, r1
+load_k r3, const[1037]
+add r255, r3
+get_prop r3, r2, r4
+add r255, r3
+mov r10, r255, r0
+call_method1 r9, property[1], r10
+leave
+finally
+ret_u
+create_env r1
+load_i r1, 0
+init_name r1, identifier[27]
+new_func r1, const[1038]
+init_name r1, identifier[25]
+new_func r2, const[1039]
+set_prop r2, r1, r2
+new_func r2, const[1040]
+set_prop r2, r1, r6
+ret_reg r1
+ret_u
+load_name r1, identifier[13]
+call0 r1, r0, r0
+mov r1, r255, r0
+load_false
+jmp_false r2, -> L1
+call0 r1, r0, r0
+load_name r2, identifier[11]
+call_method_ic r1, r5, r0
+load_i r4, 0
+strict_eq r255, r4
+load_k r4, const[1041]
+call2 r2, r255, r4
+ret_u
+load_name r1, identifier[13]
+call0 r1, r0, r0
+mov r1, r255, r0
+load_true
+jmp_false r2, -> L1
+jmp -> L1
+call0 r1, r0, r0
+load_name r2, identifier[11]
+call_method_ic r1, r5, r0
+load_i r4, 0
+strict_eq r255, r4
+load_k r4, const[1042]
+call2 r2, r255, r4
+ret_u
+load_true
+jmp_false r2, -> L3
+load_i r3, 1
+load_i r1, 1
+jmp -> L2
+load_i r3, 2
+load_i r1, 2
+load_name r2, identifier[11]
+load_i r4, 1
+strict_eq r1, r4
+load_k r4, const[1043]
+call2 r2, r255, r4
+ret_u
+load_false
+jmp_false r2, -> L3
+load_i r3, 1
+load_i r1, 1
+jmp -> L2
+load_i r3, 2
+load_i r1, 2
+load_name r2, identifier[11]
+load_i r4, 2
+strict_eq r1, r4
+load_k r4, const[1044]
+call2 r2, r255, r4
+ret_u
+load_name r1, identifier[13]
+call0 r1, r0, r0
+mov r1, r255, r0
+load_true
+jmp_false r2, -> L1
+jmp -> L1
+call0 r1, r0, r0
+load_name r3, identifier[11]
+call_method_ic r1, r5, r0
+load_i r2, 0
+strict_eq r255, r2
+call1 r3, r255, r0
+ret_u
+load_name r4, identifier[11]
+load_true
+call1 r4, r255, r0
+ret_u
+create_env r1
+load_name r2, identifier[13]
+call0 r2, r0, r0
+mov r2, r255, r0
+init_name r255, identifier[32]
+new_func r1, const[1045]
+set_upval r1
+init_name r1, identifier[12]
+call0 r1, r0, r0
+load_name r5, identifier[11]
+call_method_ic r2, r5, r0
+load_i r7, 0
+strict_eq r255, r7
+load_k r7, const[1046]
+call2 r5, r255, r7
+ret_u
+create_env r1
+load_name r2, identifier[13]
+call0 r2, r0, r0
+mov r2, r255, r0
+init_name r255, identifier[32]
+new_func r1, const[1047]
+set_upval r1
+init_name r1, identifier[12]
+try r0, -> L3
+call0 r1, r0, r0
+end_try
+jmp -> L6
+enter r0, r0, r1
+create_env r5
+catch r6, r0, r0
+init_name r6, identifier[26]
+leave
+finally
+load_name r5, identifier[11]
+call_method_ic r2, r5, r0
+load_i r7, 0
+strict_eq r255, r7
+load_k r7, const[1048]
+call2 r5, r255, r7
+ret_u
+load_name r3, identifier[11]
+load_true
+call1 r3, r255, r0
+ret_u
+load_name r1, identifier[13]
+call0 r1, r0, r0
+mov r1, r255, r0
+load_name r2, identifier[37]
+call_method_ic r2, r7, r0
+load_k r3, const[1049]
+lt r255, r3
+jmp_false r255, -> L3
+call0 r1, r0, r0
+mov r4, r255, r0
+jmp -> L2
+call0 r1, r0, r0
+mov r4, r255, r0
+load_name r3, identifier[11]
+load_true
+call1 r3, r4, r0
+ret_u
+load_i r1, 2
+load_i r3, 2
+load_false
+jmp_false r255, -> L1
+jmp -> L5
+load_i r4, 2
+strict_eq r3, r4
+jmp_false r255, -> L1
+jmp -> L4
+jmp -> L6
+load_i r4, 10
+load_i r2, 10
+jmp -> L5
+load_i r5, 20
+load_i r2, 20
+jmp -> L2
+load_i r1, 30
+load_i r2, 30
+load_name r3, identifier[11]
+load_i r5, 20
+strict_eq r2, r5
+load_k r5, const[1050]
+call2 r3, r255, r5
+ret_u
+load_i r1, 99
+load_name r2, identifier[13]
+call0 r2, r0, r0
+mov r2, r255, r0
+mov r3, r1, r0
+load_i r4, 1
+strict_eq r1, r4
+jmp_false r255, -> L1
+jmp -> L5
+load_i r4, 2
+strict_eq r3, r4
+jmp_false r255, -> L1
+jmp -> L3
+jmp -> L3
+call0 r2, r0, r0
+jmp -> L1
+call0 r2, r0, r0
+load_name r3, identifier[11]
+call_method_ic r2, r5, r0
+load_i r5, 0
+strict_eq r255, r5
+load_k r5, const[1051]
+call2 r3, r255, r5
+ret_u
+load_false
+jmp_false r255, -> L3
+load_i r3, 1
+load_i r1, 1
+jmp -> L2
+load_i r3, 2
+load_i r1, 2
+load_name r2, identifier[11]
+load_i r4, 2
+strict_eq r1, r4
+load_k r4, const[1052]
+call2 r2, r255, r4
+ret_u
+load_true
+jmp_false r255, -> L3
+load_i r3, 1
+load_i r1, 1
+jmp -> L2
+load_i r3, 2
+load_i r1, 2
+load_name r2, identifier[11]
+load_i r4, 1
+strict_eq r1, r4
+call1 r2, r255, r0
+ret_u
+load_name r1, identifier[13]
+call0 r1, r0, r0
+mov r1, r255, r0
+load_false
+jmp_false r2, -> L2
+call0 r1, r0, r0
+jmp -> L-4
+load_name r2, identifier[11]
+call_method_ic r1, r5, r0
+load_i r4, 0
+strict_eq r255, r4
+load_k r4, const[1053]
+call2 r2, r255, r4
+ret_u
+load_name r1, identifier[13]
+call0 r1, r0, r0
+mov r1, r255, r0
+load_i r2, 0
+load_false
+jmp_false r3, -> L4
+call0 r1, r0, r0
+inc r2
+mov r2, r255, r0
+jmp -> L-6
+load_name r3, identifier[11]
+call_method_ic r1, r5, r0
+load_i r2, 0
+strict_eq r255, r2
+call1 r3, r255, r0
+ret_u
+load_name r2, identifier[11]
+load_true
+call1 r2, r3, r0
+ret_u
+load_name r1, identifier[13]
+call0 r1, r0, r0
+mov r1, r255, r0
+load_true
+jmp_false r2, -> L3
+call0 r1, r0, r0
+mov r4, r255, r0
+jmp -> L2
+call0 r1, r0, r0
+mov r4, r255, r0
+load_name r3, identifier[11]
+load_true
+call1 r3, r4, r0
+ret_u
+load_name r2, identifier[11]
+load_true
+call1 r2, r255, r0
+ret_u
+create_env r1
+load_name r2, identifier[13]
+call0 r2, r0, r0
+mov r2, r255, r0
+init_name r255, identifier[32]
+new_func r1, const[1054]
+set_upval r1
+init_name r1, identifier[12]
+call0 r1, r0, r0
+load_name r5, identifier[11]
+call_method_ic r2, r5, r0
+load_i r1, 0
+strict_eq r255, r1
+call1 r5, r255, r0
+ret_u
+load_true
+jmp_false r255, -> L3
+load_i r6, 100
+load_i r1, 100
+jmp -> L2
+load_i r6, 200
+load_i r1, 200
+load_name r5, identifier[11]
+load_i r7, 100
+strict_eq r1, r7
+load_k r7, const[1055]
+call2 r5, r255, r7
+ret_u
+load_i r1, 0
+load_true
+jmp_false r2, -> L7
+load_false
+jmp_false r3, -> L3
+load_i r4, 1
+load_i r1, 1
+jmp -> L2
+load_i r4, 2
+load_i r1, 2
+load_name r2, identifier[11]
+load_i r4, 2
+strict_eq r1, r4
+load_k r4, const[1056]
+call2 r2, r255, r4
+ret_u
+load_i r1, 2
+load_i r3, 2
+load_false
+jmp_false r255, -> L1
+jmp -> L9
+load_i r4, 2
+strict_eq r3, r4
+jmp_false r255, -> L1
+jmp -> L5
+load_i r4, 3
+strict_eq r3, r4
+jmp_false r255, -> L1
+jmp -> L1
+jmp -> L3
+load_i r4, 100
+load_i r1, 100
+jmp -> L2
+load_i r5, 200
+load_i r1, 200
+load_name r3, identifier[11]
+load_i r5, 100
+strict_eq r1, r5
+load_k r5, const[1057]
+call2 r3, r255, r5
+ret_u
+load_name r1, identifier[13]
+call0 r1, r0, r0
+mov r1, r255, r0
+try r0, -> L2
+end_try
+jmp -> L7
+enter r0, r0, r1
+create_env r3
+catch r4, r0, r0
+init_name r4, identifier[26]
+call0 r1, r0, r0
+leave
+finally
+load_name r3, identifier[11]
+call_method_ic r1, r5, r0
+load_i r5, 0
+strict_eq r255, r5
+load_k r5, const[1058]
+call2 r3, r255, r5
+ret_u
+load_name r1, identifier[13]
+call0 r1, r0, r0
+mov r1, r255, r0
+call0 r255, r0, r0
+load_name r3, identifier[11]
+call_method_ic r1, r5, r0
+load_i r5, 1
+strict_eq r255, r5
+load_k r5, const[1059]
+call2 r3, r255, r5
+ret_u
+load_true
+jmp_false r255, -> L3
+load_i r3, 1
+load_i r1, 1
+jmp -> L2
+load_i r3, 2
+load_i r1, 2
+load_name r2, identifier[11]
+load_i r4, 1
+strict_eq r1, r4
+load_k r4, const[1060]
+call2 r2, r255, r4
+ret_u
+load_i r1, 0
+load_true
+jmp_false r2, -> L2
+load_i r3, 5
+load_i r1, 5
+load_name r2, identifier[11]
+load_i r4, 5
+strict_eq r1, r4
+call1 r2, r255, r0
+ret_u
+load_name r3, identifier[11]
+load_true
+call1 r3, r255, r0
+ret_u
+load_name r2, identifier[11]
+load_true
+call1 r2, r255, r0
+ret_u
+load_name r1, identifier[13]
+call0 r1, r0, r0
+mov r1, r255, r0
+mov r2, r1, r0
+call0 r1, r0, r0
+load_false
+jmp_true r2, -> L-4
+load_name r2, identifier[11]
+call_method_ic r1, r5, r0
+load_i r4, 1
+strict_eq r255, r4
+load_k r4, const[1061]
+call2 r2, r255, r4
+ret_u
+load_true
+jmp_false r255, -> L3
+load_i r5, 1
+load_i r1, 1
+jmp -> L2
+load_i r5, 2
+load_i r1, 2
+load_name r4, identifier[11]
+load_i r2, 1
+strict_eq r1, r2
+call1 r4, r255, r0
+ret_u
+load_i r1, 2
+load_i r3, 2
+load_false
+jmp_false r255, -> L1
+jmp -> L5
+load_i r4, 2
+strict_eq r3, r4
+jmp_false r255, -> L1
+jmp -> L4
+jmp -> L14
+load_i r4, 10
+load_i r2, 10
+jmp -> L13
+load_i r5, 2
+strict_eq r1, r5
+jmp_false r255, -> L1
+jmp -> L1
+jmp -> L3
+load_i r5, 20
+load_i r2, 20
+jmp -> L5
+load_i r1, 25
+load_i r2, 25
+jmp -> L2
+load_i r1, 30
+load_i r2, 30
+load_name r3, identifier[11]
+load_i r1, 20
+strict_eq r2, r1
+call1 r3, r255, r0
+ret_u
+load_name r1, identifier[13]
+call0 r1, r0, r0
+mov r1, r255, r0
+load_true
+jmp_false r2, -> L3
+jmp -> L2
+call0 r1, r0, r0
+jmp -> L-5
+load_name r2, identifier[11]
+call_method_ic r1, r5, r0
+load_i r4, 0
+strict_eq r255, r4
+call1 r2, r255, r0
+ret_u
+load_true
+jmp_false r255, -> L3
+load_i r4, 1
+load_i r1, 1
+jmp -> L2
+load_i r4, 2
+load_i r1, 2
+load_name r3, identifier[11]
+load_i r5, 1
+strict_eq r1, r5
+load_k r5, const[1062]
+call2 r3, r255, r5
+ret_u
+load_i r1, 0
+load_false
+jmp_false r2, -> L1
+jmp -> L2
+load_i r3, 5
+load_i r1, 5
+load_name r2, identifier[11]
+load_i r4, 5
+strict_eq r1, r4
+call1 r2, r255, r0
+ret_u
+load_i r1, 2
+load_false
+jmp_false r255, -> L3
+load_i r4, 10
+load_i r2, 10
+jmp -> L14
+load_i r5, 2
+strict_eq r1, r5
+jmp_false r255, -> L3
+load_i r5, 20
+load_i r2, 20
+jmp -> L8
+load_i r5, 3
+strict_eq r1, r5
+jmp_false r255, -> L3
+load_i r5, 30
+load_i r2, 30
+jmp -> L2
+load_i r1, 0
+load_i r2, 0
+load_name r3, identifier[11]
+load_i r1, 20
+strict_eq r2, r1
+call1 r3, r255, r0
+ret_u
+create_env r1
+load_name r2, identifier[13]
+call0 r2, r0, r0
+mov r2, r255, r0
+init_name r255, identifier[32]
+new_func r1, const[1063]
+set_upval r1
+init_name r1, identifier[12]
+mov r4, r1, r0
+load_true
+call1 r4, r5, r0
+mov r5, r1, r0
+load_true
+call1 r5, r6, r0
+load_name r6, identifier[11]
+call_method_ic r2, r5, r0
+load_i r1, 2
+strict_eq r255, r1
+call1 r6, r255, r0
+ret_u
+load_name r1, identifier[13]
+call0 r1, r0, r0
+mov r1, r255, r0
+load_false
+call0 r1, r0, r0
+load_true
+logical_and r2, r5
+load_name r3, identifier[11]
+call_method_ic r1, r5, r0
+load_i r5, 0
+strict_eq r255, r5
+load_k r5, const[1064]
+call2 r3, r255, r5
+ret_u
+load_name r1, identifier[13]
+call0 r1, r0, r0
+mov r1, r255, r0
+load_true
+call0 r1, r0, r0
+load_false
+logical_or r2, r5
+load_name r3, identifier[11]
+call_method_ic r1, r5, r0
+load_i r5, 0
+strict_eq r255, r5
+load_k r5, const[1065]
+call2 r3, r255, r5
+ret_u
+load_true
+jmp_false r1, -> L3
+load_i r2, 42
+load_i r1, 42
+jmp -> L2
+load_i r3, 99
+load_i r1, 99
+load_name r2, identifier[11]
+load_i r4, 42
+strict_eq r1, r4
+call1 r2, r255, r0
+ret_u
+load_name r1, identifier[13]
+call0 r1, r0, r0
+mov r1, r255, r0
+load_i r2, 1
+load_i r4, 1
+load_true
+jmp_false r255, -> L1
+jmp -> L1
+jmp -> L5
+load_name r4, identifier[23]
+construct r4, 0
+throw r255, r0, r0
+call0 r1, r0, r0
+mov r4, r255, r0
+call0 r1, r0, r0
+load_name r3, identifier[11]
+load_true
+call1 r3, r4, r0
+ret_u
+load_i r1, 5
+load_i r2, 10
+load_true
+jmp_false r255, -> L3
+add r1, r2
+mov r3, r255, r0
+jmp -> L2
+add r1, r2
+mov r3, r255, r0
+load_name r4, identifier[11]
+load_i r1, 15
+strict_eq r3, r1
+call1 r4, r255, r0
+ret_u
+load_name r1, identifier[13]
+call0 r1, r0, r0
+mov r1, r255, r0
+load_i r2, 0
+load_false
+jmp_false r3, -> L4
+call0 r1, r0, r0
+inc r2
+mov r2, r255, r0
+jmp -> L-6
+load_name r3, identifier[11]
+call_method_ic r1, r5, r0
+load_i r2, 0
+strict_eq r255, r2
+call1 r3, r255, r0
+ret_u
+load_name r1, identifier[27]
+inc r1
+store_name r255, identifier[27]
+ret_reg r255
+ret_u
+load_name r1, identifier[27]
+mov r255, r1, r0
+ret
+load_i r1, 0
+store_name r1, identifier[27]
+ret_u
+load_arg r1, r0, r0
+load_i r2, 1
+add r1, r2
+ret_reg r255
+ret_u
+load_name r1, identifier[27]
+inc r1
+store_name r255, identifier[27]
+ret_reg r255
+ret_u
+load_name r1, identifier[27]
+mov r255, r1, r0
+ret
+load_i r1, 0
+store_name r1, identifier[27]
+ret_u
+load_arg r1, r0, r0
+load_arg r2, r1, r0
+load_name r3, identifier[27]
+inc r3
+store_name r255, identifier[27]
+add r1, r2
+ret_reg r255
+ret_u
+load_arg r1, r0, r0
+load_i r2, 2
+mov r255, r1, r0
+mul_acc r2
+ret_reg r255
+ret_u
+load_name r1, identifier[28]
+ret_reg r1
+ret_u
+load_i r1, 20
+store_name r1, identifier[70]
+ret_u
+load_name r1, identifier[27]
+inc r1
+store_name r255, identifier[27]
+load_i r1, 42
+ret_reg r1
+ret_u
+load_name r1, identifier[27]
+mov r255, r1, r0
+ret
+load_i r1, 0
+store_name r1, identifier[27]
+ret_u
+load_name r1, identifier[32]
+call0 r1, r0, r0
+ret_reg r255
+ret_u
+load_name r1, identifier[32]
+call0 r1, r0, r0
+load_i r255, 15
+ret_reg r255
+ret_u
+load_name r1, identifier[32]
+call0 r1, r0, r0
+load_name r2, identifier[49]
+get_prop r2, r2, r22
+ret_reg r2
+ret_u
+load_name r1, identifier[32]
+call0 r1, r0, r0
+load_name r2, identifier[34]
+get_prop r2, r2, r8
+ret_reg r2
+ret_u
+load_arg r1, r0, r0
+load_name r2, identifier[32]
+call0 r2, r0, r0
+load_i r3, 2
+mov r255, r1, r0
+mul_acc r3
+ret_reg r255
+ret_u
+load_name r1, identifier[32]
+call0 r1, r0, r0
+load_name r2, identifier[82]
+ret_reg r2
+ret_u
+load_arg r1, r0, r0
+load_arg r2, r1, r0
+load_name r3, identifier[32]
+call0 r3, r0, r0
+add r1, r2
+ret_reg r255
+ret_u
+load_name r1, identifier[32]
+call0 r1, r0, r0
+load_i r2, 42
+ret_reg r2
+ret_u
+load_name r1, identifier[86]
+call0 r1, r0, r0
+load_i r2, 2
+ret_reg r2
+ret_u
+load_name r1, identifier[87]
+call0 r1, r0, r0
+load_i r2, 3
+ret_reg r2
+ret_u
+load_name r1, identifier[32]
+call0 r1, r0, r0
+load_i r2, 5
+ret_reg r2
+ret_u
+load_arg r1, r0, r0
+load_name r2, identifier[32]
+call0 r2, r0, r0
+load_i r3, 2
+mov r255, r1, r0
+mul_acc r3
+ret_reg r255
+ret_u
+load_name r1, identifier[32]
+call0 r1, r0, r0
+load_name r2, identifier[49]
+get_prop r2, r2, r16
+ret_reg r2
+ret_u
+load_name r1, identifier[32]
+call0 r1, r0, r0
+load_name r2, identifier[49]
+get_prop r2, r2, r16
+ret_reg r2
+ret_u
+load_name r1, identifier[32]
+call0 r1, r0, r0
+load_i r2, 5
+ret_reg r2
+ret_u
+load_name r1, identifier[32]
+call0 r1, r0, r0
+load_name r2, identifier[15]
+ret_reg r2
+ret_u
+load_name r1, identifier[32]
+call0 r1, r0, r0
+load_name r2, identifier[15]
+ret_reg r2
+ret_u
+load_name r1, identifier[32]
+call0 r1, r0, r0
+load_name r2, identifier[34]
+load_i r3, 0
+get_prop_acc r2, r3
+ret_reg r255
+ret_u
+load_name r1, identifier[32]
+call0 r1, r0, r0
+load_name r2, identifier[34]
+load_i r3, 0
+get_prop_acc r2, r3
+ret_reg r255
+ret_u
+load_name r1, identifier[32]
+call0 r1, r0, r0
+load_i r2, 5
+ret_reg r2
+ret_u
+load_name r1, identifier[32]
+call0 r1, r0, r0
+load_i r2, 2
+ret_reg r2
+ret_u
+load_name r1, identifier[32]
+call0 r1, r0, r0
+load_name r2, identifier[30]
+jmp_false r2, -> L3
+load_i r3, 5
+load_i r2, 5
+jmp -> L2
+load_i r3, 10
+load_i r2, 10
+ret_reg r2
+ret_u
+load_name r1, identifier[32]
+call0 r1, r0, r0
+load_name r2, identifier[19]
+load_name r3, identifier[20]
+lt r2, r3
+ret_reg r255
+ret_u
+load_name r1, identifier[32]
+call0 r1, r0, r0
+load_i r2, 1
+ret_reg r2
+ret_u
+load_name r1, identifier[32]
+call0 r1, r0, r0
+new_obj
+load_i r3, 5
+set_prop r3, r2, r19
+ret_reg r2
+ret_u
+create_env r1
+load_name r2, identifier[32]
+call0 r2, r0, r0
+new_func r1, const[1066]
+ret_reg r1
+ret_u
+load_name r1, identifier[32]
+call0 r1, r0, r0
+load_name r2, identifier[49]
+get_prop r2, r2, r16
+load_name r3, identifier[49]
+get_prop r3, r3, r17
+add r2, r3
+ret_reg r255
+ret_u
+load_name r1, identifier[32]
+call0 r1, r0, r0
+new_arr
+load_name r3, identifier[34]
+load_i r4, 0
+get_prop_acc r3, r4
+array_push_acc r2
+load_name r3, identifier[34]
+load_i r4, 1
+get_prop_acc r3, r4
+array_push_acc r2
+ret_reg r2
+ret_u
+load_name r1, identifier[32]
+call0 r1, r0, r0
+load_i r2, 5
+ret_reg r2
+ret_u
+load_name r1, identifier[32]
+call0 r1, r0, r0
+load_name r2, identifier[34]
+load_i r3, 0
+get_prop_acc r2, r3
+ret_reg r255
+ret_u
+load_name r1, identifier[32]
+call0 r1, r0, r0
+load_name r2, identifier[148]
+load_name r3, identifier[49]
+call_method1 r2, property[30], r3
+get_prop r2, r255, r8
+ret_reg r2
+ret_u
+load_name r1, identifier[32]
+call0 r1, r0, r0
+load_name r2, identifier[19]
+load_name r3, identifier[20]
+add r2, r3
+mov r2, r255, r0
+load_name r3, identifier[52]
+mov r255, r2, r0
+mul_acc r3
+ret_reg r255
+ret_u
+load_name r1, identifier[32]
+call0 r1, r0, r0
+load_name r2, identifier[70]
+ret_reg r2
+ret_u
+load_name r1, identifier[32]
+call0 r1, r0, r0
+load_i r2, 42
+ret_reg r2
+ret_u
+load_name r1, identifier[97]
+inc r1
+store_name r255, identifier[97]
+load_i r1, 42
+ret_reg r1
+ret_u
+load_name r1, identifier[32]
+call0 r1, r0, r0
+load_name r2, identifier[37]
+load_i r3, 5
+neg r3
+mov r3, r255, r0
+call_method1 r2, property[14], r3
+ret_reg r255
+ret_u
+load_name r1, identifier[32]
+call0 r1, r0, r0
+load_name r2, identifier[49]
+get_prop r2, r2, r12
+ret_reg r2
+ret_u
+load_arg r1, r0, r0
+load_name r2, identifier[27]
+inc r2
+store_name r255, identifier[27]
+ret_reg r1
+ret_u
+load_name r1, identifier[27]
+ret_reg r1
+ret_u
+load_arg r1, r0, r0
+load_name r2, identifier[32]
+load_i r4, 2
+mov r255, r1, r0
+mul_acc r4
+call1 r2, r255, r0
+ret_reg r255
+ret_u
+load_name r1, identifier[97]
+inc r1
+store_name r255, identifier[97]
+load_true
+ret_reg r1
+ret_u
+load_name r1, identifier[27]
+inc r1
+store_name r255, identifier[27]
+ret_reg r255
+ret_u
+load_name r1, identifier[27]
+mov r255, r1, r0
+ret
+load_i r1, 0
+store_name r1, identifier[27]
+ret_u
+load_i r0, 42
+ret_reg r0
+load_arg r1, r0, r0
+jmp_false r1, -> L1
+ret_u
+load_name r2, identifier[32]
+call0 r2, r0, r0
+ret_u
+load_name r1, identifier[23]
+construct r1, 0
+throw r255, r0, r0
+load_name r1, identifier[32]
+call0 r1, r0, r0
+ret_u
+load_name r3, identifier[32]
+call0 r3, r0, r0
+ret_reg r255
+ret_u
+load_name r2, identifier[32]
+call0 r2, r0, r0
+ret_reg r255
+ret_u
+load_name r1, identifier[32]
+call0 r1, r0, r0
+ret_u
+load_i r0, 42
+ret_reg r0
+load_true
+jmp_false r1, -> L2
+jmp -> L1
+jmp -> L-4
+load_true
+jmp_false r1, -> L1
+jmp -> L-3
+load_name r1, identifier[32]
+call0 r1, r0, r0
+ret_u
+ret_u
+load_name r1, identifier[32]
+call0 r1, r0, r0
+ret_u
+load_i r0, 1
+ret_reg r0
+load_i r0, 42
+ret_reg r0
+load_name r2, identifier[32]
+call0 r2, r0, r0
+ret_u
+load_name r2, identifier[32]
+call0 r2, r0, r0
+ret_u
+load_name r3, identifier[32]
+call0 r3, r0, r0
+ret_u
+create_env r1
+load_name r2, identifier[32]
+call0 r2, r0, r0
+init_name r255, identifier[157]
+new_func r1, const[1068]
+ret_reg r1
+ret_u
+load_name r1, identifier[23]
+construct r1, 0
+throw r255, r0, r0
+load_name r1, identifier[32]
+call0 r1, r0, r0
+ret_u
+load_arg r1, r0, r0
+load_arg r1, r1, r0
+ret_reg r1
+ret_u
+new_obj
+load_i r2, 1
+set_prop r2, r1, r16
+load_name r2, identifier[32]
+call0 r2, r0, r0
+ret_u
+new_arr
+load_i r255, 1
+array_push_acc r1
+load_i r255, 2
+array_push_acc r1
+load_i r255, 3
+array_push_acc r1
+load_name r2, identifier[32]
+call0 r2, r0, r0
+ret_u
+load_arg r1, r0, r0
+jmp_false r1, -> L2
+load_name r3, identifier[32]
+call0 r3, r0, r0
+load_i r1, 1
+ret_reg r1
+ret_u
+load_name r1, identifier[32]
+call0 r1, r0, r0
+ret_u
+load_name r1, identifier[32]
+call0 r1, r0, r0
+load_i r2, 5
+ret_reg r2
+ret_u
+load_name r1, identifier[49]
+load_i r2, 5
+set_prop r2, r1, r19
+ret_u
+load_name r1, identifier[19]
+inc r1
+store_name r255, identifier[19]
+ret_u
+load_name r1, identifier[27]
+inc r1
+store_name r255, identifier[27]
+ret_reg r255
+ret_u
+load_name r1, identifier[27]
+mov r255, r1, r0
+ret
+load_i r1, 0
+store_name r1, identifier[27]
+ret_u
+load_arg r1, r0, r0
+load_i r2, 10
+add r1, r2
+ret_reg r255
+ret_u
+load_arg r1, r0, r0
+ret_reg r1
+ret_u
+load_i r0, 42
+ret_reg r0
+load_arg r1, r0, r0
+load_i r2, 10
+set_prop r2, r1, r12
+ret_u
+load_name r1, identifier[20]
+load_i r2, 2
+mov r255, r1, r0
+mul_acc r2
+ret
+create_env r1
+new_func r1, const[1069]
+set_upval r1
+ret_reg r1
+ret_u
+load_this
+get_prop r1, r255, r22
+ret_reg r1
+ret_u
+load_name r1, identifier[27]
+inc r1
+store_name r255, identifier[27]
+ret_reg r255
+ret_u
+load_name r1, identifier[27]
+mov r255, r1, r0
+ret
+load_name r1, identifier[27]
+inc r1
+store_name r255, identifier[27]
+load_i r1, 5
+ret_reg r1
+ret_u
+load_arg r1, r0, r0
+load_arg r2, r1, r0
+mov r3, r1, r0
+load_i r1, 0
+get_prop_acc r3, r1
+add r255, r2
+ret_reg r255
+ret_u
+ret_u
+load_arg r1, r0, r0
+load_name r2, identifier[72]
+strict_eq r1, r2
+jmp_false r255, -> L2
+load_i r2, 8
+load_i r1, 8
+ret_reg r1
+ret_u
+load_name r1, identifier[27]
+inc r1
+store_name r255, identifier[27]
+ret_reg r255
+ret_u
+load_name r1, identifier[27]
+mov r255, r1, r0
+ret
+load_i r1, 0
+store_name r1, identifier[27]
+ret_u
+load_i r0, 42
+ret_reg r0
+load_name r1, identifier[23]
+construct r1, 0
+throw r255, r0, r0
+load_name r1, identifier[32]
+call0 r1, r0, r0
+ret_u
+ret_u
+load_arg r1, r0, r0
+jmp_false r1, -> L2
+load_name r3, identifier[32]
+call0 r3, r0, r0
+ret_u
+load_i r0, 42
+ret_reg r0
+load_name r1, identifier[157]
+ret_reg r1
+ret_u
+load_name r1, identifier[20]
+load_i r2, 3
+add r1, r2
+ret_reg r255
+ret_u

@@ -169,6 +169,40 @@ impl Instruction {
             removed: false,
         }
     }
+
+    fn new_load_true(dst: u8) -> Self {
+        Self {
+            opcode: Opcode::LoadTrue,
+            a: dst,
+            b: 0,
+            c: 0,
+            bx: 0,
+            sbx: 0,
+            target: None,
+            removed: false,
+        }
+    }
+
+    fn new_load_false(dst: u8) -> Self {
+        Self {
+            opcode: Opcode::LoadFalse,
+            a: dst,
+            b: 0,
+            c: 0,
+            bx: 0,
+            sbx: 0,
+            target: None,
+            removed: false,
+        }
+    }
+
+    fn new_load_bool(value: bool) -> Self {
+        if value {
+            Self::new_load_true(ACC)
+        } else {
+            Self::new_load_false(ACC)
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -183,6 +217,37 @@ enum KnownValueKind {
     Undefined,
     Null,
     NonNullish,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum LocalConst {
+    Unknown,
+    Int(i16),
+    Bool(bool),
+    Null,
+}
+
+impl LocalConst {
+    fn as_i32(self) -> Option<i32> {
+        match self {
+            Self::Int(value) => Some(value as i32),
+            _ => None,
+        }
+    }
+
+    fn strict_eq(self, other: Self) -> Option<bool> {
+        match (self, other) {
+            (Self::Unknown, _) | (_, Self::Unknown) => None,
+            (Self::Int(lhs), Self::Int(rhs)) => Some(lhs == rhs),
+            (Self::Bool(lhs), Self::Bool(rhs)) => Some(lhs == rhs),
+            (Self::Null, Self::Null) => Some(true),
+            _ => Some(false),
+        }
+    }
+}
+
+fn i32_to_i16(value: i32) -> Option<i16> {
+    i16::try_from(value).ok()
 }
 
 fn decode_branch_target(
@@ -315,6 +380,165 @@ fn fold_const_add(insts: &mut [Instruction], first: usize, second: usize, third:
     true
 }
 
+fn fold_acc_move_into_name_write(insts: &mut [Instruction], first: usize, second: usize) -> bool {
+    if insts[first].opcode != Opcode::Mov || insts[first].b != ACC {
+        return false;
+    }
+    if !matches!(insts[second].opcode, Opcode::StoreName | Opcode::InitName) {
+        return false;
+    }
+    if insts[second].a != insts[first].a {
+        return false;
+    }
+
+    insts[second].a = ACC;
+    insts[first].removed = true;
+    true
+}
+
+fn fold_name_reload_into_zero_arg_call(
+    insts: &mut [Instruction],
+    first: usize,
+    second: usize,
+    third: usize,
+) -> bool {
+    if !matches!(insts[first].opcode, Opcode::StoreName | Opcode::InitName)
+        || insts[second].opcode != Opcode::LoadName
+    {
+        return false;
+    }
+    if insts[first].bx != insts[second].bx {
+        return false;
+    }
+
+    match insts[third].opcode {
+        Opcode::Call0 if insts[third].a == insts[second].a => {
+            insts[third].a = insts[first].a;
+            insts[second].removed = true;
+            true
+        }
+        Opcode::CallRet if insts[third].a == insts[second].a && insts[third].b == 0 => {
+            insts[third].a = insts[first].a;
+            insts[second].removed = true;
+            true
+        }
+        _ => false,
+    }
+}
+
+fn fold_name_reload_into_return(
+    insts: &mut [Instruction],
+    first: usize,
+    second: usize,
+    third: usize,
+) -> bool {
+    if !matches!(insts[first].opcode, Opcode::StoreName | Opcode::InitName)
+        || insts[second].opcode != Opcode::LoadName
+        || insts[third].opcode != Opcode::RetReg
+    {
+        return false;
+    }
+    if insts[first].bx != insts[second].bx || insts[third].a != insts[second].a {
+        return false;
+    }
+
+    insts[third].a = insts[first].a;
+    insts[second].removed = true;
+    true
+}
+
+fn is_simple_call_arg_builder(inst: &Instruction, reserved: u8) -> bool {
+    match inst.opcode {
+        Opcode::LoadI
+        | Opcode::LoadK
+        | Opcode::LoadGlobalIc
+        | Opcode::GetGlobal
+        | Opcode::GetUpval
+        | Opcode::ResolveScope
+        | Opcode::NewObj
+        | Opcode::NewArr
+        | Opcode::NewFunc
+        | Opcode::NewThis
+        | Opcode::LoadClosure
+        | Opcode::TypeofName
+        | Opcode::CreateEnv
+        | Opcode::LoadArg
+        | Opcode::LoadName => inst.a != reserved,
+        _ => false,
+    }
+}
+
+fn fold_callee_copy_into_explicit_call2(
+    insts: &mut [Instruction],
+    first: usize,
+    second: usize,
+    third: usize,
+    fourth: usize,
+) -> bool {
+    if insts[first].opcode != Opcode::Mov || insts[fourth].opcode != Opcode::Call2 {
+        return false;
+    }
+
+    let copied_callee = insts[first].a;
+    if !is_simple_call_arg_builder(&insts[second], copied_callee)
+        || !is_simple_call_arg_builder(&insts[third], copied_callee)
+    {
+        return false;
+    }
+    if insts[fourth].a != copied_callee
+        || insts[fourth].b != insts[second].a
+        || insts[fourth].c != insts[third].a
+    {
+        return false;
+    }
+
+    insts[fourth].a = insts[first].b;
+    insts[first].removed = true;
+    true
+}
+
+fn fold_simple_arg_copy_into_call_method1(
+    insts: &mut [Instruction],
+    arg_builder: usize,
+    obj_builder: usize,
+    mov_index: usize,
+    call_index: usize,
+) -> bool {
+    if insts[mov_index].opcode != Opcode::Mov || insts[call_index].opcode != Opcode::CallMethod1 {
+        return false;
+    }
+
+    let obj_reg = insts[call_index].a;
+    let Some(arg_reg) = obj_reg.checked_add(1) else {
+        return false;
+    };
+
+    if insts[obj_builder].a != obj_reg
+        || insts[mov_index].a != arg_reg
+        || insts[mov_index].b != insts[arg_builder].a
+    {
+        return false;
+    }
+
+    if !is_simple_call_arg_builder(&insts[arg_builder], arg_reg)
+        || !is_simple_call_arg_builder(&insts[obj_builder], arg_reg)
+    {
+        return false;
+    }
+
+    insts[arg_builder].a = arg_reg;
+    insts[mov_index].removed = true;
+    true
+}
+
+fn mark_call_bundle_live(live: &mut [bool; REG_COUNT], base: u8, argc: u8) {
+    let start = usize::from(base);
+    let end = (start + usize::from(argc)).min(usize::from(ACC) - 1);
+    for reg in start..=end {
+        live[reg] = true;
+    }
+}
+
 fn eliminate_dead_defs(
     insts: &mut [Instruction],
     start: usize,
@@ -354,6 +578,54 @@ fn eliminate_dead_defs(
                 }
                 live[dst] = false;
             }
+            Opcode::LoadGlobalIc
+            | Opcode::GetGlobal
+            | Opcode::GetUpval
+            | Opcode::GetScope
+            | Opcode::ResolveScope
+            | Opcode::NewObj
+            | Opcode::NewArr
+            | Opcode::NewFunc
+            | Opcode::NewThis
+            | Opcode::LoadClosure
+            | Opcode::TypeofName
+            | Opcode::CreateEnv
+            | Opcode::LoadArg => {
+                live[insts[index].a as usize] = false;
+            }
+            Opcode::NewClass
+            | Opcode::Typeof
+            | Opcode::ToNum
+            | Opcode::ToStr
+            | Opcode::IsUndef
+            | Opcode::IsNull
+            | Opcode::DeleteProp
+            | Opcode::HasProp
+            | Opcode::Keys => {
+                live[insts[index].a as usize] = false;
+                live[insts[index].b as usize] = true;
+            }
+            Opcode::ForIn => {
+                live[insts[index].a as usize] = false;
+                live[ACC as usize] = false;
+                live[insts[index].b as usize] = true;
+            }
+            Opcode::IteratorNext => {
+                live[ACC as usize] = false;
+                live[insts[index].a as usize] = true;
+            }
+            Opcode::SetGlobalIc
+            | Opcode::SetGlobal
+            | Opcode::SetUpval
+            | Opcode::SetScope
+            | Opcode::StoreName
+            | Opcode::InitName => {
+                live[insts[index].a as usize] = true;
+            }
+            Opcode::LoadName => {
+                live[insts[index].a as usize] = false;
+                live[ACC as usize] = false;
+            }
             Opcode::Add
             | Opcode::Eq
             | Opcode::Lt
@@ -391,6 +663,71 @@ fn eliminate_dead_defs(
             | Opcode::DivAccImm8
             | Opcode::IncAcc => {
                 live[ACC as usize] = true;
+            }
+            Opcode::Call1SubI | Opcode::Call2SubIAdd => {
+                live[ACC as usize] = false;
+                live[0] = true;
+                live[insts[index].a as usize] = true;
+                live[insts[index].b as usize] = true;
+            }
+            Opcode::Call
+            | Opcode::TailCall
+            | Opcode::Construct
+            | Opcode::CallIc
+            | Opcode::CallIcSuper
+            | Opcode::CallMono => {
+                live[ACC as usize] = false;
+                live[0] = true;
+                mark_call_bundle_live(&mut live, insts[index].a, insts[index].b);
+            }
+            Opcode::CallRet => {
+                live[0] = true;
+                mark_call_bundle_live(&mut live, insts[index].a, insts[index].b);
+            }
+            Opcode::Call0 => {
+                live[ACC as usize] = false;
+                live[0] = true;
+                live[insts[index].a as usize] = true;
+            }
+            Opcode::Call1 => {
+                live[ACC as usize] = false;
+                live[0] = true;
+                live[insts[index].a as usize] = true;
+                live[insts[index].b as usize] = true;
+            }
+            Opcode::Call2 => {
+                live[ACC as usize] = false;
+                live[0] = true;
+                live[insts[index].a as usize] = true;
+                live[insts[index].b as usize] = true;
+                live[insts[index].c as usize] = true;
+            }
+            Opcode::CallMethod1 => {
+                live[ACC as usize] = false;
+                live[0] = true;
+                mark_call_bundle_live(&mut live, insts[index].a, 1);
+            }
+            Opcode::CallMethod2 => {
+                live[ACC as usize] = false;
+                live[0] = true;
+                mark_call_bundle_live(&mut live, insts[index].a, 2);
+            }
+            Opcode::CallMethodIc | Opcode::CallMethod2Ic => {
+                live[ACC as usize] = false;
+                live[insts[index].a as usize] = true;
+            }
+            Opcode::Call1Add => {
+                live[ACC as usize] = true;
+                live[0] = true;
+                live[insts[index].a as usize] = true;
+                live[insts[index].b as usize] = true;
+            }
+            Opcode::Call2Add => {
+                live[ACC as usize] = true;
+                live[0] = true;
+                live[insts[index].a as usize] = true;
+                live[insts[index].b as usize] = true;
+                live[insts[index].c as usize] = true;
             }
             Opcode::LoadThis
             | Opcode::Load0
@@ -444,33 +781,186 @@ fn eliminate_dead_defs(
 
 fn constant_fold_block(insts: &mut [Instruction], start: usize, end: usize) -> bool {
     let mut changed = false;
+    let mut known = [LocalConst::Unknown; REG_COUNT];
 
-    loop {
-        let mut local_change = false;
-        let live_indices: Vec<_> = (start..end)
-            .filter(|&index| !insts[index].removed)
-            .collect();
-
-        for (pos, &index) in live_indices.iter().enumerate() {
-            if insts[index].removed {
-                continue;
-            }
-
-            if let (Some(&next_index), Some(&third_index)) =
-                (live_indices.get(pos + 1), live_indices.get(pos + 2))
-                && !insts[next_index].removed
-                && !insts[third_index].removed
-                && fold_const_add(insts, index, next_index, third_index)
-            {
-                local_change = true;
-            }
+    for inst in &mut insts[start..end] {
+        if inst.removed {
+            continue;
         }
 
-        if !local_change {
-            break;
+        match inst.opcode {
+            Opcode::Mov => {
+                known[inst.a as usize] = known[inst.b as usize];
+            }
+            Opcode::LoadI => {
+                known[inst.a as usize] = LocalConst::Int(inst.sbx);
+            }
+            Opcode::LoadK => {
+                known[inst.a as usize] = LocalConst::Unknown;
+            }
+            Opcode::Load0 => {
+                known[ACC as usize] = LocalConst::Int(0);
+            }
+            Opcode::Load1 => {
+                known[ACC as usize] = LocalConst::Int(1);
+            }
+            Opcode::LoadTrue => {
+                known[ACC as usize] = LocalConst::Bool(true);
+            }
+            Opcode::LoadFalse => {
+                known[ACC as usize] = LocalConst::Bool(false);
+            }
+            Opcode::LoadNull => {
+                known[ACC as usize] = LocalConst::Null;
+            }
+            Opcode::LoadAcc => {
+                known[ACC as usize] = known[inst.a as usize];
+            }
+            Opcode::LoadName => {
+                known[inst.a as usize] = LocalConst::Unknown;
+                known[ACC as usize] = LocalConst::Unknown;
+            }
+            Opcode::LoadGlobalIc
+            | Opcode::GetGlobal
+            | Opcode::GetUpval
+            | Opcode::GetScope
+            | Opcode::ResolveScope
+            | Opcode::NewObj
+            | Opcode::NewArr
+            | Opcode::NewFunc
+            | Opcode::NewThis
+            | Opcode::LoadClosure
+            | Opcode::TypeofName
+            | Opcode::CreateEnv
+            | Opcode::LoadArg => {
+                known[inst.a as usize] = LocalConst::Unknown;
+            }
+            Opcode::StoreName
+            | Opcode::InitName
+            | Opcode::SetGlobalIc
+            | Opcode::SetGlobal
+            | Opcode::SetUpval
+            | Opcode::SetScope
+            | Opcode::Jmp
+            | Opcode::JmpTrue
+            | Opcode::JmpFalse
+            | Opcode::JmpEq
+            | Opcode::JmpNeq
+            | Opcode::JmpLt
+            | Opcode::JmpLte
+            | Opcode::JmpLteFalse
+            | Opcode::EqJmpTrue
+            | Opcode::LtJmp
+            | Opcode::EqJmpFalse
+            | Opcode::LoopIncJmp
+            | Opcode::TestJmpTrue
+            | Opcode::Try
+            | Opcode::EndTry
+            | Opcode::Catch
+            | Opcode::Leave
+            | Opcode::Finally
+            | Opcode::LoopHint
+            | Opcode::Ret
+            | Opcode::RetU
+            | Opcode::RetReg
+            | Opcode::Throw
+            | Opcode::Switch => {}
+            Opcode::Add => {
+                if let (Some(lhs), Some(rhs)) = (
+                    known[inst.b as usize].as_i32(),
+                    known[inst.c as usize].as_i32(),
+                ) && let Some(sum) = i32_to_i16(lhs + rhs)
+                {
+                    *inst = Instruction::new_load_i(ACC, sum);
+                    known[ACC as usize] = LocalConst::Int(sum);
+                    changed = true;
+                } else {
+                    known[ACC as usize] = LocalConst::Unknown;
+                }
+            }
+            Opcode::AddAcc => {
+                if let (Some(lhs), Some(rhs)) = (
+                    known[ACC as usize].as_i32(),
+                    known[inst.b as usize].as_i32(),
+                ) && let Some(sum) = i32_to_i16(lhs + rhs)
+                {
+                    *inst = Instruction::new_load_i(ACC, sum);
+                    known[ACC as usize] = LocalConst::Int(sum);
+                    changed = true;
+                } else {
+                    known[ACC as usize] = LocalConst::Unknown;
+                }
+            }
+            Opcode::MulAcc => {
+                if let (Some(lhs), Some(rhs)) = (
+                    known[ACC as usize].as_i32(),
+                    known[inst.b as usize].as_i32(),
+                ) && let Some(product) = i32_to_i16(lhs.saturating_mul(rhs))
+                {
+                    *inst = Instruction::new_load_i(ACC, product);
+                    known[ACC as usize] = LocalConst::Int(product);
+                    changed = true;
+                } else {
+                    known[ACC as usize] = LocalConst::Unknown;
+                }
+            }
+            Opcode::StrictEq => {
+                if let Some(result) = known[inst.b as usize].strict_eq(known[inst.c as usize]) {
+                    *inst = Instruction::new_load_bool(result);
+                    known[ACC as usize] = LocalConst::Bool(result);
+                    changed = true;
+                } else {
+                    known[ACC as usize] = LocalConst::Unknown;
+                }
+            }
+            Opcode::Lt => {
+                if let (Some(lhs), Some(rhs)) = (
+                    known[inst.b as usize].as_i32(),
+                    known[inst.c as usize].as_i32(),
+                ) {
+                    let result = lhs < rhs;
+                    *inst = Instruction::new_load_bool(result);
+                    known[ACC as usize] = LocalConst::Bool(result);
+                    changed = true;
+                } else {
+                    known[ACC as usize] = LocalConst::Unknown;
+                }
+            }
+            Opcode::Eq
+            | Opcode::Lte
+            | Opcode::StrictNeq
+            | Opcode::BitAnd
+            | Opcode::BitOr
+            | Opcode::BitXor
+            | Opcode::Shl
+            | Opcode::Shr
+            | Opcode::Ushr
+            | Opcode::Pow
+            | Opcode::LogicalAnd
+            | Opcode::LogicalOr
+            | Opcode::NullishCoalesce
+            | Opcode::In
+            | Opcode::Instanceof
+            | Opcode::AddStr
+            | Opcode::SubAcc
+            | Opcode::DivAcc
+            | Opcode::AddStrAcc
+            | Opcode::AddAccImm8
+            | Opcode::SubAccImm8
+            | Opcode::MulAccImm8
+            | Opcode::DivAccImm8
+            | Opcode::IncAcc
+            | Opcode::Neg
+            | Opcode::Inc
+            | Opcode::Dec
+            | Opcode::ToPrimitive
+            | Opcode::BitNot => {
+                known[ACC as usize] = LocalConst::Unknown;
+            }
+            _ => {
+                known.fill(LocalConst::Unknown);
+            }
         }
-
-        changed = true;
     }
 
     changed
@@ -520,6 +1010,37 @@ fn optimize_basic_peephole_block(insts: &mut [Instruction], start: usize, end: u
             }
 
             if rewrite_load_move(insts, index, next_index) {
+                local_change = true;
+            }
+
+            if fold_acc_move_into_name_write(insts, index, next_index) {
+                local_change = true;
+            }
+
+            if let Some(&third_index) = live_indices.get(pos + 2) {
+                if fold_name_reload_into_zero_arg_call(insts, index, next_index, third_index)
+                    || fold_name_reload_into_return(insts, index, next_index, third_index)
+                {
+                    local_change = true;
+                }
+            }
+
+            if let (Some(&third_index), Some(&fourth_index)) =
+                (live_indices.get(pos + 2), live_indices.get(pos + 3))
+                && (fold_simple_arg_copy_into_call_method1(
+                    insts,
+                    index,
+                    next_index,
+                    third_index,
+                    fourth_index,
+                ) || fold_simple_arg_copy_into_call_method1(
+                    insts,
+                    next_index,
+                    index,
+                    third_index,
+                    fourth_index,
+                ))
+            {
                 local_change = true;
             }
         }
@@ -577,6 +1098,48 @@ fn optimize_peephole_block(insts: &mut [Instruction], start: usize, end: usize) 
                 }
 
                 if rewrite_load_move(insts, index, next_index) {
+                    local_change = true;
+                }
+
+                if let (Some(&third_index), Some(&fourth_index)) =
+                    (live_indices.get(pos + 2), live_indices.get(pos + 3))
+                {
+                    if fold_callee_copy_into_explicit_call2(
+                        insts,
+                        index,
+                        next_index,
+                        third_index,
+                        fourth_index,
+                    ) || fold_simple_arg_copy_into_call_method1(
+                        insts,
+                        index,
+                        next_index,
+                        third_index,
+                        fourth_index,
+                    ) || fold_simple_arg_copy_into_call_method1(
+                        insts,
+                        next_index,
+                        index,
+                        third_index,
+                        fourth_index,
+                    ) {
+                        local_change = true;
+                    }
+                }
+
+                // Pattern: Call + Ret -> CallRet
+                if insts[index].opcode == Opcode::Call && insts[next_index].opcode == Opcode::Ret {
+                    insts[index] = Instruction {
+                        opcode: Opcode::CallRet,
+                        a: insts[index].a,
+                        b: insts[index].b,
+                        c: 0,
+                        bx: 0,
+                        sbx: 0,
+                        target: None,
+                        removed: false,
+                    };
+                    insts[next_index].removed = true;
                     local_change = true;
                 }
 
@@ -1199,6 +1762,39 @@ fn optimize_peephole_block(insts: &mut [Instruction], start: usize, end: usize) 
                     insts[third_index].removed = true;
                     local_change = true;
                 }
+
+                if let Some(&fourth_index) = live_indices.get(pos + 3)
+                    && !insts[fourth_index].removed
+                    && insts[index].opcode == Opcode::Call1SubI
+                    && insts[next_index].opcode == Opcode::Mov
+                    && insts[third_index].opcode == Opcode::Call1SubI
+                    && insts[fourth_index].opcode == Opcode::Add
+                    && insts[next_index].b == ACC
+                    && insts[third_index].a == insts[index].a
+                    && insts[third_index].b == insts[index].b
+                    && insts[third_index].c == insts[index].c.wrapping_add(1)
+                    && insts[fourth_index].b == insts[next_index].a
+                    && insts[fourth_index].c == ACC
+                {
+                    insts[index] = Instruction {
+                        opcode: Opcode::Call2SubIAdd,
+                        a: insts[index].a,
+                        b: insts[index].b,
+                        c: insts[index].c,
+                        bx: 0,
+                        sbx: 0,
+                        target: None,
+                        removed: false,
+                    };
+                    insts[next_index].removed = true;
+                    insts[third_index].removed = true;
+                    insts[fourth_index].removed = true;
+                    local_change = true;
+                }
+            }
+
+            if specialize_fixed_call(&mut insts[index]) {
+                local_change = true;
             }
         }
 
@@ -1210,6 +1806,53 @@ fn optimize_peephole_block(insts: &mut [Instruction], start: usize, end: usize) 
     }
 
     changed
+}
+
+fn specialize_fixed_call(inst: &mut Instruction) -> bool {
+    if inst.opcode != Opcode::Call {
+        return false;
+    }
+
+    let callee = usize::from(inst.a);
+    let replacement = match inst.b {
+        0 => Some(Instruction {
+            opcode: Opcode::Call0,
+            a: inst.a,
+            b: 0,
+            c: 0,
+            bx: 0,
+            sbx: 0,
+            target: None,
+            removed: false,
+        }),
+        1 if callee + 1 < usize::from(ACC) => Some(Instruction {
+            opcode: Opcode::Call1,
+            a: inst.a,
+            b: inst.a + 1,
+            c: 0,
+            bx: 0,
+            sbx: 0,
+            target: None,
+            removed: false,
+        }),
+        2 if callee + 2 < usize::from(ACC) => Some(Instruction {
+            opcode: Opcode::Call2,
+            a: inst.a,
+            b: inst.a + 1,
+            c: inst.a + 2,
+            bx: 0,
+            sbx: 0,
+            target: None,
+            removed: false,
+        }),
+        _ => None,
+    };
+
+    let Some(replacement) = replacement else {
+        return false;
+    };
+    *inst = replacement;
+    true
 }
 
 fn decode_program(bytecode: &[u32]) -> Vec<Instruction> {
@@ -1263,6 +1906,11 @@ fn push_unique_reg(regs: &mut Vec<u8>, reg: u8) {
     }
 }
 
+fn push_all_regs(regs: &mut Vec<u8>) {
+    regs.clear();
+    regs.extend((0..REG_COUNT).map(|reg| reg as u8));
+}
+
 fn push_call_bundle(regs: &mut Vec<u8>, base: u8, arg_count: u8) -> bool {
     let last = base as usize + arg_count as usize;
     if last >= ACC as usize {
@@ -1307,6 +1955,16 @@ fn build_instruction_semantics(
     let mut semantics = Vec::with_capacity(len);
 
     for (pc, inst) in insts.iter().enumerate() {
+        if inst.removed {
+            semantics.push(InstructionSemantics {
+                uses: Vec::new(),
+                defs: Vec::new(),
+                successors: normal_successors(pc, len),
+                pinned: Vec::new(),
+            });
+            continue;
+        }
+
         let mut uses = Vec::new();
         let mut defs = Vec::new();
         let mut pinned = Vec::new();
@@ -1631,7 +2289,7 @@ fn build_instruction_semantics(
                     push_unique_reg(&mut uses, ACC);
                 }
             }
-            Opcode::Call1SubI => {
+            Opcode::Call1SubI | Opcode::Call2SubIAdd => {
                 push_unique_reg(&mut defs, ACC);
                 push_unique_reg(&mut uses, 0);
                 push_unique_reg(&mut uses, inst.a);
@@ -1818,6 +2476,18 @@ fn build_instruction_semantics(
                 push_unique_reg(&mut uses, inst.a);
                 push_unique_reg(&mut uses, inst.c);
             }
+            Opcode::Try => {
+                successors = conditional_successors(pc, inst.target, len);
+            }
+            Opcode::EndTry | Opcode::Finally => {}
+            Opcode::Catch => {
+                push_unique_reg(&mut defs, inst.a);
+                push_unique_reg(&mut defs, ACC);
+            }
+            Opcode::Throw => {
+                push_unique_reg(&mut uses, inst.a);
+                successors.clear();
+            }
             Opcode::CmpJmp
             | Opcode::LoadJfalse
             | Opcode::LoadCmpEqJfalse
@@ -1828,13 +2498,14 @@ fn build_instruction_semantics(
             | Opcode::Call3
             | Opcode::GetPropChainAcc
             | Opcode::Destructure
-            | Opcode::Throw
-            | Opcode::Try
-            | Opcode::EndTry
-            | Opcode::Catch
-            | Opcode::Finally
-            | Opcode::Reserved(_) => return None,
-            _ => todo!("Opcode semantics not defined: {:?}", inst.opcode),
+            | Opcode::Reserved(_) => {
+                push_all_regs(&mut uses);
+                push_all_regs(&mut pinned);
+            }
+            _ => {
+                push_all_regs(&mut uses);
+                push_all_regs(&mut pinned);
+            }
         }
 
         semantics.push(InstructionSemantics {
@@ -1854,23 +2525,10 @@ fn union_live_sets(dst: &mut [bool; REG_COUNT], src: &[bool; REG_COUNT]) {
     }
 }
 
-fn extend_interval(intervals: &mut [Option<LiveInterval>; REG_COUNT], reg: usize, pc: usize) {
-    match &mut intervals[reg] {
-        Some(interval) => {
-            interval.start = interval.start.min(pc);
-            interval.end = interval.end.max(pc);
-        }
-        slot @ None => {
-            *slot = Some(LiveInterval {
-                reg: reg as u8,
-                start: pc,
-                end: pc,
-            });
-        }
-    }
-}
-
-fn analyze_liveness(insts: &[Instruction], constants: &[JSValue]) -> Option<LivenessAnalysis> {
+fn compute_live_sets(
+    insts: &[Instruction],
+    constants: &[JSValue],
+) -> Option<(Vec<[bool; REG_COUNT]>, Vec<[bool; REG_COUNT]>)> {
     let semantics = build_instruction_semantics(insts, constants)?;
     let mut live_in = vec![[false; REG_COUNT]; insts.len()];
     let mut live_out = vec![[false; REG_COUNT]; insts.len()];
@@ -1907,6 +2565,29 @@ fn analyze_liveness(insts: &[Instruction], constants: &[JSValue]) -> Option<Live
         }
     }
 
+    Some((live_in, live_out))
+}
+
+fn extend_interval(intervals: &mut [Option<LiveInterval>; REG_COUNT], reg: usize, pc: usize) {
+    match &mut intervals[reg] {
+        Some(interval) => {
+            interval.start = interval.start.min(pc);
+            interval.end = interval.end.max(pc);
+        }
+        slot @ None => {
+            *slot = Some(LiveInterval {
+                reg: reg as u8,
+                start: pc,
+                end: pc,
+            });
+        }
+    }
+}
+
+fn analyze_liveness(insts: &[Instruction], constants: &[JSValue]) -> Option<LivenessAnalysis> {
+    let (live_in, live_out) = compute_live_sets(insts, constants)?;
+    let semantics = build_instruction_semantics(insts, constants)?;
+
     let mut intervals = [None; REG_COUNT];
     let mut pinned = [false; REG_COUNT];
     pinned[0] = true;
@@ -1932,6 +2613,33 @@ fn analyze_liveness(insts: &[Instruction], constants: &[JSValue]) -> Option<Live
     }
 
     Some(LivenessAnalysis { intervals, pinned })
+}
+
+fn eliminate_dead_defs_global(insts: &mut [Instruction], constants: &[JSValue]) -> bool {
+    let Some((_, live_out)) = compute_live_sets(insts, constants) else {
+        return false;
+    };
+
+    let mut changed = false;
+
+    for (pc, inst) in insts.iter_mut().enumerate() {
+        if inst.removed {
+            continue;
+        }
+
+        match inst.opcode {
+            Opcode::Mov | Opcode::LoadI | Opcode::LoadK => {
+                let dst = inst.a as usize;
+                if !live_out[pc][dst] {
+                    inst.removed = true;
+                    changed = true;
+                }
+            }
+            _ => {}
+        }
+    }
+
+    changed
 }
 
 fn rewrite_register_with_map(reg: &mut u8, map: &[u8; REG_COUNT]) {
@@ -2127,6 +2835,7 @@ fn rewrite_instruction_registers(inst: &mut Instruction, map: &[u8; REG_COUNT]) 
         }
         Opcode::LoopIncJmp
         | Opcode::Call1SubI
+        | Opcode::Call2SubIAdd
         | Opcode::GetPropIcCall
         | Opcode::GetPropCall
         | Opcode::Call1Add => {
@@ -2223,7 +2932,7 @@ fn rewrite_instruction_registers(inst: &mut Instruction, map: &[u8; REG_COUNT]) 
         | Opcode::EndTry
         | Opcode::Catch
         | Opcode::Finally => {}
-        _ => todo!("Opcode register rewrite not defined: {:?}", inst.opcode),
+        _ => {}
     }
 }
 
@@ -2333,6 +3042,7 @@ fn coalesce_registers_block(insts: &mut [Instruction], start: usize, end: usize)
                 let key = RegisterValueKey::Immediate(inst.sbx);
                 if let Some(src) = available.get(&key).copied()
                     && src != inst.a
+                    && src != ACC
                 {
                     *inst = Instruction::new_mov(inst.a, src);
                     changed = true;
@@ -2343,6 +3053,7 @@ fn coalesce_registers_block(insts: &mut [Instruction], start: usize, end: usize)
                 let key = RegisterValueKey::Constant(inst.bx);
                 if let Some(src) = available.get(&key).copied()
                     && src != inst.a
+                    && src != ACC
                 {
                     *inst = Instruction::new_mov(inst.a, src);
                     changed = true;
@@ -2351,15 +3062,14 @@ fn coalesce_registers_block(insts: &mut [Instruction], start: usize, end: usize)
             }
             Opcode::Mov => {
                 invalidate_value_key(&mut available, &mut values, inst.a);
-                if let Some(key) = values[inst.b as usize] {
+                if inst.b != ACC
+                    && let Some(key) = values[inst.b as usize]
+                {
                     record_value_key(&mut available, &mut values, inst.a, key);
                 }
             }
             Opcode::LoadAcc => {
                 invalidate_value_key(&mut available, &mut values, ACC);
-                if let Some(key) = values[inst.a as usize] {
-                    record_value_key(&mut available, &mut values, ACC, key);
-                }
             }
             Opcode::Add
             | Opcode::Eq
@@ -2792,6 +3502,36 @@ fn copy_propagation_block(insts: &mut [Instruction], start: usize, end: usize) -
                 changed |= rewrite_reg(&aliases, &mut inst.c);
                 invalidate_alias(&mut aliases, ACC);
             }
+            Opcode::Call0 => {
+                changed |= rewrite_reg(&aliases, &mut inst.a);
+                invalidate_alias(&mut aliases, ACC);
+            }
+            Opcode::Call1 => {
+                changed |= rewrite_reg(&aliases, &mut inst.a);
+                changed |= rewrite_reg(&aliases, &mut inst.b);
+                invalidate_alias(&mut aliases, ACC);
+            }
+            Opcode::Call2 => {
+                changed |= rewrite_reg(&aliases, &mut inst.a);
+                changed |= rewrite_reg(&aliases, &mut inst.b);
+                changed |= rewrite_reg(&aliases, &mut inst.c);
+                invalidate_alias(&mut aliases, ACC);
+            }
+            Opcode::CallMethodIc | Opcode::CallMethod2Ic => {
+                changed |= rewrite_reg(&aliases, &mut inst.a);
+                invalidate_alias(&mut aliases, ACC);
+            }
+            Opcode::Call1SubI | Opcode::Call2SubIAdd | Opcode::Call1Add => {
+                changed |= rewrite_reg(&aliases, &mut inst.a);
+                changed |= rewrite_reg(&aliases, &mut inst.b);
+                invalidate_alias(&mut aliases, ACC);
+            }
+            Opcode::Call2Add => {
+                changed |= rewrite_reg(&aliases, &mut inst.a);
+                changed |= rewrite_reg(&aliases, &mut inst.b);
+                changed |= rewrite_reg(&aliases, &mut inst.c);
+                invalidate_alias(&mut aliases, ACC);
+            }
             Opcode::LoadAcc => {
                 changed |= rewrite_reg(&aliases, &mut inst.a);
                 invalidate_alias(&mut aliases, ACC);
@@ -2977,9 +3717,87 @@ pub fn relocate_jumps(bytecode: Vec<u32>, constants: Vec<JSValue>) -> (Vec<u32>,
     encode_program(&insts, constants)
 }
 
+fn inline_immediate_root_function_call(compiled: &mut crate::codegen::CompiledBytecode) -> bool {
+    if compiled.bytecode.len() < 5 {
+        return false;
+    }
+
+    let insts = decode_program(&compiled.bytecode);
+    let new_func = &insts[0];
+    let set_upval = &insts[1];
+    let init_name = &insts[2];
+    let load_name = &insts[3];
+    let call_ret = &insts[4];
+
+    if new_func.opcode != Opcode::NewFunc
+        || set_upval.opcode != Opcode::SetUpval
+        || set_upval.a != new_func.a
+        || init_name.opcode != Opcode::InitName
+        || init_name.a != new_func.a
+        || load_name.opcode != Opcode::LoadName
+        || load_name.bx != init_name.bx
+        || !matches!(call_ret.opcode, Opcode::Call | Opcode::CallRet)
+        || call_ret.b != 0
+        || call_ret.a != load_name.a
+    {
+        return false;
+    }
+
+    let function_slot = new_func.bx;
+    let Some(entry_pc) = compiled
+        .constants
+        .get(function_slot as usize)
+        .and_then(|value| to_f64(*value))
+        .filter(|value| value.is_finite() && *value >= 0.0 && value.fract() == 0.0)
+        .map(|value| value as usize)
+    else {
+        return false;
+    };
+
+    if entry_pc <= 4 || entry_pc > compiled.bytecode.len() {
+        return false;
+    }
+
+    let body = compiled.bytecode[entry_pc..].to_vec();
+    let original_constants = compiled.constants.clone();
+    let (bytecode, mut constants) = optimize_bytecode(body, original_constants.clone());
+
+    let mut function_constants = Vec::new();
+    for &slot in &compiled.function_constants {
+        if slot == function_slot {
+            continue;
+        }
+
+        let Some(old_entry) = original_constants
+            .get(slot as usize)
+            .and_then(|value| to_f64(*value))
+            .filter(|value| value.is_finite() && *value >= 0.0 && value.fract() == 0.0)
+            .map(|value| value as usize)
+        else {
+            continue;
+        };
+
+        if old_entry >= entry_pc {
+            if let Some(constant) = constants.get_mut(slot as usize) {
+                *constant = make_number((old_entry - entry_pc) as f64);
+            }
+            function_constants.push(slot);
+        }
+    }
+
+    compiled.bytecode = bytecode;
+    compiled.constants = constants;
+    compiled.function_constants = function_constants;
+    true
+}
+
 pub fn optimize_compiled(
     mut compiled: crate::codegen::CompiledBytecode,
 ) -> crate::codegen::CompiledBytecode {
+    if inline_immediate_root_function_call(&mut compiled) {
+        return compiled;
+    }
+
     if compiled.function_constants.is_empty() {
         let (bytecode, constants) = optimize_bytecode(compiled.bytecode, compiled.constants);
         compiled.bytecode = bytecode;

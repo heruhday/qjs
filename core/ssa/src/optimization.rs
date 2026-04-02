@@ -1,11 +1,14 @@
-use std::collections::{BTreeSet, HashMap};
+use std::collections::{BTreeSet, HashMap, HashSet};
 
-use cfg::{ACC_REG, BlockId};
+use cfg::{ACC_REG, BlockId, CompareKind, decode_word};
+use codegen::Opcode;
 use value::{JSValue, make_false, make_true};
 
 use crate::ir::{
-    BytecodeLoweringError, IRCondition, IRFunction, IRInst, IRTerminator, IRUnaryOp, IRValue,
+    BytecodeLoweringError, IRBinaryOp, IRBlock, IRCondition, IRFunction, IRInst, IRTerminator,
+    IRUnaryOp, IRValue,
 };
+use crate::optimize_mixed_bytecode;
 use crate::passes::{
     CfgSimplification, ConstantFolding, CopyPropagation, DeadCodeElimination, GlobalValueNumbering,
     LoopInvariantCodeMotion, Pass, SparseConditionalConstantPropagation, ValueRangePropagation,
@@ -107,92 +110,22 @@ pub fn fold_temporary_checks(ir: &mut IRFunction) -> bool {
 }
 
 pub fn optimize_basic_peephole(ir: &mut IRFunction) -> bool {
+    let numeric = infer_numeric_values(ir);
     let mut changed = false;
 
     for block in &mut ir.blocks {
-        for _ in 0..3 {
-            let mut local_changed = false;
-
-            for inst in &mut block.instructions {
-                if let IRInst::Mov { dst, src } = inst
-                    && dst == src
-                {
-                    *inst = IRInst::Nop;
-                    local_changed = true;
-                }
-            }
-
-            for index in 1..block.instructions.len() {
-                let previous = block.instructions[index - 1].clone();
-                let current = block.instructions[index].clone();
-                let replacement = match (previous, current) {
-                    (
-                        IRInst::LoadConst {
-                            dst: previous_dst,
-                            value,
-                        },
-                        IRInst::Mov { dst, src },
-                    ) if src == previous_dst => Some(IRInst::LoadConst { dst, value }),
-                    (
-                        IRInst::Mov {
-                            dst: previous_dst,
-                            src: previous_src,
-                        },
-                        IRInst::Mov { dst, src },
-                    ) if src == previous_dst => Some(IRInst::Mov {
-                        dst,
-                        src: previous_src,
-                    }),
-                    _ => None,
-                };
-
-                if let Some(replacement) = replacement
-                    && block.instructions[index] != replacement
-                {
-                    block.instructions[index] = replacement;
-                    local_changed = true;
-                }
-            }
-
-            if local_changed {
-                changed = true;
-            } else {
-                break;
-            }
-        }
-
-        let original_len = block.instructions.len();
-        block
-            .instructions
-            .retain(|inst| !matches!(inst, IRInst::Nop));
-        if block.instructions.len() != original_len {
-            changed = true;
-        }
+        changed |= optimize_peephole_block(block, &numeric, PeepholeMode::basic());
     }
 
     changed
 }
 
 pub fn optimize_superinstructions(ir: &mut IRFunction) -> bool {
+    let numeric = infer_numeric_values(ir);
     let mut changed = false;
 
     for block in &mut ir.blocks {
-        loop {
-            let Some(last) = block.instructions.last().cloned() else {
-                break;
-            };
-
-            let Some((from, to)) = lift_terminal_value(last) else {
-                break;
-            };
-
-            if !replace_terminator_uses(&mut block.terminator, &from, &to) {
-                break;
-            }
-
-            block.instructions.pop();
-            changed = true;
-        }
+        changed |= optimize_peephole_block(block, &numeric, PeepholeMode::superinstructions());
     }
 
     changed
@@ -233,7 +166,46 @@ pub fn reuse_registers_linear_scan(ir: &mut IRFunction) -> bool {
     changed
 }
 
-pub fn run_fixed_point_round(ir: &mut IRFunction) -> bool {
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum OptTier {
+    Tier0,
+    Tier1,
+    Tier2,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Optimizer {
+    pub tier: OptTier,
+}
+
+impl Optimizer {
+    pub const fn new(tier: OptTier) -> Self {
+        Self { tier }
+    }
+
+    pub fn optimize(&self, ir: &mut IRFunction) -> bool {
+        match self.tier {
+            OptTier::Tier0 => optimize_tier0(ir),
+            OptTier::Tier1 => optimize_tier1(ir),
+            OptTier::Tier2 => optimize_tier2(ir),
+        }
+    }
+
+    pub fn optimize_to_bytecode(
+        &self,
+        ir: &IRFunction,
+    ) -> Result<(Vec<u32>, Vec<JSValue>), BytecodeLoweringError> {
+        optimize_to_bytecode_with_tier(ir, self.tier)
+    }
+}
+
+impl Default for Optimizer {
+    fn default() -> Self {
+        Self::new(OptTier::Tier1)
+    }
+}
+
+pub fn run_basic_round(ir: &mut IRFunction) -> bool {
     let mut changed = false;
     changed |= simplify_branches(ir);
     changed |= constant_fold(ir);
@@ -241,6 +213,22 @@ pub fn run_fixed_point_round(ir: &mut IRFunction) -> bool {
     changed |= copy_propagation(ir);
     changed |= optimize_basic_peephole(ir);
     changed |= eliminate_dead_code(ir);
+    changed |= eliminate_dead_code(ir);
+    changed
+}
+
+pub fn run_fixed_point_round(ir: &mut IRFunction) -> bool {
+    run_basic_round(ir)
+}
+
+pub fn run_full_round(ir: &mut IRFunction) -> bool {
+    let mut changed = false;
+    changed |= run_basic_round(ir);
+    changed |= loop_invariant_code_motion(ir);
+    changed |= GlobalValueNumbering.run(ir);
+    changed |= SparseConditionalConstantPropagation.run(ir);
+    changed |= ValueRangePropagation.run(ir);
+    changed |= optimize_basic_peephole(ir);
     changed |= eliminate_dead_code(ir);
     changed
 }
@@ -275,9 +263,16 @@ where
     changed
 }
 
-pub fn optimize_ir(ir: &mut IRFunction) -> bool {
+pub fn optimize_tier0(ir: &mut IRFunction) -> bool {
     let mut changed = false;
+    changed |= run_until_stable(ir, 2, run_basic_round);
+    changed |= optimize_superinstructions(ir);
+    changed |= eliminate_dead_code(ir);
+    changed
+}
 
+pub fn optimize_tier1(ir: &mut IRFunction) -> bool {
+    let mut changed = false;
     changed |= run_until_stable(ir, 8, run_fixed_point_round);
     changed |= loop_invariant_code_motion(ir);
     changed |= GlobalValueNumbering.run(ir);
@@ -289,8 +284,8 @@ pub fn optimize_ir(ir: &mut IRFunction) -> bool {
     changed
 }
 
-pub fn optimize_bytecode(ir: &mut IRFunction) -> bool {
-    let mut changed = optimize_ir(ir);
+pub fn optimize_tier2(ir: &mut IRFunction) -> bool {
+    let mut changed = optimize_tier1(ir);
     changed |= reuse_registers_linear_scan(ir);
     changed |= optimize_superinstructions(ir);
     changed |= optimize_basic_peephole(ir);
@@ -299,12 +294,29 @@ pub fn optimize_bytecode(ir: &mut IRFunction) -> bool {
     changed
 }
 
+pub fn optimize_ir(ir: &mut IRFunction) -> bool {
+    optimize_tier1(ir)
+}
+
+pub fn optimize_bytecode(ir: &mut IRFunction) -> bool {
+    optimize_tier2(ir)
+}
+
 pub fn optimize_to_bytecode(
     ir: &IRFunction,
 ) -> Result<(Vec<u32>, Vec<JSValue>), BytecodeLoweringError> {
+    optimize_to_bytecode_with_tier(ir, OptTier::Tier2)
+}
+
+pub fn optimize_to_bytecode_with_tier(
+    ir: &IRFunction,
+    tier: OptTier,
+) -> Result<(Vec<u32>, Vec<JSValue>), BytecodeLoweringError> {
     let mut optimized_ir = ir.clone();
-    optimize_bytecode(&mut optimized_ir);
-    optimized_ir.into_bytecodes()
+    Optimizer::new(tier).optimize(&mut optimized_ir);
+    optimized_ir
+        .into_bytecodes()
+        .map(|(bytecode, constants)| optimize_mixed_bytecode(bytecode, constants))
 }
 
 #[derive(Debug, Clone)]
@@ -314,6 +326,28 @@ struct LiveInterval {
     end: usize,
 }
 
+#[derive(Clone, Copy)]
+struct PeepholeMode {
+    structural: bool,
+    superinstructions: bool,
+}
+
+impl PeepholeMode {
+    const fn basic() -> Self {
+        Self {
+            structural: true,
+            superinstructions: false,
+        }
+    }
+
+    const fn superinstructions() -> Self {
+        Self {
+            structural: false,
+            superinstructions: true,
+        }
+    }
+}
+
 fn contains_opaque_bytecode(ir: &IRFunction) -> bool {
     ir.blocks.iter().any(|block| {
         block
@@ -321,6 +355,264 @@ fn contains_opaque_bytecode(ir: &IRFunction) -> bool {
             .iter()
             .any(|inst| matches!(inst, IRInst::Bytecode { .. }))
     })
+}
+
+fn optimize_peephole_block(
+    block: &mut IRBlock,
+    numeric: &HashSet<IRValue>,
+    mode: PeepholeMode,
+) -> bool {
+    let mut changed = false;
+
+    loop {
+        let mut local_changed = false;
+
+        if mode.structural {
+            local_changed |= apply_structural_peepholes(block);
+        }
+
+        if mode.superinstructions {
+            local_changed |= apply_superinstruction_peepholes(block, numeric);
+        }
+
+        if !local_changed {
+            break;
+        }
+
+        changed = true;
+    }
+
+    changed
+}
+
+fn apply_structural_peepholes(block: &mut IRBlock) -> bool {
+    let mut changed = false;
+
+    for inst in &mut block.instructions {
+        if let IRInst::Mov { dst, src } = inst
+            && dst == src
+        {
+            *inst = IRInst::Nop;
+            changed = true;
+        }
+    }
+
+    for index in 1..block.instructions.len() {
+        let previous = block.instructions[index - 1].clone();
+        let current = block.instructions[index].clone();
+
+        if let IRInst::Mov { dst, src } = &current
+            && let Some(previous_dst) = defined_value(&previous)
+            && *src == previous_dst
+            && can_sink_destination(&previous)
+            && !value_used_after(block, index, &previous_dst)
+            && rewrite_destination(&mut block.instructions[index - 1], dst)
+        {
+            block.instructions[index] = IRInst::Nop;
+            changed = true;
+            continue;
+        }
+
+        if let Some(replacement) = structural_replacement(previous, current)
+            && block.instructions[index] != replacement
+        {
+            block.instructions[index] = replacement;
+            changed = true;
+        }
+    }
+
+    let original_len = block.instructions.len();
+    block
+        .instructions
+        .retain(|inst| !matches!(inst, IRInst::Nop));
+    changed || block.instructions.len() != original_len
+}
+
+fn structural_replacement(previous: IRInst, current: IRInst) -> Option<IRInst> {
+    match (previous, current) {
+        (
+            IRInst::LoadConst {
+                dst: previous_dst,
+                value,
+            },
+            IRInst::Mov { dst, src },
+        ) if src == previous_dst => Some(IRInst::LoadConst { dst, value }),
+        (
+            IRInst::Mov {
+                dst: previous_dst,
+                src: previous_src,
+            },
+            IRInst::Mov { dst, src },
+        ) if src == previous_dst => Some(IRInst::Mov {
+            dst,
+            src: previous_src,
+        }),
+        _ => None,
+    }
+}
+
+fn apply_superinstruction_peepholes(block: &mut IRBlock, numeric: &HashSet<IRValue>) -> bool {
+    let mut changed = false;
+
+    loop {
+        if try_lift_terminal_value(block)
+            || try_lift_terminal_compare(block)
+            || try_fuse_terminal_call_return(block)
+        {
+            changed = true;
+            continue;
+        }
+        break;
+    }
+
+    let mut index = 0;
+    while index < block.instructions.len() {
+        if try_fuse_instruction_superinstruction(block, index, numeric) {
+            changed = true;
+            continue;
+        }
+        index += 1;
+    }
+
+    changed
+}
+
+fn try_fuse_instruction_superinstruction(
+    block: &mut IRBlock,
+    index: usize,
+    numeric: &HashSet<IRValue>,
+) -> bool {
+    let Some(inst) = block.instructions.get(index).cloned() else {
+        return false;
+    };
+
+    let replacement = match inst {
+        IRInst::Unary { dst, op, operand } => match op {
+            IRUnaryOp::Inc => {
+                let (Some(dst_reg), Some(src_reg)) =
+                    (register_value(&dst), register_value(&operand))
+                else {
+                    return false;
+                };
+                Some(make_bytecode_inst(
+                    Opcode::LoadInc,
+                    dst_reg,
+                    src_reg,
+                    0,
+                    vec![operand],
+                    vec![dst],
+                ))
+            }
+            IRUnaryOp::Dec => {
+                let (Some(dst_reg), Some(src_reg)) =
+                    (register_value(&dst), register_value(&operand))
+                else {
+                    return false;
+                };
+                Some(make_bytecode_inst(
+                    Opcode::LoadDec,
+                    dst_reg,
+                    src_reg,
+                    0,
+                    vec![operand],
+                    vec![dst],
+                ))
+            }
+            _ => None,
+        },
+        IRInst::Binary { dst, op, lhs, rhs } => {
+            let (Some(dst_reg), Some(lhs_reg), Some(rhs_reg)) = (
+                register_value(&dst),
+                register_value(&lhs),
+                register_value(&rhs),
+            ) else {
+                return false;
+            };
+
+            let both_numeric = value_is_numeric(&lhs, numeric) && value_is_numeric(&rhs, numeric);
+            match op {
+                IRBinaryOp::Add if !both_numeric => Some(make_bytecode_inst(
+                    Opcode::LoadAdd,
+                    dst_reg,
+                    lhs_reg,
+                    rhs_reg,
+                    vec![lhs, rhs],
+                    vec![dst],
+                )),
+                IRBinaryOp::Sub if !both_numeric => Some(make_bytecode_inst(
+                    Opcode::LoadSub,
+                    dst_reg,
+                    lhs_reg,
+                    rhs_reg,
+                    vec![lhs, rhs],
+                    vec![dst],
+                )),
+                IRBinaryOp::Mul if !both_numeric => Some(make_bytecode_inst(
+                    Opcode::LoadMul,
+                    dst_reg,
+                    lhs_reg,
+                    rhs_reg,
+                    vec![lhs, rhs],
+                    vec![dst],
+                )),
+                IRBinaryOp::Eq => Some(make_bytecode_inst(
+                    Opcode::LoadCmpEq,
+                    dst_reg,
+                    lhs_reg,
+                    rhs_reg,
+                    vec![lhs, rhs],
+                    vec![dst],
+                )),
+                IRBinaryOp::Lt if !both_numeric => Some(make_bytecode_inst(
+                    Opcode::LoadCmpLt,
+                    dst_reg,
+                    lhs_reg,
+                    rhs_reg,
+                    vec![lhs, rhs],
+                    vec![dst],
+                )),
+                _ => None,
+            }
+        }
+        _ => None,
+    };
+
+    let Some(replacement) = replacement else {
+        return false;
+    };
+
+    if block.instructions[index] == replacement {
+        return false;
+    }
+
+    block.instructions[index] = replacement;
+    true
+}
+
+fn register_value(value: &IRValue) -> Option<u8> {
+    match value {
+        IRValue::Register(reg, _) => Some(*reg),
+        IRValue::Constant(_) => None,
+    }
+}
+
+fn encode_raw(opcode: Opcode, a: u8, b: u8, c: u8) -> u32 {
+    ((c as u32) << 24) | ((b as u32) << 16) | ((a as u32) << 8) | opcode.as_u8() as u32
+}
+
+fn make_bytecode_inst(
+    opcode: Opcode,
+    a: u8,
+    b: u8,
+    c: u8,
+    uses: Vec<IRValue>,
+    defs: Vec<IRValue>,
+) -> IRInst {
+    IRInst::Bytecode {
+        inst: decode_word(0, encode_raw(opcode, a, b, c)),
+        uses,
+        defs,
+    }
 }
 
 fn lift_terminal_value(inst: IRInst) -> Option<(IRValue, IRValue)> {
@@ -380,6 +672,261 @@ fn replace_value_use(value: &mut IRValue, from: &IRValue, to: &IRValue) -> bool 
 
     *value = to.clone();
     true
+}
+
+fn try_lift_terminal_value(block: &mut IRBlock) -> bool {
+    let Some(last) = block.instructions.last().cloned() else {
+        return false;
+    };
+
+    let Some((from, to)) = lift_terminal_value(last) else {
+        return false;
+    };
+
+    if !replace_terminator_uses(&mut block.terminator, &from, &to) {
+        return false;
+    }
+
+    block.instructions.pop();
+    true
+}
+
+fn try_lift_terminal_compare(block: &mut IRBlock) -> bool {
+    let Some(IRInst::Binary { dst, op, lhs, rhs }) = block.instructions.last().cloned() else {
+        return false;
+    };
+    let Some(kind) = compare_kind_for_binary(op) else {
+        return false;
+    };
+
+    let condition = match &mut block.terminator {
+        IRTerminator::Branch { condition, .. }
+        | IRTerminator::ConditionalReturn { condition, .. } => condition,
+        _ => return false,
+    };
+
+    let negate = match condition {
+        IRCondition::Truthy { value, negate } if *value == dst => *negate,
+        _ => return false,
+    };
+
+    *condition = IRCondition::Compare {
+        kind,
+        lhs,
+        rhs,
+        negate,
+    };
+    block.instructions.pop();
+    true
+}
+
+fn try_fuse_terminal_call_return(block: &mut IRBlock) -> bool {
+    let returned = match &block.terminator {
+        IRTerminator::Return { value: Some(value) } => value.clone(),
+        _ => return false,
+    };
+
+    let Some(IRInst::Bytecode { inst, uses, defs }) = block.instructions.last().cloned() else {
+        return false;
+    };
+    if inst.opcode != codegen::Opcode::Call || !defs.iter().any(|value| *value == returned) {
+        return false;
+    }
+
+    let Some(callee) = uses
+        .iter()
+        .find(|value| matches!(value, IRValue::Register(reg, _) if *reg == inst.a))
+        .cloned()
+    else {
+        return false;
+    };
+
+    block.instructions.pop();
+    block.terminator = IRTerminator::CallReturn {
+        callee,
+        argc: inst.b,
+    };
+    true
+}
+
+fn compare_kind_for_binary(op: IRBinaryOp) -> Option<CompareKind> {
+    match op {
+        IRBinaryOp::Eq => Some(CompareKind::Eq),
+        IRBinaryOp::Lt => Some(CompareKind::Lt),
+        IRBinaryOp::Lte => Some(CompareKind::Lte),
+        _ => None,
+    }
+}
+
+fn can_sink_destination(inst: &IRInst) -> bool {
+    matches!(
+        inst,
+        IRInst::Mov { .. }
+            | IRInst::LoadConst { .. }
+            | IRInst::Unary { .. }
+            | IRInst::Binary { .. }
+    )
+}
+
+fn rewrite_destination(inst: &mut IRInst, dst: &IRValue) -> bool {
+    match inst {
+        IRInst::Mov { dst: current, .. }
+        | IRInst::LoadConst { dst: current, .. }
+        | IRInst::Unary { dst: current, .. }
+        | IRInst::Binary { dst: current, .. } => {
+            if *current == *dst {
+                false
+            } else {
+                *current = dst.clone();
+                true
+            }
+        }
+        IRInst::Phi { .. } | IRInst::Bytecode { .. } | IRInst::Nop => false,
+    }
+}
+
+fn value_used_after(block: &IRBlock, index: usize, value: &IRValue) -> bool {
+    block.instructions[index + 1..]
+        .iter()
+        .any(|inst| instruction_uses_value(inst, value))
+        || terminator_uses_value(&block.terminator, value)
+}
+
+fn instruction_uses_value(inst: &IRInst, value: &IRValue) -> bool {
+    match inst {
+        IRInst::Phi { incoming, .. } => incoming.iter().any(|(_, incoming)| incoming == value),
+        IRInst::Mov { src, .. } => src == value,
+        IRInst::LoadConst { .. } | IRInst::Nop => false,
+        IRInst::Unary { operand, .. } => operand == value,
+        IRInst::Binary { lhs, rhs, .. } => lhs == value || rhs == value,
+        IRInst::Bytecode { uses, .. } => uses.iter().any(|used| used == value),
+    }
+}
+
+fn terminator_uses_value(terminator: &IRTerminator, value: &IRValue) -> bool {
+    match terminator {
+        IRTerminator::Branch { condition, .. }
+        | IRTerminator::ConditionalReturn { condition, .. } => {
+            condition_uses_value(condition, value)
+        }
+        IRTerminator::Switch { key, .. }
+        | IRTerminator::Throw { value: key }
+        | IRTerminator::TailCall { callee: key, .. }
+        | IRTerminator::CallReturn { callee: key, .. } => key == value,
+        IRTerminator::Return {
+            value: Some(returned),
+        } => returned == value,
+        IRTerminator::Jump { .. }
+        | IRTerminator::Try { .. }
+        | IRTerminator::Return { value: None }
+        | IRTerminator::None => false,
+    }
+}
+
+fn infer_numeric_values(ir: &IRFunction) -> HashSet<IRValue> {
+    let mut numeric = HashSet::new();
+
+    loop {
+        let mut changed = false;
+
+        for block in &ir.blocks {
+            for inst in &block.instructions {
+                let Some(dst) = defined_value(inst) else {
+                    continue;
+                };
+
+                let is_numeric = match inst {
+                    IRInst::Phi { incoming, .. } => {
+                        !incoming.is_empty()
+                            && incoming
+                                .iter()
+                                .all(|(_, value)| value_is_numeric(value, &numeric))
+                    }
+                    IRInst::Mov { src, .. } => value_is_numeric(src, &numeric),
+                    IRInst::LoadConst { value, .. } => value::to_f64(*value).is_some(),
+                    IRInst::Unary { op, .. } => matches!(
+                        op,
+                        IRUnaryOp::ToNum
+                            | IRUnaryOp::Neg
+                            | IRUnaryOp::Inc
+                            | IRUnaryOp::Dec
+                            | IRUnaryOp::BitNot
+                    ),
+                    IRInst::Binary { op, lhs, rhs, .. } => match op {
+                        IRBinaryOp::Add => {
+                            value_is_numeric(lhs, &numeric) && value_is_numeric(rhs, &numeric)
+                        }
+                        IRBinaryOp::Sub
+                        | IRBinaryOp::Mul
+                        | IRBinaryOp::Div
+                        | IRBinaryOp::Mod
+                        | IRBinaryOp::Pow
+                        | IRBinaryOp::BitAnd
+                        | IRBinaryOp::BitOr
+                        | IRBinaryOp::BitXor
+                        | IRBinaryOp::Shl
+                        | IRBinaryOp::Shr
+                        | IRBinaryOp::Ushr => true,
+                        IRBinaryOp::Eq
+                        | IRBinaryOp::Lt
+                        | IRBinaryOp::Lte
+                        | IRBinaryOp::StrictEq
+                        | IRBinaryOp::StrictNeq
+                        | IRBinaryOp::LogicalAnd
+                        | IRBinaryOp::LogicalOr
+                        | IRBinaryOp::NullishCoalesce
+                        | IRBinaryOp::In
+                        | IRBinaryOp::Instanceof
+                        | IRBinaryOp::AddStr => false,
+                    },
+                    IRInst::Bytecode { inst, .. } => matches!(
+                        inst.opcode,
+                        Opcode::LoadI
+                            | Opcode::AddI32
+                            | Opcode::AddF64
+                            | Opcode::SubI32
+                            | Opcode::SubF64
+                            | Opcode::MulI32
+                            | Opcode::MulF64
+                            | Opcode::AddI32Fast
+                            | Opcode::AddF64Fast
+                            | Opcode::SubI32Fast
+                            | Opcode::MulI32Fast
+                            | Opcode::LoadInc
+                            | Opcode::LoadDec
+                    ),
+                    IRInst::Nop => false,
+                };
+
+                if is_numeric && numeric.insert(dst) {
+                    changed = true;
+                }
+            }
+        }
+
+        if !changed {
+            break;
+        }
+    }
+
+    numeric
+}
+
+fn value_is_numeric(value: &IRValue, numeric: &HashSet<IRValue>) -> bool {
+    match value {
+        IRValue::Constant(value) => value::to_f64(*value).is_some(),
+        IRValue::Register(_, _) => numeric.contains(value),
+    }
+}
+
+fn condition_uses_value(condition: &IRCondition, value: &IRValue) -> bool {
+    match condition {
+        IRCondition::Truthy {
+            value: condition_value,
+            ..
+        } => condition_value == value,
+        IRCondition::Compare { lhs, rhs, .. } => lhs == value || rhs == value,
+    }
 }
 
 fn live_intervals(ir: &IRFunction) -> Vec<LiveInterval> {

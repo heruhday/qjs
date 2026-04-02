@@ -13,6 +13,7 @@ atoms = { path = "../atoms" }
 built_ins = { path = "../built_ins" }
 cfg = { path = "../cfg" }
 codegen = { path = "../codegen" }
+direct_optimization = { path = "../direct_optimization" }
 gc = { path = "../gc" }
 heap = { path = "../heap" }
 itoa = "1"
@@ -22,3 +23,6 @@ serde = "1"
 serde_json = "1"
 ssa = { path = "../ssa" }
 value = { path = "../value" }
+
+[dev-dependencies]
+disasm = { path = "../disasm" }

@@ -238,6 +238,12 @@ pub struct RuntimeFeedback {
     pub osr_active: bool,
 }
 
+#[derive(Debug, Clone, Copy)]
+enum PendingCallContinuation {
+    AddReturnedToAcc { lhs: JSValue },
+    Call2SubIAddSecond { callee: JSValue, arg: JSValue },
+}
+
 #[derive(Debug)]
 pub struct FrameHeader {
     pub return_pc: usize,
@@ -248,6 +254,7 @@ pub struct FrameHeader {
     pub register_count: u32,
     pub construct_result: Option<JSValue>,
     pub scope_depth: usize,
+    pending_call: Option<PendingCallContinuation>,
 }
 
 #[derive(Debug)]
@@ -284,6 +291,7 @@ impl Frame {
                 register_count: 256,
                 construct_result,
                 scope_depth,
+                pending_call: None,
             },
             regs: [make_undefined(); 256],
             ic_vector: Vec::new(),
@@ -358,6 +366,7 @@ impl Frame {
         self.header.register_count = 256;
         self.header.construct_result = construct_result;
         self.header.scope_depth = scope_depth;
+        self.header.pending_call = None;
         self.regs.fill(make_undefined());
         self.regs[0] = this_value;
         self.ic_vector.clear();
@@ -424,6 +433,11 @@ impl FrameStack {
         self.sp -= 1;
         self.sync_current();
         true
+    }
+
+    #[inline(always)]
+    fn caller_frame_mut(&mut self) -> Option<&mut Frame> {
+        (self.sp > 0).then(|| &mut self.frames[self.sp - 1])
     }
 
     #[inline(always)]
@@ -512,6 +526,7 @@ pub struct VM {
 
     /// Dispatch table for threaded execution (hot opcodes only)
     dispatch_table: [Option<DispatchHandler>; 256],
+    threaded_stop_depth: Option<usize>,
 }
 
 enum CallAction {
@@ -685,6 +700,7 @@ pub enum Opcode {
     LteJmpLoop,
     NewObjInitProp,
     ProfileHotCall,
+    Call2SubIAdd,
     Call1SubI,
     JmpLteFalse,
     RetReg,
@@ -934,6 +950,7 @@ impl From<u8> for Opcode {
             222 => Self::LteJmpLoop,
             223 => Self::NewObjInitProp,
             224 => Self::ProfileHotCall,
+            239 => Self::Call2SubIAdd,
             240 => Self::Call1SubI,
             241 => Self::JmpLteFalse,
             242 => Self::RetReg,
@@ -1187,6 +1204,7 @@ impl Opcode {
             Self::LteJmpLoop => 222,
             Self::NewObjInitProp => 223,
             Self::ProfileHotCall => 224,
+            Self::Call2SubIAdd => 239,
             Self::Call1SubI => 240,
             Self::JmpLteFalse => 241,
             Self::RetReg => 242,
@@ -1664,6 +1682,7 @@ impl VM {
             console_echo: true,
             builtin_number_to_fixed: make_undefined(),
             dispatch_table: [None; 256],
+            threaded_stop_depth: None,
         };
 
         vm.init_dispatch_table();
@@ -1719,18 +1738,18 @@ impl VM {
             self.dispatch_table[i] = None;
         }
 
-        // Register handlers for hot opcodes (based on Fibonacci benchmark)
+        // Register handlers for the Pareto-hot opcode set and emitted superinstructions.
         self.dispatch_table[Opcode::Mov.as_u8() as usize] = Some(Self::handler_mov);
         self.dispatch_table[Opcode::LoadI.as_u8() as usize] = Some(Self::handler_loadi);
+        self.dispatch_table[Opcode::LoadK.as_u8() as usize] = Some(Self::handler_loadk);
         self.dispatch_table[Opcode::AddI32.as_u8() as usize] = Some(Self::handler_addi32);
         self.dispatch_table[Opcode::AddF64.as_u8() as usize] = Some(Self::handler_addf64);
         self.dispatch_table[Opcode::SubF64.as_u8() as usize] = Some(Self::handler_subf64);
         self.dispatch_table[Opcode::MulF64.as_u8() as usize] = Some(Self::handler_mulf64);
-        self.dispatch_table[Opcode::JmpFalse.as_u8() as usize] = Some(Self::handler_jmpfalse);
-        self.dispatch_table[Opcode::RetReg.as_u8() as usize] = Some(Self::handler_retreg);
-        self.dispatch_table[Opcode::LoadK.as_u8() as usize] = Some(Self::handler_loadk);
         self.dispatch_table[Opcode::Add.as_u8() as usize] = Some(Self::handler_add);
+        self.dispatch_table[Opcode::JmpFalse.as_u8() as usize] = Some(Self::handler_jmpfalse);
         self.dispatch_table[Opcode::Jmp.as_u8() as usize] = Some(Self::handler_jmp);
+        self.dispatch_table[Opcode::RetReg.as_u8() as usize] = Some(Self::handler_retreg);
         self.dispatch_table[Opcode::Load0.as_u8() as usize] = Some(Self::handler_load0);
         self.dispatch_table[Opcode::Load1.as_u8() as usize] = Some(Self::handler_load1);
         self.dispatch_table[Opcode::Eq.as_u8() as usize] = Some(Self::handler_eq);
@@ -1743,7 +1762,7 @@ impl VM {
         self.dispatch_table[Opcode::JmpLteFalseF64.as_u8() as usize] =
             Some(Self::handler_jmpltefalsef64);
 
-        // Register handlers for new superinstructions
+        // Arithmetic and branch superinstructions.
         self.dispatch_table[Opcode::AddI32Fast.as_u8() as usize] = Some(Self::handler_addi32fast);
         self.dispatch_table[Opcode::AddF64Fast.as_u8() as usize] = Some(Self::handler_addf64fast);
         self.dispatch_table[Opcode::SubI32Fast.as_u8() as usize] = Some(Self::handler_subi32fast);
@@ -1751,9 +1770,50 @@ impl VM {
         self.dispatch_table[Opcode::EqI32Fast.as_u8() as usize] = Some(Self::handler_eqi32fast);
         self.dispatch_table[Opcode::LtI32Fast.as_u8() as usize] = Some(Self::handler_lti32fast);
         self.dispatch_table[Opcode::JmpI32Fast.as_u8() as usize] = Some(Self::handler_jmpi32fast);
+        self.dispatch_table[Opcode::AddMov.as_u8() as usize] = Some(Self::handler_addmov);
+        self.dispatch_table[Opcode::EqJmpTrue.as_u8() as usize] = Some(Self::handler_eqjmptrue);
+        self.dispatch_table[Opcode::EqJmpFalse.as_u8() as usize] = Some(Self::handler_eqjmpfalse);
+        self.dispatch_table[Opcode::LtJmp.as_u8() as usize] = Some(Self::handler_ltjmp);
+        self.dispatch_table[Opcode::LteJmpLoop.as_u8() as usize] = Some(Self::handler_ltejmploop);
+        self.dispatch_table[Opcode::CmpJmp.as_u8() as usize] = Some(Self::handler_cmpjmp);
+        self.dispatch_table[Opcode::TestJmpTrue.as_u8() as usize] = Some(Self::handler_testjmptrue);
+        self.dispatch_table[Opcode::IncJmpFalseLoop.as_u8() as usize] =
+            Some(Self::handler_incjmpfalseloop);
+        self.dispatch_table[Opcode::IncAccJmp.as_u8() as usize] = Some(Self::handler_incaccjmp);
+
+        // Call and data-movement superinstructions.
         self.dispatch_table[Opcode::Call0.as_u8() as usize] = Some(Self::handler_call0);
         self.dispatch_table[Opcode::Call1.as_u8() as usize] = Some(Self::handler_call1);
         self.dispatch_table[Opcode::Call2.as_u8() as usize] = Some(Self::handler_call2);
+        self.dispatch_table[Opcode::LoadArg.as_u8() as usize] = Some(Self::handler_loadarg);
+        self.dispatch_table[Opcode::GetUpval.as_u8() as usize] = Some(Self::handler_getupval);
+        self.dispatch_table[Opcode::LoadClosure.as_u8() as usize] = Some(Self::handler_getupval);
+        self.dispatch_table[Opcode::Call2SubIAdd.as_u8() as usize] =
+            Some(Self::handler_call2subiadd);
+        self.dispatch_table[Opcode::Call1SubI.as_u8() as usize] = Some(Self::handler_call1subi);
+        self.dispatch_table[Opcode::RetIfLteI.as_u8() as usize] = Some(Self::handler_retifltei);
+        self.dispatch_table[Opcode::AddAccReg.as_u8() as usize] = Some(Self::handler_addaccreg);
+        self.dispatch_table[Opcode::Call1Add.as_u8() as usize] = Some(Self::handler_call1add);
+        self.dispatch_table[Opcode::Call2Add.as_u8() as usize] = Some(Self::handler_call2add);
+        self.dispatch_table[Opcode::LoadKAdd.as_u8() as usize] = Some(Self::handler_loadkadd);
+        self.dispatch_table[Opcode::LoadKCmp.as_u8() as usize] = Some(Self::handler_loadkcmp);
+        self.dispatch_table[Opcode::LoadKAddAcc.as_u8() as usize] = Some(Self::handler_loadkaddacc);
+        self.dispatch_table[Opcode::AddAccImm8Mov.as_u8() as usize] =
+            Some(Self::handler_addaccimm8mov);
+        self.dispatch_table[Opcode::MulAccMov.as_u8() as usize] = Some(Self::handler_mulaccmov);
+        self.dispatch_table[Opcode::LoadArgCall.as_u8() as usize] = Some(Self::handler_loadargcall);
+        self.dispatch_table[Opcode::LoadThisCall.as_u8() as usize] =
+            Some(Self::handler_loadthiscall);
+        self.dispatch_table[Opcode::GetPropIcCall.as_u8() as usize] =
+            Some(Self::handler_getpropiccall);
+        self.dispatch_table[Opcode::GetPropCall.as_u8() as usize] = Some(Self::handler_getpropcall);
+        self.dispatch_table[Opcode::GetPropAccCall.as_u8() as usize] =
+            Some(Self::handler_getpropacccall);
+        self.dispatch_table[Opcode::GetLengthIcCall.as_u8() as usize] =
+            Some(Self::handler_getlengthiccall);
+        self.dispatch_table[Opcode::GetPropChainAcc.as_u8() as usize] =
+            Some(Self::handler_getpropchainacc);
+        self.dispatch_table[Opcode::RetU.as_u8() as usize] = Some(Self::handler_retu);
     }
 
     // New handler functions for superinstructions
@@ -1969,6 +2029,330 @@ impl VM {
         }
     }
 
+    fn handler_addmov(vm: &mut VM, insn: u32) -> ControlFlow {
+        let a = ((insn >> 8) & 0xFF) as usize;
+        let b = ((insn >> 16) & 0xFF) as usize;
+        let c = ((insn >> 24) & 0xFF) as usize;
+        let result = vm.add_values(vm.frame.regs[b], vm.frame.regs[c]);
+        vm.frame.regs[ACC] = result;
+        vm.frame.regs[a] = result;
+        ControlFlow::Continue
+    }
+
+    fn handler_eqjmptrue(vm: &mut VM, insn: u32) -> ControlFlow {
+        let a = ((insn >> 8) & 0xFF) as i8 as i16;
+        let b = ((insn >> 16) & 0xFF) as usize;
+        let c = ((insn >> 24) & 0xFF) as usize;
+        if vm.abstract_equal(vm.frame.regs[b], vm.frame.regs[c]) {
+            vm.jump_by(a);
+        }
+        ControlFlow::Continue
+    }
+
+    fn handler_eqjmpfalse(vm: &mut VM, insn: u32) -> ControlFlow {
+        let a = ((insn >> 8) & 0xFF) as i8 as i16;
+        let b = ((insn >> 16) & 0xFF) as usize;
+        let c = ((insn >> 24) & 0xFF) as usize;
+        if !vm.abstract_equal(vm.frame.regs[b], vm.frame.regs[c]) {
+            vm.jump_by(a);
+        }
+        ControlFlow::Continue
+    }
+
+    fn handler_ltjmp(vm: &mut VM, insn: u32) -> ControlFlow {
+        let a = ((insn >> 8) & 0xFF) as i8 as i16;
+        let b = ((insn >> 16) & 0xFF) as usize;
+        let c = ((insn >> 24) & 0xFF) as usize;
+        if vm.less_than(vm.frame.regs[b], vm.frame.regs[c]) {
+            vm.jump_by(a);
+        }
+        ControlFlow::Continue
+    }
+
+    fn handler_ltejmploop(vm: &mut VM, insn: u32) -> ControlFlow {
+        let a = ((insn >> 8) & 0xFF) as i8 as i16;
+        let b = ((insn >> 16) & 0xFF) as usize;
+        let c = ((insn >> 24) & 0xFF) as usize;
+        if vm.less_than_or_equal(vm.frame.regs[b], vm.frame.regs[c]) {
+            vm.jump_by(a);
+        }
+        ControlFlow::Continue
+    }
+
+    fn handler_cmpjmp(vm: &mut VM, insn: u32) -> ControlFlow {
+        let a = ((insn >> 8) & 0xFF) as usize;
+        let b = ((insn >> 16) & 0xFF) as usize;
+        let c = ((insn >> 24) & 0xFF) as i8 as i16;
+        if vm.less_than(vm.frame.regs[a], vm.frame.regs[b]) {
+            vm.jump_by(c);
+        }
+        ControlFlow::Continue
+    }
+
+    fn handler_testjmptrue(vm: &mut VM, insn: u32) -> ControlFlow {
+        let a = ((insn >> 8) & 0xFF) as usize;
+        let sbx = ((insn >> 16) & 0xFFFF) as u16 as i16;
+        if vm.is_truthy_value(vm.frame.regs[a]) {
+            vm.jump_by(sbx);
+        }
+        ControlFlow::Continue
+    }
+
+    fn handler_incjmpfalseloop(vm: &mut VM, insn: u32) -> ControlFlow {
+        let a = ((insn >> 8) & 0xFF) as usize;
+        let sbx = ((insn >> 16) & 0xFFFF) as u16 as i16;
+        vm.frame.regs[ACC] = vm.inc_value(vm.frame.regs[ACC]);
+        if !vm.is_truthy_value(vm.frame.regs[a]) {
+            vm.jump_by(sbx);
+        }
+        ControlFlow::Continue
+    }
+
+    fn handler_incaccjmp(vm: &mut VM, insn: u32) -> ControlFlow {
+        let sbx = ((insn >> 16) & 0xFFFF) as u16 as i16;
+        vm.frame.regs[ACC] = vm.inc_value(vm.frame.regs[ACC]);
+        vm.jump_by(sbx);
+        ControlFlow::Continue
+    }
+
+    fn handler_addaccreg(vm: &mut VM, insn: u32) -> ControlFlow {
+        let a = ((insn >> 8) & 0xFF) as usize;
+        let b = ((insn >> 16) & 0xFF) as usize;
+        vm.frame.regs[ACC] = vm.add_values(vm.frame.regs[a], vm.frame.regs[b]);
+        ControlFlow::Continue
+    }
+
+    fn handler_call1add(vm: &mut VM, insn: u32) -> ControlFlow {
+        let a = ((insn >> 8) & 0xFF) as usize;
+        let b = ((insn >> 16) & 0xFF) as usize;
+        let callee = vm.frame.regs[a];
+        let arg = vm.frame.regs[b];
+        let lhs = vm.frame.regs[ACC];
+        match vm.dispatch_call_value(callee, vm.frame.regs[0], &[arg]) {
+            CallAction::Returned(result) => {
+                vm.frame.regs[ACC] = vm.add_values(lhs, result);
+            }
+            CallAction::EnteredFrame => {
+                if let Some(caller) = vm.frame.caller_frame_mut() {
+                    caller.header.pending_call =
+                        Some(PendingCallContinuation::AddReturnedToAcc { lhs });
+                }
+            }
+        }
+        ControlFlow::Continue
+    }
+
+    fn handler_call2add(vm: &mut VM, insn: u32) -> ControlFlow {
+        let a = ((insn >> 8) & 0xFF) as usize;
+        let b = ((insn >> 16) & 0xFF) as usize;
+        let c = ((insn >> 24) & 0xFF) as usize;
+        let callee = vm.frame.regs[a];
+        let arg1 = vm.frame.regs[b];
+        let arg2 = vm.frame.regs[c];
+        let lhs = vm.frame.regs[ACC];
+        match vm.dispatch_call_value(callee, vm.frame.regs[0], &[arg1, arg2]) {
+            CallAction::Returned(result) => {
+                vm.frame.regs[ACC] = vm.add_values(lhs, result);
+            }
+            CallAction::EnteredFrame => {
+                if let Some(caller) = vm.frame.caller_frame_mut() {
+                    caller.header.pending_call =
+                        Some(PendingCallContinuation::AddReturnedToAcc { lhs });
+                }
+            }
+        }
+        ControlFlow::Continue
+    }
+
+    fn handler_call2subiadd(vm: &mut VM, insn: u32) -> ControlFlow {
+        let a = ((insn >> 8) & 0xFF) as usize;
+        let b = ((insn >> 16) & 0xFF) as usize;
+        let imm = ((insn >> 24) & 0xFF) as u8 as i8;
+        let next_imm = imm.wrapping_add(1);
+        let callee = vm.frame.regs[a];
+        let arg1 = vm.sub_immediate_value(vm.frame.regs[b], imm);
+        let arg2 = vm.sub_immediate_value(vm.frame.regs[b], next_imm);
+        match vm.dispatch_call_value(callee, vm.frame.regs[0], &[arg1]) {
+            CallAction::Returned(result1) => {
+                match vm.dispatch_call_value(callee, vm.frame.regs[0], &[arg2]) {
+                    CallAction::Returned(result2) => {
+                        vm.frame.regs[ACC] = vm.add_values(result1, result2);
+                    }
+                    CallAction::EnteredFrame => {
+                        if let Some(caller) = vm.frame.caller_frame_mut() {
+                            caller.header.pending_call =
+                                Some(PendingCallContinuation::AddReturnedToAcc { lhs: result1 });
+                        }
+                    }
+                }
+            }
+            CallAction::EnteredFrame => {
+                if let Some(caller) = vm.frame.caller_frame_mut() {
+                    caller.header.pending_call =
+                        Some(PendingCallContinuation::Call2SubIAddSecond { callee, arg: arg2 });
+                }
+            }
+        }
+        ControlFlow::Continue
+    }
+
+    fn handler_loadkadd(vm: &mut VM, insn: u32) -> ControlFlow {
+        let a = ((insn >> 8) & 0xFF) as usize;
+        let index = ((insn >> 16) & 0xFFFF) as usize;
+        let constant = vm.constant_or_undefined(index);
+        vm.frame.regs[a] = vm.add_values(constant, vm.frame.regs[ACC]);
+        ControlFlow::Continue
+    }
+
+    fn handler_loadkcmp(vm: &mut VM, insn: u32) -> ControlFlow {
+        let a = ((insn >> 8) & 0xFF) as usize;
+        let index = ((insn >> 16) & 0xFFFF) as usize;
+        let constant = vm.constant_or_undefined(index);
+        vm.frame.regs[ACC] = make_bool(vm.less_than(constant, vm.frame.regs[a]));
+        ControlFlow::Continue
+    }
+
+    fn handler_loadkaddacc(vm: &mut VM, insn: u32) -> ControlFlow {
+        let index = ((insn >> 16) & 0xFFFF) as usize;
+        let constant = vm.constant_or_undefined(index);
+        vm.frame.regs[ACC] = vm.add_values(constant, vm.frame.regs[ACC]);
+        ControlFlow::Continue
+    }
+
+    fn handler_addaccimm8mov(vm: &mut VM, insn: u32) -> ControlFlow {
+        let a = ((insn >> 8) & 0xFF) as usize;
+        let b = ((insn >> 16) & 0xFF) as i8 as i32;
+        vm.frame.regs[ACC] = vm.binary_numeric_op(vm.frame.regs[ACC], make_int32(b), |x, y| x + y);
+        vm.frame.regs[a] = vm.frame.regs[ACC];
+        ControlFlow::Continue
+    }
+
+    fn handler_mulaccmov(vm: &mut VM, insn: u32) -> ControlFlow {
+        let a = ((insn >> 8) & 0xFF) as usize;
+        let b = ((insn >> 16) & 0xFF) as usize;
+        vm.frame.regs[ACC] = vm.mul_values(vm.frame.regs[ACC], vm.frame.regs[b]);
+        vm.frame.regs[a] = vm.frame.regs[ACC];
+        ControlFlow::Continue
+    }
+
+    fn handler_loadargcall(vm: &mut VM, insn: u32) -> ControlFlow {
+        let a = ((insn >> 8) & 0xFF) as usize;
+        let b = ((insn >> 16) & 0xFF) as usize;
+        vm.frame.regs[a] = vm.frame.arg(b);
+        let action = vm.dispatch_call_value(vm.frame.regs[a], vm.frame.regs[0], &[]);
+        vm.store_call_result(action)
+    }
+
+    fn handler_loadthiscall(vm: &mut VM, _insn: u32) -> ControlFlow {
+        let action = vm.dispatch_call_value(vm.frame.regs[0], vm.frame.regs[0], &[]);
+        vm.store_call_result(action)
+    }
+
+    fn handler_getpropiccall(vm: &mut VM, insn: u32) -> ControlFlow {
+        let a = ((insn >> 8) & 0xFF) as usize;
+        let b = ((insn >> 16) & 0xFF) as usize;
+        let c = ((insn >> 24) & 0xFF) as usize;
+        let key = Self::property_key_from_immediate(c as u16);
+        let this_value = vm.frame.regs[b];
+        vm.feedback.last_ic_slot = Some(c);
+        let callee = vm.get_property_via_ic(c, this_value, key);
+        vm.frame.regs[a] = callee;
+        let action = vm.invoke_method_call(callee, this_value, 0, a + 1);
+        vm.store_call_result(action)
+    }
+
+    fn handler_getpropcall(vm: &mut VM, insn: u32) -> ControlFlow {
+        let a = ((insn >> 8) & 0xFF) as usize;
+        let b = ((insn >> 16) & 0xFF) as usize;
+        let c = ((insn >> 24) & 0xFF) as u16;
+        let key = Self::property_key_from_immediate(c);
+        let this_value = vm.frame.regs[b];
+        let callee = vm.get_property(this_value, key);
+        vm.frame.regs[a] = callee;
+        let action = vm.dispatch_call_value(callee, this_value, &[]);
+        vm.store_call_result(action)
+    }
+
+    fn handler_getpropacccall(vm: &mut VM, insn: u32) -> ControlFlow {
+        let b = ((insn >> 16) & 0xFF) as usize;
+        let c = ((insn >> 24) & 0xFF) as usize;
+        let this_value = vm.frame.regs[b];
+        let key = vm.property_key_from_value(vm.frame.regs[c]);
+        let callee = vm.get_property(this_value, key);
+        let action = vm.dispatch_call_value(callee, this_value, &[]);
+        vm.store_call_result(action)
+    }
+
+    fn handler_getlengthiccall(vm: &mut VM, insn: u32) -> ControlFlow {
+        let b = ((insn >> 16) & 0xFF) as usize;
+        vm.frame.regs[ACC] = vm.get_length_value(vm.frame.regs[b]);
+        ControlFlow::Continue
+    }
+
+    fn handler_getpropchainacc(vm: &mut VM, insn: u32) -> ControlFlow {
+        let b = ((insn >> 16) & 0xFF) as usize;
+        let c = ((insn >> 24) & 0xFF) as u16;
+        let inner_reg = vm.array_index_from_value(vm.frame.regs[b]).unwrap_or(0);
+        let base = vm
+            .frame
+            .regs
+            .get(inner_reg)
+            .copied()
+            .unwrap_or(make_undefined());
+        vm.frame.regs[ACC] = vm.get_property(base, Self::property_key_from_immediate(c));
+        ControlFlow::Continue
+    }
+
+    fn handler_loadarg(vm: &mut VM, insn: u32) -> ControlFlow {
+        let a = ((insn >> 8) & 0xFF) as usize;
+        let b = ((insn >> 16) & 0xFF) as usize;
+        vm.frame.regs[a] = vm.frame.arg(b);
+        ControlFlow::Continue
+    }
+
+    fn handler_getupval(vm: &mut VM, insn: u32) -> ControlFlow {
+        let a = ((insn >> 8) & 0xFF) as usize;
+        let b = ((insn >> 16) & 0xFF) as usize;
+        vm.frame.regs[a] = vm
+            .current_function_value()
+            .and_then(|function_value| vm.get_function_upvalue(function_value, b))
+            .or_else(|| vm.upvalues.get(b).copied())
+            .unwrap_or(make_undefined());
+        ControlFlow::Continue
+    }
+
+    fn handler_call1subi(vm: &mut VM, insn: u32) -> ControlFlow {
+        let a = ((insn >> 8) & 0xFF) as usize;
+        let b = ((insn >> 16) & 0xFF) as usize;
+        let imm = ((insn >> 24) & 0xFF) as u8 as i8;
+        let callee = vm.frame.regs[a];
+        let arg = vm.sub_immediate_value(vm.frame.regs[b], imm);
+
+        match vm.dispatch_call_value(callee, vm.frame.regs[0], &[arg]) {
+            CallAction::Returned(result) => {
+                vm.frame.regs[ACC] = result;
+                ControlFlow::Continue
+            }
+            CallAction::EnteredFrame => ControlFlow::Continue,
+        }
+    }
+
+    fn handler_retifltei(vm: &mut VM, insn: u32) -> ControlFlow {
+        let a = ((insn >> 8) & 0xFF) as usize;
+        let b = ((insn >> 16) & 0xFF) as usize;
+        let c = ((insn >> 24) & 0xFF) as usize;
+
+        if vm.less_than_or_equal(vm.frame.regs[a], vm.frame.regs[b]) {
+            return vm.finish_frame_exit(vm.frame.regs[c]);
+        }
+
+        ControlFlow::Continue
+    }
+
+    fn handler_retu(vm: &mut VM, _insn: u32) -> ControlFlow {
+        vm.finish_frame_exit(make_undefined())
+    }
+
     // Handler functions for hot opcodes
     fn handler_mov(vm: &mut VM, insn: u32) -> ControlFlow {
         let a = ((insn >> 8) & 0xFF) as usize;
@@ -2090,11 +2474,7 @@ impl VM {
 
     fn handler_retreg(vm: &mut VM, insn: u32) -> ControlFlow {
         let a = ((insn >> 8) & 0xFF) as usize;
-
-        if !vm.exit_frame(vm.frame.regs[a]) {
-            return ControlFlow::Stop;
-        }
-        ControlFlow::Continue
+        vm.finish_frame_exit(vm.frame.regs[a])
     }
 
     fn handler_loadk(vm: &mut VM, insn: u32) -> ControlFlow {
@@ -2111,8 +2491,7 @@ impl VM {
     fn handler_add(vm: &mut VM, insn: u32) -> ControlFlow {
         let b = ((insn >> 16) & 0xFF) as usize;
         let c = ((insn >> 24) & 0xFF) as usize;
-        let (lhs, rhs) = vm.value_pair(vm.frame.regs[b], vm.frame.regs[c]);
-        vm.frame.regs[ACC] = lhs.add(&rhs).raw();
+        vm.frame.regs[ACC] = vm.add_values(vm.frame.regs[b], vm.frame.regs[c]);
         ControlFlow::Continue
     }
 
@@ -3349,6 +3728,14 @@ impl VM {
     }
 
     fn less_than(&mut self, lhs: JSValue, rhs: JSValue) -> bool {
+        if lhs.is_int() && rhs.is_int() {
+            return lhs.int_payload_unchecked() < rhs.int_payload_unchecked();
+        }
+
+        if let Some((left, right)) = self.fast_number_pair(lhs, rhs) {
+            return left < right;
+        }
+
         if is_string(lhs) && is_string(rhs) {
             return self.string_text(lhs) < self.string_text(rhs);
         }
@@ -3359,11 +3746,110 @@ impl VM {
     }
 
     fn less_than_or_equal(&mut self, lhs: JSValue, rhs: JSValue) -> bool {
+        if lhs.is_int() && rhs.is_int() {
+            return lhs.int_payload_unchecked() <= rhs.int_payload_unchecked();
+        }
+
+        if let Some((left, right)) = self.fast_number_pair(lhs, rhs) {
+            return left <= right;
+        }
+
         self.less_than(lhs, rhs) || self.strict_equal(lhs, rhs)
     }
 
     fn fast_number_pair(&self, lhs: JSValue, rhs: JSValue) -> Option<(f64, f64)> {
         Some((to_f64(lhs)?, to_f64(rhs)?))
+    }
+
+    fn constant_or_undefined(&self, index: usize) -> JSValue {
+        self.const_pool
+            .get(index)
+            .copied()
+            .unwrap_or(make_undefined())
+    }
+
+    fn should_stop_after_frame_exit(&self) -> bool {
+        self.threaded_stop_depth == Some(self.frame.depth())
+    }
+
+    fn finish_frame_exit(&mut self, result: JSValue) -> ControlFlow {
+        if !self.exit_frame(result) || self.should_stop_after_frame_exit() {
+            ControlFlow::Stop
+        } else {
+            ControlFlow::Continue
+        }
+    }
+
+    fn store_call_result(&mut self, action: CallAction) -> ControlFlow {
+        if let CallAction::Returned(result) = action {
+            self.frame.regs[ACC] = result;
+        }
+        ControlFlow::Continue
+    }
+
+    fn add_values(&mut self, lhs: JSValue, rhs: JSValue) -> JSValue {
+        if lhs.is_int() && rhs.is_int() {
+            let lhs_int = lhs.int_payload_unchecked();
+            let rhs_int = rhs.int_payload_unchecked();
+            if let Some(result) = lhs_int.checked_add(rhs_int) {
+                return make_int32(result);
+            }
+        }
+
+        if let Some((lhs, rhs)) = self.fast_number_pair(lhs, rhs) {
+            return make_number(lhs + rhs);
+        }
+
+        let (lhs, rhs) = self.value_pair(lhs, rhs);
+        lhs.add(&rhs).raw()
+    }
+
+    fn mul_values(&mut self, lhs: JSValue, rhs: JSValue) -> JSValue {
+        if lhs.is_int() && rhs.is_int() {
+            let lhs_int = lhs.int_payload_unchecked();
+            let rhs_int = rhs.int_payload_unchecked();
+            if let Some(result) = lhs_int.checked_mul(rhs_int) {
+                return make_int32(result);
+            }
+        }
+
+        if let Some((lhs, rhs)) = self.fast_number_pair(lhs, rhs) {
+            return make_number(lhs * rhs);
+        }
+
+        let (lhs, rhs) = self.value_pair(lhs, rhs);
+        lhs.mul(&rhs).raw()
+    }
+
+    fn sub_immediate_value(&mut self, value: JSValue, imm: i8) -> JSValue {
+        let imm_i32 = i32::from(imm);
+        if value.is_int() {
+            let value_int = value.int_payload_unchecked();
+            if let Some(result) = value_int.checked_sub(imm_i32) {
+                return make_int32(result);
+            }
+        }
+
+        if let Some(number) = to_f64(value) {
+            return make_number(number - f64::from(imm));
+        }
+
+        self.binary_numeric_op(value, make_int32(imm_i32), |x, y| x - y)
+    }
+
+    fn inc_value(&mut self, value: JSValue) -> JSValue {
+        if value.is_int() {
+            let int_val = value.int_payload_unchecked();
+            if let Some(result) = int_val.checked_add(1) {
+                return make_int32(result);
+            }
+        }
+
+        if let Some(number) = to_f64(value) {
+            return make_number(number + 1.0);
+        }
+
+        self.value_op(value).inc().raw()
     }
 
     fn write_result_reg(&mut self, dst: usize, value: JSValue) {
@@ -4157,8 +4643,44 @@ impl VM {
         gc::collect_garbage(self);
     }
 
+    fn process_pending_call_continuation(&mut self) -> bool {
+        let Some(pending) = self.frame.header.pending_call.take() else {
+            return false;
+        };
+
+        match pending {
+            PendingCallContinuation::AddReturnedToAcc { lhs } => {
+                self.frame.regs[ACC] = self.add_values(lhs, self.frame.regs[ACC]);
+            }
+            PendingCallContinuation::Call2SubIAddSecond { callee, arg } => {
+                let lhs = self.frame.regs[ACC];
+                match self.dispatch_call_value(callee, self.frame.regs[0], &[arg]) {
+                    CallAction::Returned(result) => {
+                        self.frame.regs[ACC] = self.add_values(lhs, result);
+                    }
+                    CallAction::EnteredFrame => {
+                        if let Some(caller) = self.frame.caller_frame_mut() {
+                            caller.header.pending_call =
+                                Some(PendingCallContinuation::AddReturnedToAcc { lhs });
+                        }
+                    }
+                }
+            }
+        }
+
+        true
+    }
+
     fn run_inner(&mut self, stop_at_depth: Option<usize>) {
-        while self.pc < self.bytecode.len() {
+        loop {
+            if self.process_pending_call_continuation() {
+                continue;
+            }
+
+            if self.pc >= self.bytecode.len() {
+                return;
+            }
+
             let insn = self.bytecode[self.pc];
             self.pc += 1;
 
@@ -4191,8 +4713,7 @@ impl VM {
                         .unwrap_or(make_undefined());
                 }
                 Opcode::Add => {
-                    let (lhs, rhs) = self.value_pair(self.frame.regs[b], self.frame.regs[c]);
-                    self.frame.regs[ACC] = lhs.add(&rhs).raw();
+                    self.frame.regs[ACC] = self.add_values(self.frame.regs[b], self.frame.regs[c]);
                 }
                 Opcode::GetPropIc => {
                     let key = Self::property_key_from_immediate(c as u16);
@@ -4203,13 +4724,44 @@ impl VM {
                     CallAction::Returned(result) => self.frame.regs[ACC] = result,
                     CallAction::EnteredFrame => continue,
                 },
+                Opcode::Call2SubIAdd => {
+                    let imm = c as u8 as i8;
+                    let next_imm = imm.wrapping_add(1);
+                    let callee = self.frame.regs[a];
+                    let arg1 = self.sub_immediate_value(self.frame.regs[b], imm);
+                    let arg2 = self.sub_immediate_value(self.frame.regs[b], next_imm);
+                    match self.dispatch_call_value(callee, self.frame.regs[0], &[arg1]) {
+                        CallAction::Returned(result1) => {
+                            match self.dispatch_call_value(callee, self.frame.regs[0], &[arg2]) {
+                                CallAction::Returned(result2) => {
+                                    self.frame.regs[ACC] = self.add_values(result1, result2);
+                                }
+                                CallAction::EnteredFrame => {
+                                    if let Some(caller) = self.frame.caller_frame_mut() {
+                                        caller.header.pending_call =
+                                            Some(PendingCallContinuation::AddReturnedToAcc {
+                                                lhs: result1,
+                                            });
+                                    }
+                                    continue;
+                                }
+                            }
+                        }
+                        CallAction::EnteredFrame => {
+                            if let Some(caller) = self.frame.caller_frame_mut() {
+                                caller.header.pending_call =
+                                    Some(PendingCallContinuation::Call2SubIAddSecond {
+                                        callee,
+                                        arg: arg2,
+                                    });
+                            }
+                            continue;
+                        }
+                    }
+                }
                 Opcode::Call1SubI => {
                     let callee = self.frame.regs[a];
-                    let arg = self.binary_numeric_op(
-                        self.frame.regs[b],
-                        make_int32(c as i8 as i32),
-                        |x, y| x - y,
-                    );
+                    let arg = self.sub_immediate_value(self.frame.regs[b], c as i8);
                     match self.dispatch_call_value(callee, self.frame.regs[0], &[arg]) {
                         CallAction::Returned(result) => self.frame.regs[ACC] = result,
                         CallAction::EnteredFrame => continue,
@@ -5347,19 +5899,24 @@ impl VM {
                 }
                 Opcode::AddAccReg => {
                     // AddAccReg a, b: ACC = reg[a] + reg[b]
-                    let (lhs, rhs) = self.value_pair(self.frame.regs[a], self.frame.regs[b]);
-                    self.frame.regs[ACC] = lhs.add(&rhs).raw();
+                    self.frame.regs[ACC] = self.add_values(self.frame.regs[a], self.frame.regs[b]);
                 }
                 Opcode::Call1Add => {
                     // Call1Add a, b: call reg[a] with 1 arg, add result to ACC
                     let callee = self.frame.regs[a];
                     let arg = self.frame.regs[b];
+                    let lhs = self.frame.regs[ACC];
                     match self.dispatch_call_value(callee, self.frame.regs[0], &[arg]) {
                         CallAction::Returned(result) => {
-                            let (lhs, rhs) = self.value_pair(self.frame.regs[ACC], result);
-                            self.frame.regs[ACC] = lhs.add(&rhs).raw();
+                            self.frame.regs[ACC] = self.add_values(lhs, result);
                         }
-                        CallAction::EnteredFrame => continue,
+                        CallAction::EnteredFrame => {
+                            if let Some(caller) = self.frame.caller_frame_mut() {
+                                caller.header.pending_call =
+                                    Some(PendingCallContinuation::AddReturnedToAcc { lhs });
+                            }
+                            continue;
+                        }
                     }
                 }
                 Opcode::Call2Add => {
@@ -5367,12 +5924,18 @@ impl VM {
                     let callee = self.frame.regs[a];
                     let arg1 = self.frame.regs[b];
                     let arg2 = self.frame.regs[c];
+                    let lhs = self.frame.regs[ACC];
                     match self.dispatch_call_value(callee, self.frame.regs[0], &[arg1, arg2]) {
                         CallAction::Returned(result) => {
-                            let (lhs, rhs) = self.value_pair(self.frame.regs[ACC], result);
-                            self.frame.regs[ACC] = lhs.add(&rhs).raw();
+                            self.frame.regs[ACC] = self.add_values(lhs, result);
                         }
-                        CallAction::EnteredFrame => continue,
+                        CallAction::EnteredFrame => {
+                            if let Some(caller) = self.frame.caller_frame_mut() {
+                                caller.header.pending_call =
+                                    Some(PendingCallContinuation::AddReturnedToAcc { lhs });
+                            }
+                            continue;
+                        }
                     }
                 }
                 Opcode::LoadKAdd => {
@@ -5415,6 +5978,7 @@ impl VM {
                 }
                 Opcode::CallRet => {
                     // CallRet a, b: call reg[a] with b args, return result
+                    let caller_depth = self.frame.depth();
                     match self.invoke_call(a, b) {
                         CallAction::Returned(result) => {
                             if !self.exit_frame(result) {
@@ -5425,7 +5989,17 @@ impl VM {
                             }
                             continue;
                         }
-                        CallAction::EnteredFrame => continue,
+                        CallAction::EnteredFrame => {
+                            self.run_until_frame_depth(caller_depth);
+                            let result = self.frame.regs[ACC];
+                            if !self.exit_frame(result) {
+                                return;
+                            }
+                            if stop_at_depth == Some(self.frame.depth()) {
+                                return;
+                            }
+                            continue;
+                        }
                     }
                 }
                 // Specialized opcodes (stubs for now)
@@ -5878,7 +6452,9 @@ impl VM {
     }
 
     fn run_until_frame_depth(&mut self, depth: usize) {
+        self.threaded_stop_depth = Some(depth);
         self.run_inner(Some(depth));
+        self.threaded_stop_depth = None;
     }
     pub fn optimize(&mut self) {
         let bytecode = std::mem::take(&mut self.bytecode);
@@ -5904,7 +6480,9 @@ impl VM {
             self.bytecode = bytecode;
             self.const_pool = const_pool;
         }
+        self.threaded_stop_depth = None;
         self.run_inner(None);
+        self.threaded_stop_depth = None;
     }
 }
 

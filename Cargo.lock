@@ -98,6 +98,7 @@ name = "direct_optimization"
 version = "1.0.0-dev"
 dependencies = [
  "codegen",
+ "disasm",
  "value",
 ]
 
@@ -297,6 +298,7 @@ dependencies = [
  "cfg",
  "codegen",
  "value",
+ "vm",
 ]
 
 [[package]]
@@ -332,6 +334,8 @@ dependencies = [
  "built_ins",
  "cfg",
  "codegen",
+ "direct_optimization",
+ "disasm",
  "gc",
  "heap",
  "itoa",

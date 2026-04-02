@@ -22,6 +22,17 @@ impl Pass for DeadCodeElimination {
             let mut retained = Vec::with_capacity(block.instructions.len());
 
             for inst in block.instructions.iter().rev() {
+                if let IRInst::Bytecode { uses, defs, .. } = inst {
+                    for def in defs {
+                        live.remove(def);
+                    }
+                    for value in uses {
+                        live.insert(value.clone());
+                    }
+                    retained.push(inst.clone());
+                    continue;
+                }
+
                 let Some(dst) = defined_value(inst) else {
                     retained.push(inst.clone());
                     continue;

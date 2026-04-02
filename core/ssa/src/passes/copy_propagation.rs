@@ -20,15 +20,23 @@ impl Pass for CopyPropagation {
 
                 match inst {
                     IRInst::Mov { dst, src } => {
-                        copies.insert(dst.clone(), src.clone());
+                        invalidate_copies(&mut copies, dst);
+                        if dst != src {
+                            copies.insert(dst.clone(), src.clone());
+                        }
                     }
                     IRInst::Phi { dst, .. }
                     | IRInst::LoadConst { dst, .. }
                     | IRInst::Unary { dst, .. }
                     | IRInst::Binary { dst, .. } => {
-                        copies.remove(dst);
+                        invalidate_copies(&mut copies, dst);
                     }
-                    IRInst::Bytecode { .. } | IRInst::Nop => {}
+                    IRInst::Bytecode { defs, .. } => {
+                        for def in defs {
+                            invalidate_copies(&mut copies, def);
+                        }
+                    }
+                    IRInst::Nop => {}
                 }
             }
 
@@ -161,4 +169,9 @@ fn resolve_copy(mut value: IRValue, copies: &HashMap<IRValue, IRValue>) -> IRVal
     }
 
     value
+}
+
+fn invalidate_copies(copies: &mut HashMap<IRValue, IRValue>, defined: &IRValue) {
+    let snapshot = copies.clone();
+    copies.retain(|dst, src| dst != defined && resolve_copy(src.clone(), &snapshot) != *defined);
 }

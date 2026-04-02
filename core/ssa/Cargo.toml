@@ -12,3 +12,6 @@ description.workspace = true
 cfg = { path = "../cfg" }
 codegen = { path = "../codegen" }
 value = { path = "../value" }
+
+[dev-dependencies]
+vm = { path = "../vm" }

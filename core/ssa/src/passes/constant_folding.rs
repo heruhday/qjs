@@ -1,7 +1,7 @@
-use value::{JSValue, make_false, make_int32, make_number, make_true, to_f64};
-
 use crate::ir::{IRBinaryOp, IRFunction, IRInst, IRUnaryOp, IRValue};
 use crate::passes::Pass;
+
+use super::constant_eval::{fold_binary_constant, fold_unary_constant};
 
 pub struct ConstantFolding;
 
@@ -16,36 +16,12 @@ impl Pass for ConstantFolding {
         for block in &mut ir.blocks {
             for inst in &mut block.instructions {
                 let folded = match inst {
-                    IRInst::Binary { dst, op, lhs, rhs } => match op {
-                        IRBinaryOp::Add => {
-                            fold_binary(dst.clone(), lhs.clone(), rhs.clone(), |l, r| l + r)
-                        }
-                        IRBinaryOp::Sub => {
-                            fold_binary(dst.clone(), lhs.clone(), rhs.clone(), |l, r| l - r)
-                        }
-                        IRBinaryOp::Mul => {
-                            fold_binary(dst.clone(), lhs.clone(), rhs.clone(), |l, r| l * r)
-                        }
-                        IRBinaryOp::Div => {
-                            fold_binary(dst.clone(), lhs.clone(), rhs.clone(), |l, r| l / r)
-                        }
-                        IRBinaryOp::Eq => {
-                            fold_compare(dst.clone(), lhs.clone(), rhs.clone(), |l, r| l == r)
-                        }
-                        IRBinaryOp::Lt => {
-                            fold_compare(dst.clone(), lhs.clone(), rhs.clone(), |l, r| l < r)
-                        }
-                        IRBinaryOp::Lte => {
-                            fold_compare(dst.clone(), lhs.clone(), rhs.clone(), |l, r| l <= r)
-                        }
-                        _ => None,
-                    },
-                    IRInst::Unary { dst, op, operand } => match op {
-                        IRUnaryOp::Neg => {
-                            fold_unary_numeric(dst.clone(), operand.clone(), |value| -value)
-                        }
-                        _ => None,
-                    },
+                    IRInst::Binary { dst, op, lhs, rhs } => {
+                        fold_binary_inst(dst.clone(), *op, lhs.clone(), rhs.clone())
+                    }
+                    IRInst::Unary { dst, op, operand } => {
+                        fold_unary_inst(dst.clone(), *op, operand.clone())
+                    }
                     _ => None,
                 };
 
@@ -60,12 +36,7 @@ impl Pass for ConstantFolding {
     }
 }
 
-fn fold_binary(
-    dst: IRValue,
-    lhs: IRValue,
-    rhs: IRValue,
-    op: impl Fn(f64, f64) -> f64,
-) -> Option<IRInst> {
+fn fold_binary_inst(dst: IRValue, op: IRBinaryOp, lhs: IRValue, rhs: IRValue) -> Option<IRInst> {
     let IRValue::Constant(lhs) = lhs else {
         return None;
     };
@@ -73,57 +44,19 @@ fn fold_binary(
         return None;
     };
 
-    let lhs = to_f64(lhs)?;
-    let rhs = to_f64(rhs)?;
-    let folded = op(lhs, rhs);
-
     Some(IRInst::LoadConst {
         dst,
-        value: numeric_value(folded),
+        value: fold_binary_constant(op, lhs, rhs)?,
     })
 }
 
-fn fold_compare(
-    dst: IRValue,
-    lhs: IRValue,
-    rhs: IRValue,
-    op: impl Fn(f64, f64) -> bool,
-) -> Option<IRInst> {
-    let IRValue::Constant(lhs) = lhs else {
-        return None;
-    };
-    let IRValue::Constant(rhs) = rhs else {
-        return None;
-    };
-
-    let lhs = to_f64(lhs)?;
-    let rhs = to_f64(rhs)?;
-    Some(IRInst::LoadConst {
-        dst,
-        value: if op(lhs, rhs) {
-            make_true()
-        } else {
-            make_false()
-        },
-    })
-}
-
-fn fold_unary_numeric(dst: IRValue, operand: IRValue, op: impl Fn(f64) -> f64) -> Option<IRInst> {
+fn fold_unary_inst(dst: IRValue, op: IRUnaryOp, operand: IRValue) -> Option<IRInst> {
     let IRValue::Constant(operand) = operand else {
         return None;
     };
 
-    let operand = to_f64(operand)?;
     Some(IRInst::LoadConst {
         dst,
-        value: numeric_value(op(operand)),
+        value: fold_unary_constant(op, operand)?,
     })
-}
-
-fn numeric_value(number: f64) -> JSValue {
-    if number.fract() == 0.0 && number >= i32::MIN as f64 && number <= i32::MAX as f64 {
-        make_int32(number as i32)
-    } else {
-        make_number(number)
-    }
 }

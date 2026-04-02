@@ -100,6 +100,33 @@ fn optimizes_compiled_program() {
 }
 
 #[test]
+fn optimize_compiled_inlines_immediately_invoked_root_function() {
+    let compiled = compile_source(
+        "function normalize_suite() { let a = 1; let b = a + 1; console.log(b); } normalize_suite();",
+    )
+    .expect("compile");
+    let optimized = optimize_compiled(compiled);
+    let asm = disassemble_clean(&optimized.bytecode, &optimized.constants);
+
+    assert!(
+        !asm.iter().any(|line| line.starts_with("new_func ")),
+        "expected immediate root function declaration to inline away, got:\n{}",
+        asm.join("\n")
+    );
+    assert!(
+        !asm.iter().any(|line| line.starts_with("call_ret ")),
+        "expected immediate root function call to inline away, got:\n{}",
+        asm.join("\n")
+    );
+    assert!(
+        asm.iter().any(|line| line.starts_with("call_method1 ")),
+        "expected inlined root body to keep the console.log side effect, got:\n{}",
+        asm.join("\n")
+    );
+    assert_eq!(asm.last().map(String::as_str), Some("ret_u"));
+}
+
+#[test]
 fn while_false_branch_skips_loop_backedge() {
     let compiled = compile_source(
         "function sample() { let iter = 0; while (iter < 5) { iter++; } return iter; } sample();",
@@ -130,7 +157,7 @@ fn optimize_bytecode_preserves_numeric_loop_shape() {
     let asm = disassemble_clean(&optimized_bytecode, &optimized_constants);
 
     assert!(
-        asm.iter().any(|line| line == "ret_reg r1"),
+        asm.iter().any(|line| line.starts_with("ret_reg r")),
         "expected optimized loop to keep its return, got:\n{}",
         asm.join("\n")
     );
@@ -138,6 +165,178 @@ fn optimize_bytecode_preserves_numeric_loop_shape() {
         asm.iter()
             .any(|line| line.contains("jmp_lte") || line.contains("jmp_lte_f64")),
         "expected optimized loop to keep its loop branch, got:\n{}",
+        asm.join("\n")
+    );
+}
+
+#[test]
+fn optimize_bytecode_applies_direct_superinstruction_cleanup_after_ssa() {
+    let bytecode = vec![
+        encode_abc(Opcode::GetProp, 1, 0, 2),
+        encode_abc(Opcode::GetProp, 2, 1, 3),
+        encode_abc(Opcode::RetReg, 2, 0, 0),
+    ];
+    let (optimized_bytecode, optimized_constants) = optimize_bytecode(bytecode, Vec::new());
+    let asm = disassemble_clean(&optimized_bytecode, &optimized_constants);
+
+    assert!(
+        asm.iter().any(|line| line.starts_with("get_prop2_ic ")),
+        "expected direct superinstruction fusion after SSA, got:\n{}",
+        asm.join("\n")
+    );
+    assert_eq!(asm.last().map(String::as_str), Some("ret_reg r2"));
+}
+
+#[test]
+fn optimize_bytecode_specializes_fixed_arity_calls() {
+    let bytecode = vec![
+        encode_abc(Opcode::Call, 4, 2, 0),
+        encode_abc(Opcode::RetU, 0, 0, 0),
+    ];
+    let (optimized_bytecode, optimized_constants) = optimize_bytecode(bytecode, Vec::new());
+    let asm = disassemble_clean(&optimized_bytecode, &optimized_constants);
+
+    assert_eq!(asm[0], "call2 r4, r5, r6");
+    assert_eq!(asm[1], "ret_u");
+}
+
+#[test]
+fn optimize_bytecode_fuses_call_followed_by_return() {
+    let bytecode = vec![
+        encode_abc(Opcode::Call, 7, 0, 0),
+        encode_abc(Opcode::Ret, 0, 0, 0),
+    ];
+    let (optimized_bytecode, optimized_constants) = optimize_bytecode(bytecode, Vec::new());
+    let asm = disassemble_clean(&optimized_bytecode, &optimized_constants);
+
+    assert_eq!(asm, vec!["call_ret r7, 0"]);
+}
+
+#[test]
+fn optimize_bytecode_removes_dead_call_result_copies_across_name_and_method_ops() {
+    let bytecode = vec![
+        encode_abc(Opcode::Call2, 4, 5, 6),
+        encode_abc(Opcode::Mov, 4, 255, 0),
+        encode_abx(Opcode::LoadName, 7, 0),
+        encode_abx(Opcode::LoadK, 8, 0),
+        encode_abx(Opcode::CallMethod1, 7, 0),
+        encode_abc(Opcode::RetU, 0, 0, 0),
+    ];
+    let constants = vec![make_number(1.0)];
+    let (optimized_bytecode, optimized_constants) = optimize_bytecode(bytecode, constants);
+    let asm = disassemble_clean(&optimized_bytecode, &optimized_constants);
+
+    assert!(
+        !asm.iter().any(|line| line.starts_with("mov ")),
+        "expected dead ACC copy after call2 to be removed, got:\n{}",
+        asm.join("\n")
+    );
+    assert!(asm.iter().any(|line| line.starts_with("call2 ")));
+    assert!(asm.iter().any(|line| line.starts_with("call_method1 ")));
+}
+
+#[test]
+fn optimize_bytecode_propagates_callee_alias_into_explicit_call2() {
+    let bytecode = vec![
+        encode_abc(Opcode::Mov, 7, 3, 0),
+        encode_abx(Opcode::LoadK, 8, 0),
+        encode_abx(Opcode::NewFunc, 9, 1),
+        encode_abc(Opcode::Call2, 7, 8, 9),
+        encode_abc(Opcode::RetU, 0, 0, 0),
+    ];
+    let constants = vec![make_number(1.0), make_number(2.0)];
+    let (optimized_bytecode, optimized_constants) = optimize_bytecode(bytecode, constants);
+    let asm = disassemble_clean(&optimized_bytecode, &optimized_constants);
+
+    assert!(
+        !asm.iter().any(|line| line.starts_with("mov ")),
+        "expected callee copy to fold into call2, got:\n{}",
+        asm.join("\n")
+    );
+    assert!(
+        asm.iter().any(|line| line.starts_with("call2 ")),
+        "expected explicit call2 to remain after folding the callee copy, got:\n{}",
+        asm.join("\n")
+    );
+}
+
+#[test]
+fn optimize_bytecode_retargets_simple_method_arg_builder_into_call_bundle() {
+    let bytecode = vec![
+        encode_asbx(Opcode::LoadI, 1, 2),
+        encode_abx(Opcode::LoadName, 3, 0),
+        encode_abc(Opcode::Mov, 4, 1, 0),
+        encode_abx(Opcode::CallMethod1, 3, 0),
+        encode_abc(Opcode::RetU, 0, 0, 0),
+    ];
+    let (optimized_bytecode, optimized_constants) = optimize_bytecode(bytecode, Vec::new());
+    let asm = disassemble_clean(&optimized_bytecode, &optimized_constants);
+
+    assert!(
+        !asm.iter().any(|line| line == "mov r4, r1, r0"),
+        "expected method argument copy to fold into the call bundle, got:\n{}",
+        asm.join("\n")
+    );
+    assert!(
+        asm.iter().any(|line| line == "load_i r4, 2"),
+        "expected the argument builder to retarget into the bundle slot, got:\n{}",
+        asm.join("\n")
+    );
+    assert!(
+        asm.iter()
+            .any(|line| line == "call_method1 r3, property[0], r4"),
+        "expected call_method1 to remain with the packed bundle, got:\n{}",
+        asm.join("\n")
+    );
+}
+
+#[test]
+fn optimize_bytecode_reruns_copy_prop_after_call_specialization() {
+    let bytecode = vec![
+        encode_abc(Opcode::LoadTrue, 0, 0, 0),
+        encode_abc(Opcode::Mov, 3, 255, 0),
+        encode_abx(Opcode::LoadK, 4, 0),
+        encode_abc(Opcode::Call, 2, 2, 0),
+        encode_abc(Opcode::RetU, 0, 0, 0),
+    ];
+    let constants = vec![make_number(1.0)];
+    let (optimized_bytecode, optimized_constants) = optimize_bytecode(bytecode, constants);
+    let asm = disassemble_clean(&optimized_bytecode, &optimized_constants);
+
+    assert!(
+        !asm.iter().any(|line| line == "mov r3, r255, r0"),
+        "expected ACC copy to disappear after call specialization cleanup, got:\n{}",
+        asm.join("\n")
+    );
+    assert!(
+        asm.iter()
+            .any(|line| line.starts_with("call2 ") && line.contains("r255")),
+        "expected specialized call2 to consume ACC directly, got:\n{}",
+        asm.join("\n")
+    );
+}
+
+#[test]
+fn optimize_bytecode_removes_dead_acc_copy_inside_try_region() {
+    let bytecode = vec![
+        encode_asbx(Opcode::Try, 0, 4),
+        encode_abc(Opcode::Call0, 1, 0, 0),
+        encode_abc(Opcode::Mov, 2, 255, 0),
+        encode_abc(Opcode::EndTry, 0, 0, 0),
+        encode_asbx(Opcode::Jmp, 0, 5),
+        encode_abx(Opcode::Enter, 0, 1),
+        encode_abx(Opcode::CreateEnv, 3, 0),
+        encode_abc(Opcode::Catch, 4, 0, 0),
+        encode_abc(Opcode::Leave, 0, 0, 0),
+        encode_abc(Opcode::Finally, 0, 0, 0),
+        encode_abc(Opcode::RetU, 0, 0, 0),
+    ];
+    let (optimized_bytecode, optimized_constants) = optimize_bytecode(bytecode, Vec::new());
+    let asm = disassemble_clean(&optimized_bytecode, &optimized_constants);
+
+    assert!(
+        !asm.iter().any(|line| line == "mov r2, r255, r0"),
+        "expected dead ACC copy in try body to be removed, got:\n{}",
         asm.join("\n")
     );
 }

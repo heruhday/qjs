@@ -1,10 +1,12 @@
 use std::collections::{HashMap, VecDeque};
 
 use cfg::{BlockId, CompareKind};
-use value::{JSValue, bool_from_value, is_truthy, make_bool, make_int32, make_number, to_f64};
+use value::{JSValue, bool_from_value, is_truthy};
 
 use crate::ir::{IRCondition, IRFunction, IRInst, IRTerminator, IRUnaryOp, IRValue};
 use crate::passes::{CfgSimplification, Pass};
+
+use super::constant_eval::{evaluate_compare, fold_binary_constant, fold_unary_constant};
 
 type Facts = HashMap<IRValue, JSValue>;
 type EdgeFacts = HashMap<(BlockId, BlockId), Facts>;
@@ -180,18 +182,22 @@ fn infer_instruction_constant(
 ) -> Option<JSValue> {
     match inst {
         IRInst::Phi { incoming, .. } => {
-            let mut incoming_values = incoming.iter().filter_map(|(pred, value)| {
-                edge_facts
-                    .get(&(*pred, block_id))
-                    .and_then(|facts| constant_for_value(value, facts))
-            });
+            let mut first = None;
 
-            let first = incoming_values.next()?;
-            if incoming_values.all(|value| value == first) {
-                Some(first)
-            } else {
-                None
+            for (pred, value) in incoming {
+                let Some(facts) = edge_facts.get(&(*pred, block_id)) else {
+                    continue;
+                };
+                let current = constant_for_value(value, facts)?;
+
+                match first {
+                    None => first = Some(current),
+                    Some(existing) if existing == current => {}
+                    Some(_) => return None,
+                }
             }
+
+            first
         }
         IRInst::Mov { src, .. } => constant_for_value(src, current),
         IRInst::LoadConst { value, .. } => Some(*value),
@@ -377,14 +383,7 @@ fn defined_value(inst: &IRInst) -> Option<IRValue> {
 
 fn infer_unary_constant(op: IRUnaryOp, operand: &IRValue, current: &Facts) -> Option<JSValue> {
     let operand = constant_for_value(operand, current)?;
-    match op {
-        IRUnaryOp::Neg => Some(numeric_value(-to_f64(operand)?)),
-        IRUnaryOp::Inc => Some(numeric_value(to_f64(operand)? + 1.0)),
-        IRUnaryOp::Dec => Some(numeric_value(to_f64(operand)? - 1.0)),
-        IRUnaryOp::IsUndef => Some(make_bool(operand.is_undefined())),
-        IRUnaryOp::IsNull => Some(make_bool(operand.is_null())),
-        _ => None,
-    }
+    fold_unary_constant(op, operand)
 }
 
 fn infer_binary_constant(
@@ -393,28 +392,9 @@ fn infer_binary_constant(
     rhs: &IRValue,
     current: &Facts,
 ) -> Option<JSValue> {
-    use crate::ir::IRBinaryOp;
-
-    match op {
-        IRBinaryOp::Add => fold_numeric(lhs, rhs, current, |lhs, rhs| lhs + rhs),
-        IRBinaryOp::Sub => fold_numeric(lhs, rhs, current, |lhs, rhs| lhs - rhs),
-        IRBinaryOp::Mul => fold_numeric(lhs, rhs, current, |lhs, rhs| lhs * rhs),
-        IRBinaryOp::Div => fold_numeric(lhs, rhs, current, |lhs, rhs| lhs / rhs),
-        IRBinaryOp::Eq => compare_constant(CompareKind::Eq, lhs, rhs, current),
-        IRBinaryOp::Lt => compare_constant(CompareKind::Lt, lhs, rhs, current),
-        IRBinaryOp::Lte => compare_constant(CompareKind::Lte, lhs, rhs, current),
-        IRBinaryOp::StrictEq => {
-            let lhs = constant_for_value(lhs, current)?;
-            let rhs = constant_for_value(rhs, current)?;
-            Some(make_bool(lhs == rhs))
-        }
-        IRBinaryOp::StrictNeq => {
-            let lhs = constant_for_value(lhs, current)?;
-            let rhs = constant_for_value(rhs, current)?;
-            Some(make_bool(lhs != rhs))
-        }
-        _ => None,
-    }
+    let lhs = constant_for_value(lhs, current)?;
+    let rhs = constant_for_value(rhs, current)?;
+    fold_binary_constant(op, lhs, rhs)
 }
 
 fn compare_constant(
@@ -423,25 +403,9 @@ fn compare_constant(
     rhs: &IRValue,
     current: &Facts,
 ) -> Option<JSValue> {
-    let lhs = to_f64(constant_for_value(lhs, current)?)?;
-    let rhs = to_f64(constant_for_value(rhs, current)?)?;
-    let value = match kind {
-        CompareKind::Eq => lhs == rhs,
-        CompareKind::Lt => lhs < rhs,
-        CompareKind::Lte => lhs <= rhs,
-    };
-    Some(make_bool(value))
-}
-
-fn fold_numeric(
-    lhs: &IRValue,
-    rhs: &IRValue,
-    current: &Facts,
-    op: impl Fn(f64, f64) -> f64,
-) -> Option<JSValue> {
-    let lhs = to_f64(constant_for_value(lhs, current)?)?;
-    let rhs = to_f64(constant_for_value(rhs, current)?)?;
-    Some(numeric_value(op(lhs, rhs)))
+    let lhs = constant_for_value(lhs, current)?;
+    let rhs = constant_for_value(rhs, current)?;
+    evaluate_compare(kind, lhs, rhs).map(value::make_bool)
 }
 
 fn evaluate_condition(condition: &IRCondition, current: &Facts) -> Option<bool> {
@@ -482,18 +446,6 @@ fn join_maps(left: &Facts, right: &Facts) -> Facts {
     }
 
     joined
-}
-
-fn numeric_value(number: f64) -> JSValue {
-    if number.is_finite()
-        && number.fract() == 0.0
-        && number >= i32::MIN as f64
-        && number <= i32::MAX as f64
-    {
-        make_int32(number as i32)
-    } else {
-        make_number(number)
-    }
 }
 
 fn push_unique_successor(edges: &mut Vec<(BlockId, Facts)>, block: BlockId, facts: Facts) {

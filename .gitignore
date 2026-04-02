@@ -1,2 +1,28 @@
-/target
-test262/
+# Rust build output
+/target/
+
+# Test suites
+/test262/
+
+# Ignore test files in root (not directories)
+test_*
+
+# Ignore todo / optimization notes
+todo*.md
+OPTIM*.md
+
+# Cargo lock (optional for libraries, keep for binaries)
+Cargo.lock
+
+# IDE / OS junk
+.DS_Store
+Thumbs.db
+*.log
+
+# Rust artifacts
+**/*.rs.bk
+
+# js file
+*.qjs
+*.js
+

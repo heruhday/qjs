@@ -11,3 +11,6 @@ description.workspace = true
 [dependencies]
 codegen = { path = "../codegen" }
 value = { path = "../value" }
+
+[dev-dependencies]
+disasm = { path = "../disasm" }

@@ -1,10 +1,12 @@
 use std::collections::{HashMap, VecDeque};
 
 use cfg::{BlockId, CompareKind};
-use value::{JSValue, bool_from_value, is_truthy, make_bool, make_int32, make_number, to_f64};
+use value::{JSValue, bool_from_value, is_truthy, make_bool, make_int32, make_number};
 
 use crate::ir::{IRCondition, IRFunction, IRInst, IRTerminator, IRUnaryOp, IRValue};
 use crate::passes::Pass;
+
+use super::constant_eval::evaluate_compare;
 
 type Facts = HashMap<IRValue, Fact>;
 type EdgeFacts = HashMap<(BlockId, BlockId), Facts>;
@@ -208,25 +210,24 @@ fn infer_instruction_fact(
 ) -> Option<Fact> {
     match inst {
         IRInst::Phi { incoming, .. } => {
-            let mut incoming_facts = incoming.iter().filter_map(|(pred, value)| {
-                edge_facts
-                    .get(&(*pred, block_id))
-                    .map(|facts| fact_for_value(value, facts))
-            });
+            let mut joined = None;
 
-            let Some(first) = incoming_facts.next().flatten() else {
-                if predecessors.is_empty() {
-                    return None;
-                }
-                return None;
-            };
-
-            let mut joined = first;
-            for maybe_fact in incoming_facts {
-                let fact = maybe_fact?;
-                joined = join_fact(&joined, &fact)?;
+            for (pred, value) in incoming {
+                let Some(facts) = edge_facts.get(&(*pred, block_id)) else {
+                    continue;
+                };
+                let fact = fact_for_value(value, facts)?;
+                joined = Some(match joined {
+                    Some(existing) => join_fact(&existing, &fact)?,
+                    None => fact,
+                });
             }
-            Some(joined)
+
+            if joined.is_none() && predecessors.is_empty() {
+                return None;
+            }
+
+            joined
         }
         IRInst::Mov { src, .. } => fact_for_value(src, current),
         IRInst::LoadConst { value, .. } => Some(Fact::Constant(*value)),
@@ -515,13 +516,7 @@ fn compare_fact(kind: CompareKind, lhs: &IRValue, rhs: &IRValue, current: &Facts
     let lhs_constant = fact_for_value(lhs, current).and_then(|fact| exact_constant(&fact));
     let rhs_constant = fact_for_value(rhs, current).and_then(|fact| exact_constant(&fact));
     if let (Some(lhs), Some(rhs)) = (lhs_constant, rhs_constant) {
-        let lhs = to_f64(lhs)?;
-        let rhs = to_f64(rhs)?;
-        let result = match kind {
-            CompareKind::Eq => lhs == rhs,
-            CompareKind::Lt => lhs < rhs,
-            CompareKind::Lte => lhs <= rhs,
-        };
+        let result = evaluate_compare(kind, lhs, rhs)?;
         return Some(Fact::Constant(make_bool(result)));
     }
 
@@ -540,6 +535,18 @@ fn compare_fact(kind: CompareKind, lhs: &IRValue, rhs: &IRValue, current: &Facts
                 None
             }
         }
+        CompareKind::Neq => {
+            if lhs_range.max < rhs_range.min || rhs_range.max < lhs_range.min {
+                Some(true)
+            } else if lhs_range.min == lhs_range.max
+                && rhs_range.min == rhs_range.max
+                && lhs_range.min == rhs_range.min
+            {
+                Some(false)
+            } else {
+                None
+            }
+        }
         CompareKind::Lt => {
             if lhs_range.max < rhs_range.min {
                 Some(true)
@@ -553,6 +560,15 @@ fn compare_fact(kind: CompareKind, lhs: &IRValue, rhs: &IRValue, current: &Facts
             if lhs_range.max <= rhs_range.min {
                 Some(true)
             } else if lhs_range.min > rhs_range.max {
+                Some(false)
+            } else {
+                None
+            }
+        }
+        CompareKind::LteFalse => {
+            if lhs_range.min > rhs_range.max {
+                Some(true)
+            } else if lhs_range.max <= rhs_range.min {
                 Some(false)
             } else {
                 None
@@ -669,7 +685,9 @@ fn refine_compare(
         refine_register_vs_const(facts, kind, rhs, lhs_exact, want_compare, true);
     }
 
-    if kind == CompareKind::Eq && want_compare {
+    if matches!(kind, CompareKind::Eq | CompareKind::Neq) && !want_compare
+        || kind == CompareKind::Eq && want_compare
+    {
         let lhs_range = int_range_for_value(lhs, facts);
         let rhs_range = int_range_for_value(rhs, facts);
         if let (Some(lhs_range), Some(rhs_range)) = (lhs_range, rhs_range)
@@ -691,6 +709,10 @@ fn refine_register_vs_const(
 ) {
     let range = match (kind, want_compare, constant_on_left) {
         (CompareKind::Eq, true, false) | (CompareKind::Eq, true, true) => IntRange {
+            min: constant,
+            max: constant,
+        },
+        (CompareKind::Neq, false, false) | (CompareKind::Neq, false, true) => IntRange {
             min: constant,
             max: constant,
         },
@@ -726,7 +748,23 @@ fn refine_register_vs_const(
             min: i64::MIN,
             max: constant.saturating_sub(1),
         },
-        (CompareKind::Eq, false, _) => return,
+        (CompareKind::LteFalse, true, false) => IntRange {
+            min: constant.saturating_add(1),
+            max: i64::MAX,
+        },
+        (CompareKind::LteFalse, false, false) => IntRange {
+            min: i64::MIN,
+            max: constant,
+        },
+        (CompareKind::LteFalse, true, true) => IntRange {
+            min: i64::MIN,
+            max: constant.saturating_sub(1),
+        },
+        (CompareKind::LteFalse, false, true) => IntRange {
+            min: constant,
+            max: i64::MAX,
+        },
+        (CompareKind::Eq, false, _) | (CompareKind::Neq, true, _) => return,
     };
 
     constrain_register(facts, register, range);

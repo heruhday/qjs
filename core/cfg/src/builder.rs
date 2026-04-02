@@ -304,7 +304,7 @@ fn classify_terminator(
         Opcode::JmpEq | Opcode::LoadCmpEqJfalse => {
             compare_branch(inst, len, CompareKind::Eq, inst.a, inst.b, false)
         }
-        Opcode::JmpNeq => compare_branch(inst, len, CompareKind::Eq, inst.a, inst.b, true),
+        Opcode::JmpNeq => compare_branch(inst, len, CompareKind::Neq, inst.a, inst.b, false),
         Opcode::JmpLt
         | Opcode::JmpLtF64
         | Opcode::LoadCmpLtJfalse
@@ -314,10 +314,10 @@ fn classify_terminator(
             compare_branch(inst, len, CompareKind::Lte, inst.a, inst.b, false)
         }
         Opcode::JmpLteFalse | Opcode::JmpLteFalseF64 => {
-            compare_branch(inst, len, CompareKind::Lte, inst.a, inst.b, true)
+            compare_branch(inst, len, CompareKind::LteFalse, inst.a, inst.b, false)
         }
         Opcode::EqJmpTrue => compare_branch(inst, len, CompareKind::Eq, inst.b, inst.c, false),
-        Opcode::EqJmpFalse => compare_branch(inst, len, CompareKind::Eq, inst.b, inst.c, true),
+        Opcode::EqJmpFalse => compare_branch(inst, len, CompareKind::Neq, inst.b, inst.c, false),
         Opcode::LtJmp => compare_branch(inst, len, CompareKind::Lt, inst.b, inst.c, false),
         Opcode::LteJmpLoop => compare_branch(inst, len, CompareKind::Lte, inst.b, inst.c, false),
         Opcode::LoopIncJmp => compare_branch(inst, len, CompareKind::Lt, inst.a, ACC_REG, false),
