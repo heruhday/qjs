@@ -1,5 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
+use cfg::BlockId;
 use crate::ir::{IRCondition, IRFunction, IRInst, IRTerminator, IRValue};
 use crate::passes::Pass;
 
@@ -11,18 +12,27 @@ impl Pass for CopyPropagation {
     }
 
     fn run(&self, ir: &mut IRFunction) -> bool {
-        // Check if the function contains any loops (blocks with backedges)
-        let has_loops = ir.blocks.iter().any(|b| b.successors.contains(&b.id));
-        
-        // Skip copy propagation if there are loops, as it can break loop structures
-        if has_loops {
-            return false;
-        }
+        // Identify loop headers (blocks with incoming backedges)
+        let loop_headers: HashSet<BlockId> = ir
+            .blocks
+            .iter()
+            .filter(|block| {
+                ir.blocks
+                    .iter()
+                    .any(|b| b.successors.contains(&block.id) && b.id != block.id)
+            })
+            .map(|b| b.id)
+            .collect();
 
         let mut changed = false;
         let mut copies = HashMap::<IRValue, IRValue>::new();
 
         for block in &mut ir.blocks {
+            // Clear copies at loop headers to prevent breaking loop-carried Phi values
+            if loop_headers.contains(&block.id) {
+                copies.clear();
+            }
+
             for inst in &mut block.instructions {
                 rewrite_instruction(inst, &copies, &mut changed);
 
