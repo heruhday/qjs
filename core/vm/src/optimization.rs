@@ -193,6 +193,7 @@ fn contains_opaque_bytecode(ir: &IRFunction) -> bool {
 /// Patterns:
 /// 1. mov r_X, r_X (self-move)
 /// 2. mov r_X, r_Y; ...; mov r_Y, r_X (reverse moves, if no interfering writes)
+#[allow(dead_code)]
 fn eliminate_redundant_moves(bytecode: Vec<u32>, constants: Vec<JSValue>) -> (Vec<u32>, Vec<JSValue>) {
     let mut optimized = Vec::with_capacity(bytecode.len());
     let mut skip_next_reverse: Option<(u8, u8, usize)> = None;  // (prev_dst, prev_src, prev_idx)
@@ -242,7 +243,6 @@ fn eliminate_redundant_moves(bytecode: Vec<u32>, constants: Vec<JSValue>) -> (Ve
                         }
                     }
                 }
-                skip_next_reverse = None;
             }
             
             // Record this move as a potential anchor for reverse detection
@@ -260,6 +260,7 @@ fn eliminate_redundant_moves(bytecode: Vec<u32>, constants: Vec<JSValue>) -> (Ve
 /// 🔥 Problem A: Cache loop-invariant loads
 /// Simplified: Detects common patterns and creates opportunities for caching
 /// Full implementation would require SSA-level analysis or JIT quickening
+#[allow(dead_code)]
 fn cache_loop_invariants(bytecode: Vec<u32>, constants: Vec<JSValue>) -> (Vec<u32>, Vec<JSValue>) {
     // This optimization requires more context than bytecode alone provides
     // The proper solution is at codegen time or via JIT quickening

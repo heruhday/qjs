@@ -792,7 +792,7 @@ fn induction_variable_optimization_strengthens_loop_arithmetic() {
     let bound = reg(1);
     let body_use = reg(2);
 
-    let mut ir = IRFunction {
+    let ir = IRFunction {
         blocks: vec![
             // Preheader
             IRBlock {
@@ -1112,7 +1112,7 @@ fn loop_unswitching_hoists_invariant_branches() {
 /// Test: Scalar Replacement eliminates aggregate allocations
 #[test]
 fn scalar_replacement_promotes_object_fields() {
-    let obj = reg(0);
+    let _obj = reg(0);
     let field1 = reg(1);
     let field2 = reg(2);
 
@@ -1140,7 +1140,7 @@ fn scalar_replacement_promotes_object_fields() {
 fn store_elimination_removes_unused_writes() {
     let r0 = reg(0);
     let r1 = reg(1);
-    let r2 = reg(2);
+    let _r2 = reg(2);
 
     let mut ir = single_block(
         vec![
@@ -1210,7 +1210,7 @@ fn strength_reduction_replaces_mul_with_add() {
 /// promotes their fields to registers for maximum efficiency
 #[test]
 fn combination_escape_analysis_with_scalar_replacement() {
-    let obj = reg(0);
+    let _obj = reg(0);
     let field1 = reg(1);
     let field2 = reg(2);
     let result = reg(3);
@@ -1727,7 +1727,7 @@ fn combination_all_ten_optimizations_full_pipeline() {
     );
 
     // Run all 10 optimization passes in order
-    let alias = AliasAnalysis::new(HashMap::new());
+    let _alias = AliasAnalysis::new(HashMap::new());
     let cfg = CfgSimplification;
     let const_fold = ConstantFolding;
     let copy_prop = CopyPropagation;

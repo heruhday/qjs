@@ -11,6 +11,14 @@ impl Pass for CopyPropagation {
     }
 
     fn run(&self, ir: &mut IRFunction) -> bool {
+        // Check if the function contains any loops (blocks with backedges)
+        let has_loops = ir.blocks.iter().any(|b| b.successors.contains(&b.id));
+        
+        // Skip copy propagation if there are loops, as it can break loop structures
+        if has_loops {
+            return false;
+        }
+
         let mut changed = false;
         let mut copies = HashMap::<IRValue, IRValue>::new();
 

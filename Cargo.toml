@@ -1,8 +1,20 @@
 [workspace]
 resolver = "2"
 members = [
-     # CORE
-    "core/*",
+    # CORE
+    "core/ast",
+    "core/atoms",
+    "core/built_ins",
+    "core/cfg",
+    "core/codegen",
+    "core/direct_optimization",
+    "core/disasm",
+    "core/gc",
+    "core/heap",
+    "core/runtime",
+    "core/ssa",
+    "core/value",
+    "core/vm",
 ]
 
 [workspace.package]
@@ -13,4 +25,3 @@ authors = ["heruhday <heruhday@gmail.com>"]
 repository = "https://github.com/heruhday/qjs"
 license = "Unlicense OR MIT"
 description = "XJS is a Javascript lexer, parser and compiler written in Rust. Currently, it has support for some of the language."
-

@@ -3,6 +3,7 @@ mod builder;
 mod bytecode_fallback;
 mod ir;
 mod jit;
+#[allow(unused)]
 mod optimization;
 mod passes;
 mod semantics;
@@ -20,11 +21,11 @@ pub use jit::{
     RegAllocResult, RegisterAllocator, SpillSlot,
 };
 pub use optimization::{
-    OptTier, Optimizer, coalesce_registers, constant_fold, copy_propagation, eliminate_dead_code,
-    fold_temporary_checks, loop_invariant_code_motion, optimize_basic_peephole, optimize_bytecode,
-    optimize_ir, optimize_superinstructions, optimize_tier0, optimize_tier1, optimize_tier2,
-    optimize_to_bytecode, optimize_to_bytecode_with_tier, reuse_registers_linear_scan,
-    run_basic_round, run_fixed_point_round, run_full_round, run_until_stable, simplify_branches,
+    coalesce_registers, constant_fold, copy_propagation, eliminate_dead_code,
+    fold_temporary_checks, loop_invariant_code_motion, optimize_basic_peephole,
+    optimize_bytecode, optimize_ir, optimize_superinstructions, optimize_tier0,
+    optimize_tier2, optimize_to_bytecode, reuse_registers_linear_scan, run_fixed_point_round,
+    run_until_stable, simplify_branches, OptTier, Optimizer,
 };
 pub use passes::{
     AliasAnalysis, AliasResult, BlockLayoutOptimization, CfgSimplification, ConstantFolding,
