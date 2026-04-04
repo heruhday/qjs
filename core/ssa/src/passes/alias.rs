@@ -34,22 +34,19 @@ impl AliasAnalysis {
     /// - NoAlias: definitely don't alias (e.g., two different constants)
     /// - MustAlias: definitely alias (e.g., same constant value)
     /// - MayAlias: might alias (conservative default for registers)
+    #[inline]
     pub fn query(&self, lhs: &IRValue, rhs: &IRValue) -> AliasResult {
         match (lhs, rhs) {
-            // Two constants that are different don't alias
+            // Two constants: alias iff equal
             (IRValue::Constant(c1), IRValue::Constant(c2)) => {
-                if c1 == c2 {
-                    AliasResult::MustAlias
-                } else {
-                    AliasResult::NoAlias
-                }
+                if c1 == c2 { AliasResult::MustAlias } else { AliasResult::NoAlias }
             }
 
             // Constant never aliases with register
             (IRValue::Constant(_), IRValue::Register(_, _))
             | (IRValue::Register(_, _), IRValue::Constant(_)) => AliasResult::NoAlias,
 
-            // Register-to-register: without complete escape info, be conservative
+            // Register-to-register: use escape analysis if available
             (IRValue::Register(_, _), IRValue::Register(_, _)) => {
                 // If we have escape information, use it for refinement
                 if !self.escape.is_empty() {
@@ -58,22 +55,14 @@ impl AliasAnalysis {
 
                     match (lhs_escape, rhs_escape) {
                         // Both don't escape: they're local, can't alias
-                        (Some(EscapeKind::NoEscape), Some(EscapeKind::NoEscape)) => {
-                            AliasResult::NoAlias
-                        }
+                        (Some(EscapeKind::NoEscape), Some(EscapeKind::NoEscape)) => AliasResult::NoAlias,
 
                         // One doesn't escape, other has limited escape: no alias
                         (Some(EscapeKind::NoEscape), Some(EscapeKind::ArgEscape))
-                        | (Some(EscapeKind::ArgEscape), Some(EscapeKind::NoEscape)) => {
-                            AliasResult::NoAlias
-                        }
+                        | (Some(EscapeKind::ArgEscape), Some(EscapeKind::NoEscape)) => AliasResult::NoAlias,
 
-                        // Other combinations: conservative may alias
-                        _ => AliasResult::MayAlias,
-                    }
-                } else {
-                    // No escape info available: conservative default
-                    AliasResult::MayAlias
+                    // Other combinations: conservative may alias
+                    _ => AliasResult::MayAlias,
                 }
             }
         }
