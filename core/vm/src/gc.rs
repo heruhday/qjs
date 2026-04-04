@@ -25,7 +25,7 @@ fn clear_gc_marks(vm: &mut VM) {
 
 fn mark_property_key(vm: &mut VM, key: PropertyKey) {
     match key {
-        PropertyKey::Atom(atom) => {
+        PropertyKey::Atom(atom) | PropertyKey::PrivateName(atom) => {
             vm.atoms.mark(atom);
             let interned = {
                 let text = vm.atoms.resolve(atom).to_owned();

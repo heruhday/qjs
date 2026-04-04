@@ -53,17 +53,44 @@ impl Codegen {
                 Ok(None)
             }
             Statement::Break(jump) => {
-                if jump.label.is_some() {
-                    return Err(CodegenError::Unsupported {
-                        feature: "labeled break",
-                        span: jump.span,
-                    });
+                if let Some(label) = &jump.label {
+                    let Some((label_index, break_sink)) = self
+                        .label_stack
+                        .iter()
+                        .enumerate()
+                        .rev()
+                        .find(|(_, ctx)| ctx.name == label.name)
+                        .map(|(index, ctx)| (index, ctx.break_sink))
+                    else {
+                        return Err(CodegenError::InvalidBreak { span: jump.span });
+                    };
+                    if self.finally_stack.last().is_some_and(|ctx| {
+                        !self.finally_escape_patch_stack.is_empty() && label_index < ctx.label_depth
+                    }) {
+                        self.queue_labeled_break_through_finally(label, jump.span)?;
+                        return Ok(None);
+                    }
+                    let patch = self.emit_placeholder_jmp();
+                    self.queue_jump_sink_patch(break_sink, patch);
+                    return Ok(None);
                 }
-                let patch = self.emit_placeholder_jmp();
-                let Some(control_ctx) = self.control_stack.last_mut() else {
+                let Some((control_index, break_sink)) = self
+                    .control_stack
+                    .iter()
+                    .enumerate()
+                    .next_back()
+                    .map(|(index, ctx)| (index, ctx.break_sink))
+                else {
                     return Err(CodegenError::InvalidBreak { span: jump.span });
                 };
-                control_ctx.break_patches.push(patch);
+                if self.finally_stack.last().is_some_and(|ctx| {
+                    !self.finally_escape_patch_stack.is_empty() && control_index < ctx.control_depth
+                }) {
+                    self.queue_loop_transfer_through_finally(jump.span, false)?;
+                    return Ok(None);
+                }
+                let patch = self.emit_placeholder_jmp();
+                self.queue_jump_sink_patch(break_sink, patch);
                 Ok(None)
             }
             Statement::Continue(jump) => {
@@ -73,29 +100,40 @@ impl Codegen {
                         span: jump.span,
                     });
                 }
-                let patch = self.emit_placeholder_jmp();
-                let Some(control_ctx) = self
+                let Some((control_index, continue_sink)) = self
                     .control_stack
-                    .iter_mut()
+                    .iter()
+                    .enumerate()
                     .rev()
-                    .find(|ctx| ctx.continue_patches.is_some())
+                    .find_map(|(index, ctx)| ctx.continue_sink.map(|sink| (index, sink)))
                 else {
                     return Err(CodegenError::InvalidContinue { span: jump.span });
                 };
-                control_ctx
-                    .continue_patches
-                    .as_mut()
-                    .expect("loop continue patches")
-                    .push(patch);
+                if self.finally_stack.last().is_some_and(|ctx| {
+                    !self.finally_escape_patch_stack.is_empty() && control_index < ctx.control_depth
+                }) {
+                    self.queue_loop_transfer_through_finally(jump.span, true)?;
+                    return Ok(None);
+                }
+                let patch = self.emit_placeholder_jmp();
+                self.queue_jump_sink_patch(continue_sink, patch);
                 Ok(None)
             }
             Statement::Expression(ExpressionStatement { expression, .. }) => {
                 self.compile_expression(expression).map(Some)
             }
-            Statement::Labeled(node) => Err(CodegenError::Unsupported {
-                feature: "labeled statements",
-                span: node.span,
-            }),
+            Statement::Labeled(node) => {
+                let break_sink = self.alloc_jump_sink();
+                self.label_stack.push(LabelContext {
+                    name: node.label.name.clone(),
+                    break_sink,
+                });
+                self.compile_statement(&node.body, root_script)?;
+                let label_ctx = self.label_stack.pop().expect("label context");
+                let end = self.builder.len();
+                self.resolve_jump_sink(label_ctx.break_sink, end);
+                Ok(None)
+            }
             Statement::ImportDeclaration(node) => Err(CodegenError::Unsupported {
                 feature: "imports",
                 span: node.span,
@@ -104,10 +142,10 @@ impl Codegen {
                 feature: "exports",
                 span: node.span(),
             }),
-            Statement::ClassDeclaration(node) => Err(CodegenError::Unsupported {
-                feature: "classes",
-                span: node.span,
-            }),
+            Statement::ClassDeclaration(node) => {
+                self.compile_class_declaration(node)?;
+                Ok(None)
+            }
             Statement::Switch(node) => {
                 self.compile_switch_statement(node, root_script)?;
                 Ok(None)
@@ -233,13 +271,16 @@ impl Codegen {
         let (exit_jump, exit_kind, test_top) =
             self.compile_condition_jump_false(&statement.test)?;
 
-        self.control_stack.push(ControlContext::loop_context());
+        let break_sink = self.alloc_jump_sink();
+        let continue_sink = self.alloc_jump_sink();
+        self.control_stack
+            .push(ControlContext::loop_context(break_sink, continue_sink));
         self.compile_statement(&statement.body, root_script)?;
         let loop_ctx = self.control_stack.pop().expect("loop context");
 
         let continue_target = loop_start;
-        self.patch_loop_continues(
-            loop_ctx.continue_patches.expect("loop continue patches"),
+        self.resolve_jump_sink(
+            loop_ctx.continue_sink.expect("loop continue sink"),
             continue_target,
         );
 
@@ -248,7 +289,7 @@ impl Codegen {
 
         let end = self.builder.len();
         self.patch_jump(exit_jump, end, exit_kind);
-        self.patch_loop_breaks(loop_ctx.break_patches, end);
+        self.resolve_jump_sink(loop_ctx.break_sink, end);
         self.temp_top = test_top.saturating_sub(1);
         Ok(())
     }
@@ -259,7 +300,10 @@ impl Codegen {
         root_script: bool,
     ) -> Result<(), CodegenError> {
         let body_start = self.builder.len();
-        self.control_stack.push(ControlContext::loop_context());
+        let break_sink = self.alloc_jump_sink();
+        let continue_sink = self.alloc_jump_sink();
+        self.control_stack
+            .push(ControlContext::loop_context(break_sink, continue_sink));
         self.compile_statement(&statement.body, root_script)?;
         let test_start = self.builder.len();
         let test_reg = self.compile_expression(&statement.test)?;
@@ -267,12 +311,12 @@ impl Codegen {
             .emit_jmp_true(test_reg, offset_to(body_start, self.builder.len())?);
 
         let loop_ctx = self.control_stack.pop().expect("loop context");
-        self.patch_loop_continues(
-            loop_ctx.continue_patches.expect("loop continue patches"),
+        self.resolve_jump_sink(
+            loop_ctx.continue_sink.expect("loop continue sink"),
             test_start,
         );
         let end = self.builder.len();
-        self.patch_loop_breaks(loop_ctx.break_patches, end);
+        self.resolve_jump_sink(loop_ctx.break_sink, end);
         self.temp_top = test_reg.saturating_sub(1);
         Ok(())
     }
@@ -332,18 +376,16 @@ impl Codegen {
             None
         };
 
-        self.control_stack.push(ControlContext::loop_context());
+        let break_sink = self.alloc_jump_sink();
+        let continue_sink = self.alloc_jump_sink();
+        self.control_stack
+            .push(ControlContext::loop_context(break_sink, continue_sink));
         self.compile_statement(&statement.body, root_script)?;
-        let mut loop_ctx = self.control_stack.pop().expect("loop context");
+        let loop_ctx = self.control_stack.pop().expect("loop context");
 
         let continue_target = self.builder.len();
-        self.patch_loop_continues(
-            std::mem::take(
-                loop_ctx
-                    .continue_patches
-                    .as_mut()
-                    .expect("loop continue patches"),
-            ),
+        self.resolve_jump_sink(
+            loop_ctx.continue_sink.expect("loop continue sink"),
             continue_target,
         );
 
@@ -360,7 +402,7 @@ impl Codegen {
             self.patch_jump(patch_pos, end, kind);
             self.temp_top = test_top.saturating_sub(1);
         }
-        self.patch_loop_breaks(loop_ctx.break_patches, end);
+        self.resolve_jump_sink(loop_ctx.break_sink, end);
 
         if needs_runtime_bindings {
             self.builder.emit_leave();
@@ -413,18 +455,16 @@ impl Codegen {
         self.builder.emit_mov(value_reg, ACC);
         self.bind_for_each_left(&statement.left, value_reg, statement.span)?;
 
-        self.control_stack.push(ControlContext::loop_context());
+        let break_sink = self.alloc_jump_sink();
+        let continue_sink = self.alloc_jump_sink();
+        self.control_stack
+            .push(ControlContext::loop_context(break_sink, continue_sink));
         self.compile_statement(&statement.body, root_script)?;
-        let mut loop_ctx = self.control_stack.pop().expect("loop context");
+        let loop_ctx = self.control_stack.pop().expect("loop context");
 
         let continue_target = self.builder.len();
-        self.patch_loop_continues(
-            std::mem::take(
-                loop_ctx
-                    .continue_patches
-                    .as_mut()
-                    .expect("loop continue patches"),
-            ),
+        self.resolve_jump_sink(
+            loop_ctx.continue_sink.expect("loop continue sink"),
             continue_target,
         );
 
@@ -435,7 +475,7 @@ impl Codegen {
 
         let end = self.builder.len();
         self.patch_jump(exit_jump, end, JumpPatchKind::JmpFalse { reg: cond_reg });
-        self.patch_loop_breaks(loop_ctx.break_patches, end);
+        self.resolve_jump_sink(loop_ctx.break_sink, end);
 
         if needs_runtime_bindings {
             self.builder.emit_leave();
@@ -482,7 +522,9 @@ impl Codegen {
             self.patch_jump(patch, default_dispatch, JumpPatchKind::JmpFalse { reg });
         }
 
-        self.control_stack.push(ControlContext::switch_context());
+        let break_sink = self.alloc_jump_sink();
+        self.control_stack
+            .push(ControlContext::switch_context(break_sink));
         let mut case_starts = vec![None; statement.cases.len()];
         for (index, case) in statement.cases.iter().enumerate() {
             case_starts[index] = Some(self.builder.len());
@@ -490,7 +532,7 @@ impl Codegen {
         }
         let switch_ctx = self.control_stack.pop().expect("switch context");
         let end = self.builder.len();
-        self.patch_loop_breaks(switch_ctx.break_patches, end);
+        self.resolve_jump_sink(switch_ctx.break_sink, end);
 
         for (index, jump_pos) in case_entry_jumps {
             let target = case_starts[index].unwrap_or(end);
@@ -517,8 +559,18 @@ impl Codegen {
                 _ => self.compile_expression(argument)?,
             };
             self.temp_top = reg.saturating_sub(1);
+            if !self.finally_stack.is_empty() && !self.finally_escape_patch_stack.is_empty() {
+                self.queue_completion_through_finally(COMPLETION_RETURN, Some(reg), None);
+                return Ok(());
+            }
             self.builder.emit_ret_reg(reg);
         } else {
+            if !self.finally_stack.is_empty() && !self.finally_escape_patch_stack.is_empty() {
+                let undefined_reg = self.load_undefined(Some(statement.span))?;
+                self.temp_top = undefined_reg.saturating_sub(1);
+                self.queue_completion_through_finally(COMPLETION_RETURN, Some(undefined_reg), None);
+                return Ok(());
+            }
             self.builder.emit_ret_u();
         }
         Ok(())
@@ -539,10 +591,7 @@ impl Codegen {
         statement: &ast::TryStatement,
     ) -> Result<(), CodegenError> {
         if statement.finalizer.is_some() {
-            return Err(CodegenError::Unsupported {
-                feature: "try/finally",
-                span: statement.span,
-            });
+            return self.compile_try_finally_statement(statement);
         }
 
         let Some(handler) = &statement.handler else {
@@ -564,6 +613,80 @@ impl Codegen {
 
         let end = self.builder.len();
         self.patch_jump(skip_catch, end, JumpPatchKind::Jmp);
+        Ok(())
+    }
+
+    pub(crate) fn compile_try_finally_statement(
+        &mut self,
+        statement: &ast::TryStatement,
+    ) -> Result<(), CodegenError> {
+        let finalizer = statement.finalizer.as_ref().expect("try/finally statement");
+
+        let mode_reg = self.alloc_temp(Some(statement.span))?;
+        self.builder.emit_load_i(mode_reg, COMPLETION_NORMAL);
+        let value_reg = self.load_undefined(Some(statement.span))?;
+        let target_reg = self.alloc_temp(Some(statement.span))?;
+        self.builder.emit_load_i(target_reg, 0);
+
+        self.finally_stack.push(FinallyContext {
+            mode_reg,
+            value_reg,
+            target_reg,
+            control_depth: self.control_stack.len(),
+            label_depth: self.label_stack.len(),
+            deferred_jumps: Vec::new(),
+        });
+
+        let try_patch = self.builder.len();
+        self.builder.emit_try(0);
+        self.finally_escape_patch_stack.push(Vec::new());
+        self.compile_statement_list(&statement.block.body, false)?;
+        let try_escape_patches = self
+            .finally_escape_patch_stack
+            .pop()
+            .expect("try escape patches");
+        self.builder.emit_end_try();
+        let skip_catch = self.emit_placeholder_jmp();
+
+        let try_escape_start = self.builder.len();
+        self.builder.emit_end_try();
+        let try_escape_to_finalizer = self.emit_placeholder_jmp();
+        for patch in try_escape_patches {
+            self.patch_jump(patch, try_escape_start, JumpPatchKind::Jmp);
+        }
+
+        let catch_start = self.builder.len();
+        self.patch_jump(try_patch, catch_start, JumpPatchKind::Try);
+
+        let mut finalizer_entry_patches = vec![try_escape_to_finalizer];
+        if let Some(handler) = &statement.handler {
+            self.compile_catch_clause_with_finally(
+                handler,
+                mode_reg,
+                value_reg,
+                &mut finalizer_entry_patches,
+            )?;
+        } else {
+            let exception_reg = self.alloc_temp(Some(statement.span))?;
+            self.builder.emit_catch(exception_reg);
+            self.builder.emit_finally();
+            if exception_reg != value_reg {
+                self.builder.emit_mov(value_reg, exception_reg);
+            }
+            self.builder.emit_load_i(mode_reg, COMPLETION_THROW);
+        }
+
+        let after_catch = self.builder.len();
+        self.patch_jump(skip_catch, after_catch, JumpPatchKind::Jmp);
+
+        let ctx = self.finally_stack.pop().expect("finally context");
+        let finalizer_start = self.builder.len();
+        for patch in finalizer_entry_patches {
+            self.patch_jump(patch, finalizer_start, JumpPatchKind::Jmp);
+        }
+
+        let _ = self.compile_block(finalizer, true)?;
+        self.emit_finally_completion_dispatch(ctx)?;
         Ok(())
     }
 
@@ -612,6 +735,316 @@ impl Codegen {
         self.leave_fast_name_scope();
         self.nested_scope_depth = self.nested_scope_depth.saturating_sub(1);
         self.temp_top = saved_top;
+        Ok(())
+    }
+
+    pub(crate) fn compile_catch_clause_with_finally(
+        &mut self,
+        clause: &ast::CatchClause,
+        mode_reg: u8,
+        value_reg: u8,
+        finalizer_entry_patches: &mut Vec<usize>,
+    ) -> Result<(), CodegenError> {
+        let saved_top = self.temp_top;
+        self.nested_scope_depth += 1;
+
+        let needs_runtime_bindings =
+            clause.param.is_some() || self.block_needs_runtime_bindings(&clause.body);
+        self.enter_fast_name_scope_with_runtime_bindings(needs_runtime_bindings);
+
+        if needs_runtime_bindings {
+            self.builder.emit_enter(256);
+            let _env_reg = self.alloc_temp(Some(clause.span))?;
+            self.builder.emit_create_env(_env_reg);
+        }
+
+        let exception_reg = self.alloc_temp(Some(clause.span))?;
+        self.builder.emit_catch(exception_reg);
+        self.builder.emit_finally();
+
+        if let Some(param) = &clause.param {
+            match param {
+                Pattern::Identifier(identifier) => {
+                    self.declare_name_binding(&identifier.name, exception_reg)?;
+                }
+                other => {
+                    return Err(CodegenError::Unsupported {
+                        feature: "complex catch parameter",
+                        span: other.span(),
+                    });
+                }
+            }
+        }
+
+        let catch_try_patch = self.builder.len();
+        self.builder.emit_try(0);
+        self.finally_escape_patch_stack.push(Vec::new());
+        self.compile_statement_list(&clause.body.body, false)?;
+        let catch_escape_patches = self
+            .finally_escape_patch_stack
+            .pop()
+            .expect("catch escape patches");
+        self.builder.emit_end_try();
+        let skip_catch = self.emit_placeholder_jmp();
+
+        let catch_escape_start = self.builder.len();
+        self.builder.emit_end_try();
+        let catch_escape_to_finalizer = self.emit_placeholder_jmp();
+        for patch in catch_escape_patches {
+            self.patch_jump(patch, catch_escape_start, JumpPatchKind::Jmp);
+        }
+        finalizer_entry_patches.push(catch_escape_to_finalizer);
+
+        let synthetic_catch_start = self.builder.len();
+        self.patch_jump(catch_try_patch, synthetic_catch_start, JumpPatchKind::Try);
+        let thrown_reg = self.alloc_temp(Some(clause.span))?;
+        self.builder.emit_catch(thrown_reg);
+        self.builder.emit_finally();
+        if thrown_reg != value_reg {
+            self.builder.emit_mov(value_reg, thrown_reg);
+        }
+        self.builder.emit_load_i(mode_reg, COMPLETION_THROW);
+
+        let after_catch = self.builder.len();
+        self.patch_jump(skip_catch, after_catch, JumpPatchKind::Jmp);
+
+        if needs_runtime_bindings {
+            self.builder.emit_leave();
+        }
+
+        self.leave_fast_name_scope();
+        self.nested_scope_depth = self.nested_scope_depth.saturating_sub(1);
+        self.temp_top = saved_top;
+        Ok(())
+    }
+
+    fn queue_completion_through_finally(
+        &mut self,
+        mode: i16,
+        value_reg: Option<u8>,
+        target_id: Option<i16>,
+    ) {
+        let Some(ctx) = self.finally_stack.last().cloned() else {
+            return;
+        };
+
+        self.builder.emit_load_i(ctx.mode_reg, mode);
+        if let Some(value_reg) = value_reg
+            && value_reg != ctx.value_reg
+        {
+            self.builder.emit_mov(ctx.value_reg, value_reg);
+        }
+        if let Some(target_id) = target_id {
+            self.builder.emit_load_i(ctx.target_reg, target_id);
+        }
+
+        let patch = self.emit_placeholder_jmp();
+        self.finally_escape_patch_stack
+            .last_mut()
+            .expect("active finally escape route")
+            .push(patch);
+    }
+
+    fn queue_loop_transfer_through_finally(
+        &mut self,
+        span: Span,
+        is_continue: bool,
+    ) -> Result<(), CodegenError> {
+        let destination = if is_continue {
+            self.control_stack
+                .iter()
+                .rev()
+                .find_map(|ctx| {
+                    ctx.continue_sink
+                        .map(DeferredJumpDestination::ControlContinue)
+                })
+                .ok_or(CodegenError::InvalidContinue { span })?
+        } else {
+            self.control_stack
+                .last()
+                .map(|ctx| DeferredJumpDestination::ControlBreak(ctx.break_sink))
+                .ok_or(CodegenError::InvalidBreak { span })?
+        };
+
+        let target = DeferredJumpTarget {
+            id: self.next_deferred_jump_id,
+            destination,
+        };
+        self.next_deferred_jump_id = self.next_deferred_jump_id.saturating_add(1);
+
+        for ctx in &mut self.finally_stack {
+            ctx.deferred_jumps.push(target);
+        }
+
+        self.queue_completion_through_finally(
+            if is_continue {
+                COMPLETION_CONTINUE
+            } else {
+                COMPLETION_BREAK
+            },
+            None,
+            Some(target.id),
+        );
+        Ok(())
+    }
+
+    fn queue_labeled_break_through_finally(
+        &mut self,
+        label: &Identifier,
+        span: Span,
+    ) -> Result<(), CodegenError> {
+        let break_sink = self
+            .label_stack
+            .iter()
+            .rev()
+            .find(|ctx| ctx.name == label.name)
+            .map(|ctx| ctx.break_sink)
+            .ok_or(CodegenError::InvalidBreak { span })?;
+
+        let target = DeferredJumpTarget {
+            id: self.next_deferred_jump_id,
+            destination: DeferredJumpDestination::LabelBreak(break_sink),
+        };
+        self.next_deferred_jump_id = self.next_deferred_jump_id.saturating_add(1);
+
+        for ctx in &mut self.finally_stack {
+            ctx.deferred_jumps.push(target);
+        }
+
+        self.queue_completion_through_finally(COMPLETION_BREAK, None, Some(target.id));
+        Ok(())
+    }
+
+    fn emit_finally_completion_dispatch(
+        &mut self,
+        ctx: FinallyContext,
+    ) -> Result<(), CodegenError> {
+        self.emit_completion_case(ctx.mode_reg, COMPLETION_RETURN, |this| {
+            if let Some(parent) = this.finally_stack.last().cloned() {
+                if ctx.value_reg != parent.value_reg {
+                    this.builder.emit_mov(parent.value_reg, ctx.value_reg);
+                }
+                this.builder.emit_load_i(parent.mode_reg, COMPLETION_RETURN);
+                let patch = this.emit_placeholder_jmp();
+                this.finally_escape_patch_stack
+                    .last_mut()
+                    .expect("outer finally escape route")
+                    .push(patch);
+            } else {
+                this.builder.emit_ret_reg(ctx.value_reg);
+            }
+            Ok(())
+        })?;
+
+        self.emit_completion_case(ctx.mode_reg, COMPLETION_THROW, |this| {
+            if let Some(parent) = this.finally_stack.last().cloned() {
+                if ctx.value_reg != parent.value_reg {
+                    this.builder.emit_mov(parent.value_reg, ctx.value_reg);
+                }
+                this.builder.emit_load_i(parent.mode_reg, COMPLETION_THROW);
+                let patch = this.emit_placeholder_jmp();
+                this.finally_escape_patch_stack
+                    .last_mut()
+                    .expect("outer finally escape route")
+                    .push(patch);
+            } else {
+                this.builder.emit_throw(ctx.value_reg);
+            }
+            Ok(())
+        })?;
+
+        self.emit_completion_case(ctx.mode_reg, COMPLETION_BREAK, |this| {
+            if let Some(parent) = this.finally_stack.last().cloned() {
+                if ctx.target_reg != parent.target_reg {
+                    this.builder.emit_mov(parent.target_reg, ctx.target_reg);
+                }
+                this.builder.emit_load_i(parent.mode_reg, COMPLETION_BREAK);
+                let patch = this.emit_placeholder_jmp();
+                this.finally_escape_patch_stack
+                    .last_mut()
+                    .expect("outer finally escape route")
+                    .push(patch);
+            } else {
+                this.emit_deferred_jump_dispatch(&ctx, false)?;
+            }
+            Ok(())
+        })?;
+
+        self.emit_completion_case(ctx.mode_reg, COMPLETION_CONTINUE, |this| {
+            if let Some(parent) = this.finally_stack.last().cloned() {
+                if ctx.target_reg != parent.target_reg {
+                    this.builder.emit_mov(parent.target_reg, ctx.target_reg);
+                }
+                this.builder
+                    .emit_load_i(parent.mode_reg, COMPLETION_CONTINUE);
+                let patch = this.emit_placeholder_jmp();
+                this.finally_escape_patch_stack
+                    .last_mut()
+                    .expect("outer finally escape route")
+                    .push(patch);
+            } else {
+                this.emit_deferred_jump_dispatch(&ctx, true)?;
+            }
+            Ok(())
+        })?;
+
+        Ok(())
+    }
+
+    fn emit_completion_case(
+        &mut self,
+        mode_reg: u8,
+        expected_mode: i16,
+        action: impl FnOnce(&mut Self) -> Result<(), CodegenError>,
+    ) -> Result<(), CodegenError> {
+        let expected_reg = self.alloc_temp(None)?;
+        self.builder.emit_load_i(expected_reg, expected_mode);
+        self.builder.emit_strict_eq(mode_reg, expected_reg);
+        let cond_reg = self.alloc_temp(None)?;
+        self.builder.emit_mov(cond_reg, ACC);
+        let skip_case = self.emit_placeholder_jmp_false(cond_reg);
+        action(self)?;
+        let end = self.builder.len();
+        self.patch_jump(skip_case, end, JumpPatchKind::JmpFalse { reg: cond_reg });
+        Ok(())
+    }
+
+    fn emit_deferred_jump_dispatch(
+        &mut self,
+        ctx: &FinallyContext,
+        is_continue: bool,
+    ) -> Result<(), CodegenError> {
+        for target in ctx
+            .deferred_jumps
+            .iter()
+            .copied()
+            .filter(|target| match target.destination {
+                DeferredJumpDestination::ControlContinue(_) => is_continue,
+                DeferredJumpDestination::ControlBreak(_)
+                | DeferredJumpDestination::LabelBreak(_) => !is_continue,
+            })
+        {
+            let target_reg = self.alloc_temp(None)?;
+            self.builder.emit_load_i(target_reg, target.id);
+            self.builder.emit_strict_eq(ctx.target_reg, target_reg);
+            let cond_reg = self.alloc_temp(None)?;
+            self.builder.emit_mov(cond_reg, ACC);
+            let skip_jump = self.emit_placeholder_jmp_false(cond_reg);
+            let jump = self.emit_placeholder_jmp();
+            match target.destination {
+                DeferredJumpDestination::ControlBreak(break_sink) => {
+                    self.queue_jump_sink_patch(break_sink, jump);
+                }
+                DeferredJumpDestination::ControlContinue(continue_sink) => {
+                    self.queue_jump_sink_patch(continue_sink, jump);
+                }
+                DeferredJumpDestination::LabelBreak(break_sink) => {
+                    self.queue_jump_sink_patch(break_sink, jump);
+                }
+            }
+            let end = self.builder.len();
+            self.patch_jump(skip_jump, end, JumpPatchKind::JmpFalse { reg: cond_reg });
+        }
         Ok(())
     }
 

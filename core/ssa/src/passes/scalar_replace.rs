@@ -47,10 +47,17 @@ impl ScalarReplacement {
         for block in &ir.blocks {
             for inst in &block.instructions {
                 match inst {
-                    IRInst::Unary { dst, .. } | IRInst::Binary { dst, .. } | IRInst::Mov { dst, .. } => {
+                    IRInst::Unary { dst, .. }
+                    | IRInst::Binary { dst, .. }
+                    | IRInst::Mov { dst, .. } => {
                         // Check if this value doesn't escape or only escapes to args/returns
                         if let Some(&kind) = escape.get(dst) {
-                            if matches!(kind, EscapeKind::NoEscape | EscapeKind::ArgEscape | EscapeKind::ReturnEscape) {
+                            if matches!(
+                                kind,
+                                EscapeKind::NoEscape
+                                    | EscapeKind::ArgEscape
+                                    | EscapeKind::ReturnEscape
+                            ) {
                                 candidates.push(dst.clone());
                             }
                         }

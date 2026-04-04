@@ -1,0 +1,16 @@
+[package]
+name = "qjs-repl"
+edition.workspace = true
+version.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+repository.workspace = true
+license.workspace = true
+description = "Command-line REPL, runner, and disassembler for qjs"
+
+[dependencies]
+built_ins = { path = "../core/built_ins" }
+codegen = { path = "../core/codegen" }
+disasm = { path = "../core/disasm" }
+value = { path = "../core/value" }
+vm = { path = "../core/vm" }

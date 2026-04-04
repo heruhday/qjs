@@ -1,4 +1,4 @@
-use crate::ir::{IRFunction, IRValue, IRInst};
+use crate::ir::{IRFunction, IRInst, IRValue};
 use crate::passes::Pass;
 use codegen::Opcode;
 use std::collections::HashMap;
@@ -41,8 +41,8 @@ pub struct InlineCacheEntry {
     pub instruction_index: usize,
     pub target_function: Option<IRValue>,
     pub call_count: u32,
-    pub is_monomorphic: bool,  // Only one target observed
-    pub polymorphic_targets: Vec<IRValue>,  // Multiple targets if polymorphic
+    pub is_monomorphic: bool,              // Only one target observed
+    pub polymorphic_targets: Vec<IRValue>, // Multiple targets if polymorphic
 }
 
 /// 🔥 Inline Cache Statistics - tracks optimization opportunities
@@ -51,7 +51,7 @@ pub struct InlineCacheStats {
     pub total_call_sites: usize,
     pub monomorphic_sites: usize,
     pub polymorphic_sites: usize,
-    pub hot_call_sites: usize,  // Calls exceeding threshold
+    pub hot_call_sites: usize, // Calls exceeding threshold
     pub ic_slots_allocated: usize,
 }
 
@@ -64,7 +64,7 @@ impl Inlining {
     /// Collect call sites that are candidates for inline caching
     pub fn collect_inline_sites(&self, ir: &IRFunction) -> Vec<InlineSite> {
         let mut sites = Vec::new();
-        
+
         for (block_id, block) in ir.blocks.iter().enumerate() {
             for (inst_idx, inst) in block.instructions.iter().enumerate() {
                 // Identify call-like instructions
@@ -79,7 +79,7 @@ impl Inlining {
                 }
             }
         }
-        
+
         sites
     }
 
@@ -88,46 +88,49 @@ impl Inlining {
     pub fn build_inline_cache(&self, ir: &IRFunction) -> (Vec<InlineCacheEntry>, InlineCacheStats) {
         let mut ic_entries = Vec::new();
         let mut stats = InlineCacheStats::default();
-        
+
         let call_sites = self.collect_inline_sites(ir);
         stats.total_call_sites = call_sites.len();
-        
+
         // Analyze each call site for monomorphism
         let mut site_targets: HashMap<(usize, usize), Vec<IRValue>> = HashMap::new();
-        
+
         for site in call_sites.iter() {
             if let Some(callee) = &site.callee {
                 let key = (site.block, site.instruction_index);
-                site_targets.entry(key).or_insert_with(Vec::new).push(callee.clone());
+                site_targets
+                    .entry(key)
+                    .or_insert_with(Vec::new)
+                    .push(callee.clone());
             }
         }
-        
+
         // Create IC entries for monomorphic and hot sites
         for (location, targets) in site_targets.iter() {
             let is_monomorphic = targets.len() == 1;
-            
+
             if is_monomorphic {
                 stats.monomorphic_sites += 1;
             } else {
                 stats.polymorphic_sites += 1;
             }
-            
+
             let entry = InlineCacheEntry {
                 block_id: location.0,
                 instruction_index: location.1,
                 target_function: targets.first().cloned(),
-                call_count: 0,  // Would be populated at runtime
+                call_count: 0, // Would be populated at runtime
                 is_monomorphic,
                 polymorphic_targets: targets.clone(),
             };
-            
+
             // Only allocate IC slots for monomorphic sites (high confidence)
             if is_monomorphic {
                 stats.ic_slots_allocated += 1;
                 ic_entries.push(entry);
             }
         }
-        
+
         (ic_entries, stats)
     }
 
@@ -142,6 +145,8 @@ impl Inlining {
                         | Opcode::CallIc
                         | Opcode::CallIcVar
                         | Opcode::CallVar
+                        | Opcode::CallThis
+                        | Opcode::CallThisVar
                         | Opcode::TailCall
                         | Opcode::Construct
                         | Opcode::CallRet
@@ -175,18 +180,22 @@ impl Inlining {
     pub fn run_with_summary(&self, ir: &mut IRFunction) -> InliningSummary {
         let candidates = self.collect_inline_sites(ir).len();
         let (ic_entries, _stats) = self.build_inline_cache(ir);
-        
+
         InliningSummary {
             candidates,
-            inlined: ic_entries.len(),  // Number of IC slots allocated
+            inlined: ic_entries.len(), // Number of IC slots allocated
         }
     }
 
     /// 🔥 Speculative inlining using IC information
     /// For monomorphic call sites with known targets, inline the function if it's small
-    pub fn speculative_inline(&self, _ir: &mut IRFunction, ic_entries: &[InlineCacheEntry]) -> bool {
+    pub fn speculative_inline(
+        &self,
+        _ir: &mut IRFunction,
+        ic_entries: &[InlineCacheEntry],
+    ) -> bool {
         let mut changed = false;
-        
+
         for entry in ic_entries {
             if entry.is_monomorphic {
                 // For monomorphic sites, we know the unique target
@@ -194,7 +203,7 @@ impl Inlining {
                 changed = true;
             }
         }
-        
+
         changed
     }
 
@@ -202,7 +211,7 @@ impl Inlining {
     /// Generate checks to quickly detect type/target mismatches
     pub fn optimize_polymorphic_calls(&self, ir: &mut IRFunction) -> bool {
         let mut changed = false;
-        
+
         for block in &mut ir.blocks {
             for inst in &mut block.instructions {
                 // Detect call instructions and mark for IC optimization
@@ -212,7 +221,7 @@ impl Inlining {
                 }
             }
         }
-        
+
         changed
     }
 
@@ -220,10 +229,10 @@ impl Inlining {
     /// Returns tuple of (potentially_cached_calls, total_calls)
     pub fn estimate_ic_benefit(&self, ir: &IRFunction) -> (usize, usize) {
         let (ic_entries, _stats) = self.build_inline_cache(ir);
-        
+
         let total_calls = self.collect_inline_sites(ir).len();
         let cached_calls = ic_entries.len();
-        
+
         (cached_calls, total_calls)
     }
 }

@@ -1,8 +1,8 @@
 use std::collections::{HashMap, HashSet};
 
-use cfg::BlockId;
 use crate::ir::{IRCondition, IRFunction, IRInst, IRTerminator, IRValue};
 use crate::passes::Pass;
+use cfg::BlockId;
 
 pub struct CopyPropagation;
 

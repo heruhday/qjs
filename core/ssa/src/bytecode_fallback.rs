@@ -602,7 +602,8 @@ fn eliminate_dead_defs(
             | Opcode::LoadClosure
             | Opcode::TypeofName
             | Opcode::CreateEnv
-            | Opcode::LoadArg => {
+            | Opcode::LoadArg
+            | Opcode::LoadRestArgs => {
                 live[insts[index].a as usize] = false;
             }
             Opcode::NewClass
@@ -818,6 +819,17 @@ fn eliminate_dead_defs(
                 live[ACC_REG as usize] = false;
                 live[0] = true;
                 mark_call_bundle_live(&mut live, insts[index].a, 2);
+            }
+            Opcode::CallThis => {
+                live[ACC_REG as usize] = false;
+                live[insts[index].b as usize] = true;
+                mark_call_bundle_live(&mut live, insts[index].a, insts[index].c);
+            }
+            Opcode::CallThisVar => {
+                live[ACC_REG as usize] = false;
+                live[insts[index].a as usize] = true;
+                live[insts[index].b as usize] = true;
+                live[insts[index].c as usize] = true;
             }
             Opcode::CallMethodIc | Opcode::CallMethod2Ic => {
                 live[ACC_REG as usize] = false;
@@ -1173,6 +1185,7 @@ fn is_simple_call_arg_builder(inst: &Instruction, reserved: u8) -> bool {
         | Opcode::TypeofName
         | Opcode::CreateEnv
         | Opcode::LoadArg
+        | Opcode::LoadRestArgs
         | Opcode::LoadName => inst.a != reserved,
         _ => false,
     }
@@ -1669,6 +1682,7 @@ fn copy_propagation_block(
             | Opcode::IsUndef
             | Opcode::IsNull
             | Opcode::LoadArg
+            | Opcode::LoadRestArgs
             | Opcode::GetScope
             | Opcode::SetScope => {
                 changed |= rewrite_reg(&aliases, &mut insts[index].b);
@@ -2254,8 +2268,17 @@ fn build_instruction_semantics(
             | Opcode::Construct
             | Opcode::CallIc
             | Opcode::CallIcSuper
+            | Opcode::CallThis
             | Opcode::CallMono => {
-                if !push_call_bundle(&mut pinned, inst.a, inst.b) {
+                if !push_call_bundle(
+                    &mut pinned,
+                    inst.a,
+                    if inst.opcode == Opcode::CallThis {
+                        inst.c
+                    } else {
+                        inst.b
+                    },
+                ) {
                     return None;
                 }
             }
@@ -2270,6 +2293,11 @@ fn build_instruction_semantics(
                 }
                 push_unique_reg(&mut pinned, inst.a);
                 push_unique_reg(&mut pinned, inst.a + 1);
+            }
+            Opcode::CallThisVar => {
+                push_unique_reg(&mut pinned, inst.a);
+                push_unique_reg(&mut pinned, inst.b);
+                push_unique_reg(&mut pinned, inst.c);
             }
             _ => {}
         }
@@ -2432,6 +2460,7 @@ fn rewrite_instruction_registers(inst: &mut Instruction, map: &[u8; REG_COUNT]) 
         | Opcode::TypeofName
         | Opcode::CreateEnv
         | Opcode::LoadArg
+        | Opcode::LoadRestArgs
         | Opcode::IteratorNext
         | Opcode::SetGlobalIc
         | Opcode::SetGlobal
@@ -2597,8 +2626,16 @@ fn rewrite_instruction_registers(inst: &mut Instruction, map: &[u8; REG_COUNT]) 
         | Opcode::CallMono
         | Opcode::CallRet
         | Opcode::CallVar
-        | Opcode::CallIcVar => {
+        | Opcode::CallIcVar
+        | Opcode::CallThis
+        | Opcode::CallThisVar => {
             rewrite_register_with_map(&mut inst.a, map);
+            if matches!(inst.opcode, Opcode::CallThis | Opcode::CallThisVar) {
+                rewrite_register_with_map(&mut inst.b, map);
+            }
+            if matches!(inst.opcode, Opcode::CallThisVar) {
+                rewrite_register_with_map(&mut inst.c, map);
+            }
         }
         Opcode::LoadThis
         | Opcode::Load0

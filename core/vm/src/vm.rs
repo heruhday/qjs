@@ -16,7 +16,7 @@ use crate::runtime_trait::{
     ArithmeticOps, AssignmentOps, BitwiseOps, CallOps, CoercionOps, ComparisonOps,
     LogicalAssignOps, LogicalOps, NullishOps, PropertyOps, Ternary, TypeOps, ValueOps,
 };
-use built_ins::{BuiltinHost, BuiltinMethod};
+use built_ins::BuiltinHost;
 
 pub type JSString = QString;
 const ACC: usize = 255;
@@ -27,6 +27,7 @@ pub enum PropertyKey {
     Atom(Atom),
     Index(u32),
     Value(JSValue),
+    PrivateName(Atom), // For private properties (#field, #method, etc.)
 }
 
 impl PropertyKey {
@@ -36,6 +37,7 @@ impl PropertyKey {
             PropertyKey::Atom(atom) => (1, u64::from(atom.0)),
             PropertyKey::Index(index) => (2, u64::from(index)),
             PropertyKey::Value(value) => (3, value.bits()),
+            PropertyKey::PrivateName(atom) => (4, u64::from(atom.0)), // Private names sort after regular properties
         }
     }
 }
@@ -81,6 +83,7 @@ pub struct JSObject {
     pub header: GCHeader,
     pub shape: *mut Shape,
     pub properties: HashMap<PropertyKey, JSValue>,
+    pub private_properties: HashMap<PropertyKey, JSValue>, // Private properties (#field, #method, etc.)
     pub named_values: Vec<JSValue>,
     pub named_present: Vec<bool>,
     pub kind: ObjectKind,
@@ -511,6 +514,7 @@ pub struct VM {
     pub last_exception: JSValue,
     pub(crate) interned_strings: HashMap<String, JSValue>,
     compiled_properties: Vec<String>,
+    compiled_private_properties: Vec<Atom>,
     property_slots: HashMap<String, u16>,
     pub atoms: AtomTable,
     pub feedback: RuntimeFeedback,
@@ -523,6 +527,10 @@ pub struct VM {
     console_group_depth: usize,
     console_echo: bool,
     builtin_number_to_fixed: JSValue,
+    builtin_object_prototype: JSValue,
+    builtin_string_prototype: JSValue,
+    symbol_registry: HashMap<String, JSValue>,
+    next_symbol_id: u64,
 
     /// Dispatch table for threaded execution (hot opcodes only)
     dispatch_table: [Option<DispatchHandler>; 256],
@@ -589,6 +597,7 @@ pub enum Opcode {
     GetIdxFast,
     SetIdxFast,
     LoadArg,
+    LoadRestArgs,
     LoadAcc,
     StrictEq,
     StrictNeq,
@@ -604,6 +613,7 @@ pub enum Opcode {
     LogicalOr,
     NullishCoalesce,
     In,
+    PrivateIn,
     Instanceof,
     GetLengthIc,
     ArrayPushAcc,
@@ -613,6 +623,8 @@ pub enum Opcode {
     NewClass,
     GetProp,
     SetProp,
+    GetPrivateProp,
+    SetPrivateProp,
     GetIdxIc,
     SetIdxIc,
     GetGlobal,
@@ -650,6 +662,8 @@ pub enum Opcode {
     TailCall,
     Construct,
     CallVar,
+    CallThis,
+    CallThisVar,
     Enter,
     Leave,
     Yield,
@@ -839,6 +853,7 @@ impl From<u8> for Opcode {
             48 => Self::GetIdxFast,
             49 => Self::SetIdxFast,
             50 => Self::LoadArg,
+            225 => Self::LoadRestArgs,
             51 => Self::LoadAcc,
             52 => Self::StrictEq,
             53 => Self::StrictNeq,
@@ -857,8 +872,8 @@ impl From<u8> for Opcode {
             69 => Self::NewClass,
             70 => Self::GetProp,
             71 => Self::SetProp,
-            72 => Self::GetIdxIc,
-            73 => Self::SetIdxIc,
+            72 => Self::GetPrivateProp,
+            73 => Self::SetPrivateProp,
             74 => Self::GetGlobal,
             75 => Self::SetGlobal,
             76 => Self::GetUpval,
@@ -878,7 +893,6 @@ impl From<u8> for Opcode {
             90 => Self::CreateEnv,
             91 => Self::LoadName,
             92 => Self::StoreName,
-            123 => Self::InitName,
             93 => Self::LoadClosure,
             94 => Self::NewThis,
             95 => Self::TypeofName,
@@ -894,6 +908,8 @@ impl From<u8> for Opcode {
             105 => Self::TailCall,
             106 => Self::Construct,
             107 => Self::CallVar,
+            226 => Self::CallThis,
+            227 => Self::CallThisVar,
             108 => Self::Enter,
             109 => Self::Leave,
             110 => Self::Yield,
@@ -908,7 +924,9 @@ impl From<u8> for Opcode {
             119 => Self::LogicalOr,
             120 => Self::NullishCoalesce,
             121 => Self::In,
-            122 => Self::Instanceof,
+            122 => Self::PrivateIn,
+            123 => Self::InitName,
+            124 => Self::Instanceof,
             128 => Self::CallIc,
             129 => Self::CallIcVar,
             160 => Self::ProfileType,
@@ -1093,6 +1111,7 @@ impl Opcode {
             Self::GetIdxFast => 48,
             Self::SetIdxFast => 49,
             Self::LoadArg => 50,
+            Self::LoadRestArgs => 225,
             Self::LoadAcc => 51,
             Self::StrictEq => 52,
             Self::StrictNeq => 53,
@@ -1108,7 +1127,8 @@ impl Opcode {
             Self::LogicalOr => 119,
             Self::NullishCoalesce => 120,
             Self::In => 121,
-            Self::Instanceof => 122,
+            Self::PrivateIn => 122,
+            Self::Instanceof => 124,
             Self::GetLengthIc => 64,
             Self::ArrayPushAcc => 65,
             Self::NewObj => 66,
@@ -1117,8 +1137,10 @@ impl Opcode {
             Self::NewClass => 69,
             Self::GetProp => 70,
             Self::SetProp => 71,
-            Self::GetIdxIc => 72,
-            Self::SetIdxIc => 73,
+            Self::GetPrivateProp => 72,
+            Self::SetPrivateProp => 73,
+            Self::GetIdxIc => 74,
+            Self::SetIdxIc => 75,
             Self::GetGlobal => 74,
             Self::SetGlobal => 75,
             Self::GetUpval => 76,
@@ -1154,6 +1176,8 @@ impl Opcode {
             Self::TailCall => 105,
             Self::Construct => 106,
             Self::CallVar => 107,
+            Self::CallThis => 226,
+            Self::CallThisVar => 227,
             Self::Enter => 108,
             Self::Leave => 109,
             Self::Yield => 110,
@@ -1582,6 +1606,15 @@ impl TypeOps for VmValue {
         self.wrap_bool(self.vm().has_property(rhs.value, self.prop_key(self.value)))
     }
 
+    fn private_in(&self, rhs: &Self) -> Self {
+        if let Some(atom) = self.value.as_atom() {
+            self.wrap_bool(self.vm().has_private_property(rhs.value, PropertyKey::PrivateName(atom)))
+        } else {
+            // This shouldn't happen for valid code
+            self.wrap_bool(false)
+        }
+    }
+
     fn delete(&self) -> Self {
         self.wrap(make_true())
     }
@@ -1669,6 +1702,7 @@ impl VM {
             last_exception: make_undefined(),
             interned_strings: HashMap::new(),
             compiled_properties: Vec::new(),
+            compiled_private_properties: Vec::new(),
             property_slots: HashMap::new(),
             atoms: AtomTable::new(),
             feedback: RuntimeFeedback::default(),
@@ -1681,6 +1715,10 @@ impl VM {
             console_group_depth: 0,
             console_echo: true,
             builtin_number_to_fixed: make_undefined(),
+            builtin_object_prototype: make_undefined(),
+            builtin_string_prototype: make_undefined(),
+            symbol_registry: HashMap::new(),
+            next_symbol_id: 0,
             dispatch_table: [None; 256],
             threaded_stop_depth: None,
         };
@@ -1694,9 +1732,11 @@ impl VM {
             bytecode,
             constants,
             string_constants,
+            atom_constants,
             function_constants,
             names,
             properties,
+            private_properties,
         } = compiled;
         let mut vm = Self::new(bytecode, constants, args);
         vm.function_constants = function_constants;
@@ -1706,29 +1746,108 @@ impl VM {
                 *slot = value;
             }
         }
-        vm.install_js_builtins(&names, &properties);
+        for (index, text) in atom_constants {
+            let atom = vm.atoms.intern(&text);
+            let value = JSValue::atom(atom);
+            if let Some(slot) = vm.const_pool.get_mut(index as usize) {
+                *slot = value;
+            }
+        }
+        vm.install_js_builtins(&names, &properties, &private_properties);
         vm
     }
 
-    pub fn install_js_builtins(&mut self, names: &[String], properties: &[String]) {
-        built_ins::install_js_builtins(self, names, properties);
+    pub fn install_js_builtins(&mut self, names: &[String], properties: &[String], private_properties: &[String]) {
+        built_ins::install_js_builtins(self, names, properties, private_properties);
+        if let Some(slot) = names.iter().position(|name| name == "Object")
+            && let Ok(slot) = u16::try_from(slot)
+            && let Some(&object_ctor) = self.global_object.get(&slot)
+        {
+            self.builtin_object_prototype = self.get_property_by_name(object_ctor, "prototype");
+        }
+        if let Some(slot) = names.iter().position(|name| name == "String")
+            && let Ok(slot) = u16::try_from(slot)
+            && let Some(&string_ctor) = self.global_object.get(&slot)
+        {
+            self.builtin_string_prototype = self.get_property_by_name(string_ctor, "prototype");
+        }
+        if self.builtin_string_prototype.is_undefined() {
+            self.builtin_string_prototype = built_ins::create_string_prototype(self);
+        }
         self.builtin_number_to_fixed =
             self.alloc_native_function(Some("__builtin_number_to_fixed"));
     }
 
-    pub fn set_console_echo(&mut self, enabled: bool) {
-        self.console_echo = enabled;
-    }
+    fn eval_compiled(
+        &mut self,
+        compiled: crate::codegen::CompiledBytecode,
+    ) -> Result<JSValue, String> {
+        let crate::codegen::CompiledBytecode {
+            bytecode,
+            constants,
+            string_constants,
+            atom_constants,
+            function_constants,
+            names,
+            properties,
+            private_properties,
+        } = compiled;
 
-    fn install_builtin_object(&mut self, global_slot: u16, methods: &[BuiltinMethod]) {
-        let object = self.alloc_object();
-        for method in methods {
-            if let Some(slot) = self.property_slots.get(method.property_name).copied() {
-                let function = self.alloc_native_function(Some(method.native_name));
-                let _ = self.set_property(object, PropertyKey::Id(slot), function);
+        let mut temp_vm = Self::new(bytecode, constants, vec![]);
+        temp_vm.atoms = self.atoms.clone();
+        temp_vm.interned_strings = self.interned_strings.clone();
+        temp_vm.global_object = self.global_object.clone();
+        temp_vm.symbol_registry = self.symbol_registry.clone();
+        temp_vm.next_symbol_id = self.next_symbol_id;
+        temp_vm.builtin_object_prototype = self.builtin_object_prototype;
+        temp_vm.builtin_string_prototype = self.builtin_string_prototype;
+        temp_vm.console_echo = self.console_echo;
+        temp_vm.console_timers = self.console_timers.clone();
+        temp_vm.console_counts = self.console_counts.clone();
+        temp_vm.console_group_depth = self.console_group_depth;
+        temp_vm.function_constants = function_constants;
+
+        for (index, text) in string_constants {
+            let value = temp_vm.intern_string(text);
+            if let Some(slot) = temp_vm.const_pool.get_mut(index as usize) {
+                *slot = value;
             }
         }
-        self.global_object.insert(global_slot, object);
+        for (index, text) in atom_constants {
+            let atom = temp_vm.atoms.intern(&text);
+            let value = JSValue::atom(atom);
+            if let Some(slot) = temp_vm.const_pool.get_mut(index as usize) {
+                *slot = value;
+            }
+        }
+
+        temp_vm.install_js_builtins(&names, &properties, &private_properties);
+        temp_vm.run(false);
+
+        let result = temp_vm.frame.regs[ACC];
+        self.global_object = temp_vm.global_object.clone();
+        self.atoms = temp_vm.atoms.clone();
+        self.interned_strings = temp_vm.interned_strings.clone();
+        self.symbol_registry = temp_vm.symbol_registry.clone();
+        self.next_symbol_id = temp_vm.next_symbol_id;
+        self.console_timers = temp_vm.console_timers.clone();
+        self.console_counts = temp_vm.console_counts.clone();
+        self.console_group_depth = temp_vm.console_group_depth;
+        self.objects.append(&mut temp_vm.objects);
+        self.shapes.append(&mut temp_vm.shapes);
+        self.strings.append(&mut temp_vm.strings);
+        self.console_output.append(&mut temp_vm.console_output);
+
+        Ok(result)
+    }
+
+    fn eval_source(&mut self, source: &str) -> Result<JSValue, String> {
+        let compiled = crate::codegen::compile_source(source).map_err(|error| error.to_string())?;
+        self.eval_compiled(compiled)
+    }
+
+    pub fn set_console_echo(&mut self, enabled: bool) {
+        self.console_echo = enabled;
     }
 
     /// Initialize the dispatch table with handler functions for hot opcodes
@@ -2659,10 +2778,9 @@ impl VM {
     fn property_key_from_value(&self, value: JSValue) -> PropertyKey {
         if let Some(index) = self.array_index_from_value(value) {
             PropertyKey::Index(index as u32)
-        } else if let Some(atom) = value.as_atom() {
-            PropertyKey::Atom(atom)
-        } else if let Some(string_ptr) = string_from_value(value) {
-            PropertyKey::Atom(unsafe { (*string_ptr).atom })
+        } else if let Some(text) = self.string_text(value) {
+            self.property_key_for_existing_name(text)
+                .unwrap_or(PropertyKey::Value(value))
         } else {
             PropertyKey::Value(value)
         }
@@ -2670,13 +2788,26 @@ impl VM {
 
     fn property_key_to_value(&mut self, key: PropertyKey) -> JSValue {
         match key {
-            PropertyKey::Id(id) => make_number(id as f64),
-            PropertyKey::Atom(atom) => {
+            PropertyKey::Id(id) => self
+                .compiled_properties
+                .get(id as usize)
+                .cloned()
+                .map(|text| self.intern_string(text))
+                .unwrap_or_else(|| self.intern_string(id.to_string())),
+            PropertyKey::Atom(atom) | PropertyKey::PrivateName(atom) => {
                 let text = self.atoms.resolve(atom).to_owned();
                 self.intern_string(text)
             }
-            PropertyKey::Index(index) => make_number(index as f64),
-            PropertyKey::Value(value) => value,
+            PropertyKey::Index(index) => self.intern_string(index.to_string()),
+            PropertyKey::Value(value) => {
+                if matches!(value.heap_kind(), Some(value::HeapKind::Symbol)) {
+                    value
+                } else if let Some(text) = self.property_key_to_text(PropertyKey::Value(value)) {
+                    self.intern_string(text)
+                } else {
+                    value
+                }
+            }
         }
     }
 
@@ -3022,13 +3153,20 @@ impl VM {
             header: GCHeader::with_kind(ObjType::Object, heap_kind),
             shape,
             properties: HashMap::new(),
+            private_properties: HashMap::new(), // Initialize private properties
             named_values: Vec::new(),
             named_present: Vec::new(),
             kind,
         });
         let obj_ptr = Box::into_raw(obj);
         self.objects.push(obj_ptr);
-        make_object(obj_ptr)
+        let value = make_object(obj_ptr);
+        if !self.builtin_object_prototype.is_undefined() {
+            let prototype_key =
+                self.property_key_for_name(built_ins::object_internal_prototype_name());
+            let _ = self.set_property(value, prototype_key, self.builtin_object_prototype);
+        }
+        value
     }
 
     pub fn alloc_object(&mut self) -> JSValue {
@@ -3038,7 +3176,9 @@ impl VM {
     pub fn alloc_array(&mut self, size_hint: usize) -> JSValue {
         let mut array = QArray::new(self.heap_shape.clone());
         array.elements = Vec::with_capacity(size_hint);
-        self.alloc_object_with_kind(ObjectKind::Array(array))
+        let value = self.alloc_object_with_kind(ObjectKind::Array(array));
+        built_ins::attach_array_methods(self, value);
+        value
     }
 
     fn alloc_iterator(&mut self, values: Vec<JSValue>) -> JSValue {
@@ -3046,14 +3186,16 @@ impl VM {
     }
 
     fn alloc_function(&mut self, descriptor: JSValue) -> JSValue {
-        self.alloc_object_with_kind(ObjectKind::Function(QFunction {
+        let function = self.alloc_object_with_kind(ObjectKind::Function(QFunction {
             name: None,
             params: Vec::new(),
             body: Vec::new(),
             prototype: None,
             descriptor,
             upvalues: Vec::new(),
-        }))
+        }));
+        built_ins::attach_callable_methods(self, function);
+        function
     }
 
     fn alloc_native_function(&mut self, name: Option<&str>) -> JSValue {
@@ -3113,7 +3255,7 @@ impl VM {
                 .get(slot as usize)
                 .cloned()
                 .or_else(|| Some(slot.to_string())),
-            PropertyKey::Atom(atom) => Some(self.atoms.resolve(atom).to_owned()),
+            PropertyKey::Atom(atom) | PropertyKey::PrivateName(atom) => Some(self.atoms.resolve(atom).to_owned()),
             PropertyKey::Index(index) => Some(index.to_string()),
             PropertyKey::Value(value) => {
                 if let Some(text) = self.string_text(value) {
@@ -3135,12 +3277,70 @@ impl VM {
         }
     }
 
+    fn is_internal_property_key(&self, key: PropertyKey) -> bool {
+        self.property_key_to_text(key)
+            .is_some_and(|name| name.starts_with("__qjs_"))
+    }
+
     fn property_key_for_name(&mut self, name: &str) -> PropertyKey {
         if let Some(&slot) = self.property_slots.get(name) {
             PropertyKey::Id(slot)
         } else {
             PropertyKey::Atom(self.atoms.intern(name))
         }
+    }
+
+    fn property_key_for_existing_name(&self, name: &str) -> Option<PropertyKey> {
+        self.property_slots
+            .get(name)
+            .copied()
+            .map(PropertyKey::Id)
+            .or_else(|| self.atoms.get(name).map(PropertyKey::Atom))
+    }
+
+    fn get_property_by_name(&self, obj_val: JSValue, name: &str) -> JSValue {
+        self.property_key_for_existing_name(name)
+            .map(|key| self.get_property(obj_val, key))
+            .unwrap_or_else(make_undefined)
+    }
+
+    fn get_own_property_by_name(&self, obj_val: JSValue, name: &str) -> JSValue {
+        self.property_key_for_existing_name(name)
+            .map(|key| self.get_own_property_value_internal(obj_val, key))
+            .unwrap_or_else(make_undefined)
+    }
+
+    fn has_property_by_name(&self, obj_val: JSValue, name: &str) -> bool {
+        self.property_key_for_existing_name(name)
+            .is_some_and(|key| self.has_property(obj_val, key))
+    }
+
+    fn has_own_property_by_name(&self, obj_val: JSValue, name: &str) -> bool {
+        self.property_key_for_existing_name(name)
+            .is_some_and(|key| self.has_own_property_value_internal(obj_val, key))
+    }
+
+    fn delete_property_by_name(&mut self, obj_val: JSValue, name: &str) -> bool {
+        self.property_key_for_existing_name(name)
+            .is_some_and(|key| self.delete_property(obj_val, key))
+    }
+
+    fn own_property_names(&self, obj_val: JSValue) -> Vec<String> {
+        self.get_keys(obj_val)
+            .into_iter()
+            .filter_map(|key| self.property_key_to_text(key))
+            .collect()
+    }
+
+    fn own_property_keys(&mut self, obj_val: JSValue) -> Vec<JSValue> {
+        self.get_keys(obj_val)
+            .into_iter()
+            .map(|key| self.property_key_to_value(key))
+            .collect()
+    }
+
+    fn get_internal_prototype(&self, obj_val: JSValue) -> JSValue {
+        self.get_own_property_by_name(obj_val, built_ins::object_internal_prototype_name())
     }
 
     fn vm_to_runtime_value(
@@ -3476,13 +3676,15 @@ impl VM {
 
     fn dispatch_native_function(
         &mut self,
+        callee: JSValue,
         function: &QNativeFunction,
         this_value: JSValue,
         args: &[JSValue],
     ) -> JSValue {
         if let Some(name) = function.name {
             let builtin_name = self.atoms.resolve(name).to_owned();
-            if let Some(result) = built_ins::dispatch_builtin(self, &builtin_name, this_value, args)
+            if let Some(result) =
+                built_ins::dispatch_builtin(self, &builtin_name, callee, this_value, args)
             {
                 return result;
             }
@@ -3890,6 +4092,10 @@ impl VM {
 
     fn property_is_length(&self, key: PropertyKey) -> bool {
         match key {
+            PropertyKey::Id(id) => self
+                .compiled_properties
+                .get(id as usize)
+                .is_some_and(|name| name == "length"),
             PropertyKey::Atom(atom) => self.atoms.resolve(atom) == "length",
             PropertyKey::Value(value) => self.string_equals(value, "length"),
             _ => false,
@@ -3953,11 +4159,7 @@ impl VM {
         let _ = self.set_property(obj_val, PropertyKey::Id(key_id), value);
     }
 
-    fn get_property(&self, obj_val: JSValue, key: PropertyKey) -> JSValue {
-        if let Some(value) = self.get_primitive_property(obj_val, key) {
-            return value;
-        }
-
+    fn get_own_property_value_internal(&self, obj_val: JSValue, key: PropertyKey) -> JSValue {
         let Some(obj_ptr) = object_from_value(obj_val) else {
             return make_undefined();
         };
@@ -3974,17 +4176,119 @@ impl VM {
                     _ => self
                         .get_named_property_slot(obj_ptr, key)
                         .or_else(|| (*obj_ptr).properties.get(&key).copied())
+                        .or_else(|| {
+                            if matches!(key, PropertyKey::PrivateName(_)) {
+                                (*obj_ptr).private_properties.get(&key).copied()
+                            } else {
+                                None
+                            }
+                        })
                         .unwrap_or(make_undefined()),
                 },
                 _ => self
                     .get_named_property_slot(obj_ptr, key)
                     .or_else(|| (*obj_ptr).properties.get(&key).copied())
+                    .or_else(|| {
+                        if matches!(key, PropertyKey::PrivateName(_)) {
+                            (*obj_ptr).private_properties.get(&key).copied()
+                        } else {
+                            None
+                        }
+                    })
                     .unwrap_or(make_undefined()),
             }
         }
     }
 
+    fn has_own_property_value_internal(&self, obj_val: JSValue, key: PropertyKey) -> bool {
+        let Some(obj_ptr) = object_from_value(obj_val) else {
+            return false;
+        };
+
+        unsafe {
+            match &(*obj_ptr).kind {
+                ObjectKind::Array(array) => match key {
+                    PropertyKey::Index(index) => array.elements.get(index as usize).is_some(),
+                    _ if self.property_is_length(key) => true,
+                    _ => {
+                        self.has_named_property_slot(obj_ptr, key)
+                            || (*obj_ptr).properties.contains_key(&key)
+                            || matches!(key, PropertyKey::PrivateName(_)) && (*obj_ptr).private_properties.contains_key(&key)
+                    }
+                },
+                _ => {
+                    self.has_named_property_slot(obj_ptr, key)
+                        || (*obj_ptr).properties.contains_key(&key)
+                        || matches!(key, PropertyKey::PrivateName(_)) && (*obj_ptr).private_properties.contains_key(&key)
+                }
+            }
+        }
+    }
+
+    fn get_property(&self, obj_val: JSValue, key: PropertyKey) -> JSValue {
+        let key = match key {
+            PropertyKey::Id(id) if id as usize >= self.compiled_properties.len() => {
+                let private_idx = id as usize - self.compiled_properties.len();
+                if let Some(atom) = self.compiled_private_properties.get(private_idx) {
+                    PropertyKey::PrivateName(*atom)
+                } else {
+                    return make_undefined();
+                }
+            }
+            other => other,
+        };
+
+        if let Some(value) = self.get_primitive_property(obj_val, key) {
+            return value;
+        }
+
+        let Some(_) = object_from_value(obj_val) else {
+            return make_undefined();
+        };
+
+        let mut current = obj_val;
+        loop {
+            if self.has_own_property_value_internal(current, key) {
+                return self.get_own_property_value_internal(current, key);
+            }
+
+            let prototype = self.get_internal_prototype(current);
+            if prototype.is_null() || prototype.is_undefined() || !is_object(prototype) {
+                return make_undefined();
+            }
+            current = prototype;
+        }
+    }
+
     fn get_primitive_property(&self, value: JSValue, key: PropertyKey) -> Option<JSValue> {
+        if let Some(text) = self.string_text(value) {
+            if self.property_is_length(key) {
+                return Some(make_number(text.chars().count() as f64));
+            }
+
+            let index = match key {
+                PropertyKey::Index(index) => Some(index as usize),
+                _ => self
+                    .property_key_to_text(key)
+                    .and_then(|name| name.parse::<usize>().ok()),
+            };
+            if let Some(index) = index
+                && let Some(ch) = text.chars().nth(index)
+            {
+                let rendered = ch.to_string();
+                if let Some(atom) = self.atoms.get(&rendered) {
+                    return Some(JSValue::atom(atom));
+                }
+            }
+
+            if !self.builtin_string_prototype.is_undefined() {
+                let method = self.get_property(self.builtin_string_prototype, key);
+                if !method.is_undefined() {
+                    return Some(method);
+                }
+            }
+        }
+
         if to_f64(value).is_some() && self.property_key_to_text(key).as_deref() == Some("toFixed") {
             return Some(self.builtin_number_to_fixed);
         }
@@ -3993,9 +4297,36 @@ impl VM {
     }
 
     fn set_property(&mut self, obj_val: JSValue, key: PropertyKey, value: JSValue) -> JSValue {
+        let key = match key {
+            PropertyKey::Id(id) if id as usize >= self.compiled_properties.len() => {
+                let private_idx = id as usize - self.compiled_properties.len();
+                if let Some(name) = self.compiled_private_properties.get(private_idx) {
+                    PropertyKey::PrivateName(*name)
+                } else {
+                    return value;
+                }
+            }
+            other => other,
+        };
+
         let Some(obj_ptr) = object_from_value(obj_val) else {
             return make_undefined();
         };
+
+        let frozen_key = self.property_key_for_name("__qjs_frozen");
+        let is_frozen = if key == frozen_key {
+            false
+        } else {
+            unsafe {
+                self.get_named_property_slot(obj_ptr, frozen_key)
+                    .or_else(|| (*obj_ptr).properties.get(&frozen_key).copied())
+                    .and_then(bool_from_value)
+                    .unwrap_or(false)
+            }
+        };
+        if is_frozen {
+            return value;
+        }
 
         unsafe {
             if let ObjectKind::Array(array) = &mut (*obj_ptr).kind {
@@ -4024,7 +4355,11 @@ impl VM {
         }
 
         unsafe {
-            (*obj_ptr).properties.insert(key, value);
+            if matches!(key, PropertyKey::PrivateName(_)) {
+                (*obj_ptr).private_properties.insert(key, value);
+            } else {
+                (*obj_ptr).properties.insert(key, value);
+            }
         }
         value
     }
@@ -4049,37 +4384,116 @@ impl VM {
                     _ => {
                         self.delete_named_property_slot(obj_ptr, key)
                             || (*obj_ptr).properties.remove(&key).is_some()
+                            || (matches!(key, PropertyKey::PrivateName(_)) && (*obj_ptr).private_properties.remove(&key).is_some())
                     }
                 },
                 _ => {
                     self.delete_named_property_slot(obj_ptr, key)
                         || (*obj_ptr).properties.remove(&key).is_some()
+                        || (matches!(key, PropertyKey::PrivateName(_)) && (*obj_ptr).private_properties.remove(&key).is_some())
                 }
             }
         }
     }
 
     fn has_property(&self, obj_val: JSValue, key: PropertyKey) -> bool {
+        if self.get_primitive_property(obj_val, key).is_some() {
+            return true;
+        }
+
+        let Some(_) = object_from_value(obj_val) else {
+            return false;
+        };
+
+        let mut current = obj_val;
+        loop {
+            if self.has_own_property_value_internal(current, key) {
+                return true;
+            }
+
+            let prototype = self.get_internal_prototype(current);
+            if prototype.is_null() || prototype.is_undefined() || !is_object(prototype) {
+                return false;
+            }
+            current = prototype;
+        }
+    }
+
+    fn has_private_property(&self, obj_val: JSValue, key: PropertyKey) -> bool {
         let Some(obj_ptr) = object_from_value(obj_val) else {
             return false;
         };
 
         unsafe {
-            match &(*obj_ptr).kind {
-                ObjectKind::Array(array) => match key {
-                    PropertyKey::Index(index) => array.elements.get(index as usize).is_some(),
-                    _ if self.property_is_length(key) => true,
-                    _ => {
-                        self.has_named_property_slot(obj_ptr, key)
-                            || (*obj_ptr).properties.contains_key(&key)
-                    }
-                },
-                _ => {
-                    self.has_named_property_slot(obj_ptr, key)
-                        || (*obj_ptr).properties.contains_key(&key)
-                }
+            matches!(key, PropertyKey::PrivateName(_)) && (*obj_ptr).private_properties.contains_key(&key)
+        }
+    }
+
+    fn get_private_property(&self, obj_val: JSValue, key: PropertyKey) -> JSValue {
+        let Some(obj_ptr) = object_from_value(obj_val) else {
+            return make_undefined();
+        };
+
+        unsafe {
+            if let PropertyKey::PrivateName(_) = key {
+                (*obj_ptr).private_properties.get(&key).copied().unwrap_or(make_undefined())
+            } else {
+                make_undefined()
             }
         }
+    }
+
+    fn set_private_property(&mut self, obj_val: JSValue, key: PropertyKey, value: JSValue) -> JSValue {
+        let Some(obj_ptr) = object_from_value(obj_val) else {
+            return make_undefined();
+        };
+
+        unsafe {
+            if let PropertyKey::PrivateName(_) = key {
+                (*obj_ptr).private_properties.insert(key, value);
+            }
+        }
+        value
+    }
+
+    fn get_own_property_value_from_value(&self, obj_val: JSValue, key: JSValue) -> JSValue {
+        self.get_own_property_value_internal(obj_val, self.property_key_from_value(key))
+    }
+
+    fn has_own_property_value_from_value(&self, obj_val: JSValue, key: JSValue) -> bool {
+        self.has_own_property_value_internal(obj_val, self.property_key_from_value(key))
+    }
+
+    fn object_same_value(&self, lhs: JSValue, rhs: JSValue) -> bool {
+        if let (Some(left), Some(right)) = (to_f64(lhs), to_f64(rhs)) {
+            if left.is_nan() && right.is_nan() {
+                return true;
+            }
+
+            if left == 0.0 && right == 0.0 {
+                return left.to_bits() == right.to_bits();
+            }
+
+            return left == right;
+        }
+
+        if is_string(lhs) && is_string(rhs) {
+            return self.string_text(lhs) == self.string_text(rhs);
+        }
+
+        if is_object(lhs) && is_object(rhs) {
+            return object_from_value(lhs) == object_from_value(rhs);
+        }
+
+        if let (Some(left), Some(right)) = (bool_from_value(lhs), bool_from_value(rhs)) {
+            return left == right;
+        }
+
+        if (is_null(lhs) && is_null(rhs)) || (is_undefined(lhs) && is_undefined(rhs)) {
+            return true;
+        }
+
+        lhs == rhs
     }
 
     fn get_keys(&self, obj_val: JSValue) -> Vec<PropertyKey> {
@@ -4107,7 +4521,11 @@ impl VM {
                             .filter(|key| !Self::uses_shape_storage(*key)),
                     );
                     named.sort_by_key(PropertyKey::sort_key);
-                    keys.extend(named);
+                    keys.extend(
+                        named
+                            .into_iter()
+                            .filter(|key| !self.is_internal_property_key(*key)),
+                    );
                     keys
                 }
                 _ => {
@@ -4120,7 +4538,9 @@ impl VM {
                             .filter(|key| !Self::uses_shape_storage(*key)),
                     );
                     keys.sort_by_key(PropertyKey::sort_key);
-                    keys
+                    keys.into_iter()
+                        .filter(|key| !self.is_internal_property_key(*key))
+                        .collect()
                 }
             }
         }
@@ -4307,14 +4727,58 @@ impl VM {
         }
     }
 
-    fn function_entry_pc(&self, descriptor: JSValue) -> Option<usize> {
+    fn collect_rest_args_value(&mut self, start: usize) -> JSValue {
+        let array = self.alloc_array(0);
+        let argc = self.frame.argc as usize;
+        for index in start..argc {
+            let _ = self.array_push(array, self.frame.arg(index));
+        }
+        array
+    }
+
+    fn function_descriptor_info(&self, descriptor: JSValue) -> Option<(usize, bool)> {
         let entry = to_f64(descriptor)?;
-        if !entry.is_finite() || entry < 0.0 || entry.fract() != 0.0 {
+        if !entry.is_finite() || entry.fract() != 0.0 {
             return None;
         }
+        if entry >= 0.0 {
+            return Some((entry as usize, false));
+        }
 
-        let entry = entry as usize;
-        (entry < self.bytecode.len()).then_some(entry)
+        let decoded = -entry - 1.0;
+        (decoded >= 0.0).then_some((decoded as usize, true))
+    }
+
+    fn function_value_is_async(&self, function_value: JSValue) -> bool {
+        let Some(obj_ptr) = object_from_value(function_value) else {
+            return false;
+        };
+
+        unsafe {
+            match &(*obj_ptr).kind {
+                ObjectKind::Function(function) => self
+                    .function_descriptor_info(function.descriptor)
+                    .is_some_and(|(_, is_async)| is_async),
+                _ => false,
+            }
+        }
+    }
+
+    fn current_frame_is_async(&self) -> bool {
+        self.frame
+            .header
+            .function_value
+            .is_some_and(|function_value| self.function_value_is_async(function_value))
+    }
+
+    fn promise_resolve_value(&mut self, value: JSValue) -> JSValue {
+        let resolve = self.builtin_function("__builtin_promise_resolve_static");
+        self.call_value(resolve, make_undefined(), &[value])
+    }
+
+    fn promise_reject_value(&mut self, value: JSValue) -> JSValue {
+        let reject = self.builtin_function("__builtin_promise_reject_static");
+        self.call_value(reject, make_undefined(), &[value])
     }
 
     #[inline(always)]
@@ -4413,9 +4877,13 @@ impl VM {
 
     #[inline(always)]
     fn exit_frame(&mut self, result: JSValue) -> bool {
-        let result = match self.frame.header.construct_result {
-            Some(instance) if !is_object(result) => instance,
-            _ => result,
+        let result = if self.current_frame_is_async() {
+            self.promise_resolve_value(result)
+        } else {
+            match self.frame.header.construct_result {
+                Some(instance) if !is_object(result) => instance,
+                _ => result,
+            }
         };
         let return_pc = self.frame.header.return_pc;
         let scope_depth = self.frame.header.scope_depth;
@@ -4446,7 +4914,7 @@ impl VM {
             match &(*obj_ptr).kind {
                 ObjectKind::Function(function) => {
                     let descriptor = function.descriptor;
-                    if let Some(entry_pc) = self.function_entry_pc(descriptor) {
+                    if let Some((entry_pc, _)) = self.function_descriptor_info(descriptor) {
                         self.enter_frame(entry_pc, callee, this_value, args, None);
                         CallAction::EnteredFrame
                     } else if is_undefined(descriptor) {
@@ -4455,9 +4923,9 @@ impl VM {
                         CallAction::Returned(descriptor)
                     }
                 }
-                ObjectKind::NativeFunction(function) => {
-                    CallAction::Returned(self.dispatch_native_function(function, this_value, args))
-                }
+                ObjectKind::NativeFunction(function) => CallAction::Returned(
+                    self.dispatch_native_function(callee, function, this_value, args),
+                ),
                 ObjectKind::NativeClosure(function) => {
                     CallAction::Returned(self.dispatch_native_closure(function, this_value, args))
                 }
@@ -4486,12 +4954,24 @@ impl VM {
                 ObjectKind::Function(function) => {
                     let descriptor = function.descriptor;
                     let instance = self.alloc_object();
-                    if let Some(entry_pc) = self.function_entry_pc(descriptor) {
+                    if let Some((entry_pc, _)) = self.function_descriptor_info(descriptor) {
                         self.enter_frame(entry_pc, callee, instance, args, Some(instance));
                         CallAction::EnteredFrame
                     } else {
                         CallAction::Returned(instance)
                     }
+                }
+                ObjectKind::NativeFunction(function) => {
+                    if let Some(name) = function.name {
+                        let builtin_name = self.atoms.resolve(name).to_owned();
+                        if let Some(result) =
+                            built_ins::dispatch_constructor(self, callee, &builtin_name, args)
+                        {
+                            return CallAction::Returned(result);
+                        }
+                    }
+
+                    CallAction::Returned(self.alloc_object())
                 }
                 ObjectKind::Class(class) => {
                     let base = class.base;
@@ -5020,6 +5500,9 @@ impl VM {
                 Opcode::LoadArg => {
                     self.frame.regs[a] = self.frame.arg(b);
                 }
+                Opcode::LoadRestArgs => {
+                    self.frame.regs[a] = self.collect_rest_args_value(b as usize);
+                }
                 Opcode::LoadAcc => {
                     self.frame.regs[ACC] = self.frame.regs[a];
                 }
@@ -5078,6 +5561,10 @@ impl VM {
                     let (lhs, rhs) = self.value_pair(self.frame.regs[b], self.frame.regs[c]);
                     self.frame.regs[ACC] = lhs.in_(&rhs).raw();
                 }
+                Opcode::PrivateIn => {
+                    let (lhs, rhs) = self.value_pair(self.frame.regs[b], self.frame.regs[c]);
+                    self.frame.regs[ACC] = lhs.private_in(&rhs).raw();
+                }
                 Opcode::Instanceof => {
                     let (lhs, rhs) = self.value_pair(self.frame.regs[b], self.frame.regs[c]);
                     self.frame.regs[ACC] = lhs.instanceof(&rhs).raw();
@@ -5121,6 +5608,19 @@ impl VM {
                 }
                 Opcode::SetProp | Opcode::SetSuper => {
                     self.frame.regs[ACC] = self.set_property(
+                        self.frame.regs[b],
+                        Self::property_key_from_immediate(c as u16),
+                        self.frame.regs[a],
+                    );
+                }
+                Opcode::GetPrivateProp => {
+                    self.frame.regs[ACC] = self.get_private_property(
+                        self.frame.regs[b],
+                        Self::property_key_from_immediate(c as u16),
+                    );
+                }
+                Opcode::SetPrivateProp => {
+                    self.frame.regs[ACC] = self.set_private_property(
                         self.frame.regs[b],
                         Self::property_key_from_immediate(c as u16),
                         self.frame.regs[a],
@@ -5313,6 +5813,11 @@ impl VM {
                     *self.feedback.loop_hint_counts.entry(pc).or_default() += 1;
                 }
                 Opcode::Ret => {
+                    if !self.frame.try_stack.is_empty() {
+                        let catch_pc = self.frame.try_stack.last().unwrap();
+                        self.pc = *catch_pc;
+                        continue;
+                    }
                     if !self.exit_frame(self.frame.regs[ACC]) {
                         return;
                     }
@@ -5331,6 +5836,11 @@ impl VM {
                     continue;
                 }
                 Opcode::RetReg => {
+                    if !self.frame.try_stack.is_empty() {
+                        let catch_pc = self.frame.try_stack.last().unwrap();
+                        self.pc = *catch_pc;
+                        continue;
+                    }
                     if !self.exit_frame(self.frame.regs[a]) {
                         return;
                     }
@@ -5351,6 +5861,20 @@ impl VM {
                     CallAction::Returned(result) => self.frame.regs[ACC] = result,
                     CallAction::EnteredFrame => continue,
                 },
+                Opcode::CallThis => {
+                    let args = self.collect_call_args(a + 1, c as usize);
+                    match self.dispatch_call_value(self.frame.regs[a], self.frame.regs[b], &args) {
+                        CallAction::Returned(result) => self.frame.regs[ACC] = result,
+                        CallAction::EnteredFrame => continue,
+                    }
+                }
+                Opcode::CallThisVar => {
+                    let args = self.array_values(self.frame.regs[c]).unwrap_or_default();
+                    match self.dispatch_call_value(self.frame.regs[a], self.frame.regs[b], &args) {
+                        CallAction::Returned(result) => self.frame.regs[ACC] = result,
+                        CallAction::EnteredFrame => continue,
+                    }
+                }
                 Opcode::Enter => {
                     let frame_size = Self::decode_abx(insn).min(256);
                     self.frame.header.frame_size = frame_size as u32;
@@ -5373,6 +5897,15 @@ impl VM {
                     if let Some(catch_pc) = self.frame.try_stack.pop() {
                         self.last_exception = exception;
                         self.pc = catch_pc.min(self.bytecode.len());
+                    } else if self.current_frame_is_async() {
+                        let rejection = self.promise_reject_value(exception);
+                        if !self.exit_frame(rejection) {
+                            return;
+                        }
+                        if stop_at_depth == Some(self.frame.depth()) {
+                            return;
+                        }
+                        continue;
                     } else {
                         if !self.exit_frame(exception) {
                             return;
@@ -6498,8 +7031,140 @@ impl BuiltinHost for VM {
         }
     }
 
-    fn install_builtin_object(&mut self, global_slot: u16, methods: &[BuiltinMethod]) {
-        VM::install_builtin_object(self, global_slot, methods);
+    fn prepare_js_builtin_private_properties(&mut self, private_properties: &[String]) {
+        self.compiled_private_properties.clear();
+        self.compiled_private_properties.extend(private_properties.iter().map(|name| self.atoms.intern(name)));
+        // Private properties use the same property_slots map but with different offset
+        for (slot, atom) in self.compiled_private_properties.iter().enumerate() {
+            if let Ok(slot) = u16::try_from(slot + self.compiled_properties.len()) {
+                self.property_slots.insert(self.atoms.resolve(*atom).to_owned(), slot);
+            }
+        }
+    }
+
+    fn set_global(&mut self, global_slot: u16, value: JSValue) {
+        self.global_object.insert(global_slot, value);
+    }
+
+    fn builtin_function(&mut self, native_name: &'static str) -> JSValue {
+        self.alloc_native_function(Some(native_name))
+    }
+
+    fn create_object(&mut self) -> JSValue {
+        self.alloc_object()
+    }
+
+    fn create_array(&mut self) -> JSValue {
+        self.alloc_array(0)
+    }
+
+    fn get_property(&self, object: JSValue, name: &str) -> JSValue {
+        self.get_property_by_name(object, name)
+    }
+
+    fn get_own_property(&self, object: JSValue, name: &str) -> JSValue {
+        self.get_own_property_by_name(object, name)
+    }
+
+    fn set_property(&mut self, object: JSValue, name: &str, value: JSValue) -> JSValue {
+        let key = self.property_key_for_name(name);
+        self.set_property(object, key, value)
+    }
+
+    fn delete_property(&mut self, object: JSValue, name: &str) -> bool {
+        self.delete_property_by_name(object, name)
+    }
+
+    fn has_property(&self, object: JSValue, name: &str) -> bool {
+        self.has_property_by_name(object, name)
+    }
+
+    fn has_own_property(&self, object: JSValue, name: &str) -> bool {
+        self.has_own_property_by_name(object, name)
+    }
+
+    fn get_property_value(&self, object: JSValue, key: JSValue) -> JSValue {
+        self.get_property(object, self.property_key_from_value(key))
+    }
+
+    fn get_own_property_value(&self, object: JSValue, key: JSValue) -> JSValue {
+        self.get_own_property_value_from_value(object, key)
+    }
+
+    fn set_property_value(&mut self, object: JSValue, key: JSValue, value: JSValue) -> JSValue {
+        self.set_property(object, self.property_key_from_value(key), value)
+    }
+
+    fn delete_property_value(&mut self, object: JSValue, key: JSValue) -> bool {
+        self.delete_property(object, self.property_key_from_value(key))
+    }
+
+    fn has_property_value(&self, object: JSValue, key: JSValue) -> bool {
+        self.has_property(object, self.property_key_from_value(key))
+    }
+
+    fn has_own_property_value(&self, object: JSValue, key: JSValue) -> bool {
+        self.has_own_property_value_from_value(object, key)
+    }
+
+    fn own_property_names(&self, object: JSValue) -> Vec<String> {
+        VM::own_property_names(self, object)
+    }
+
+    fn own_property_keys(&mut self, object: JSValue) -> Vec<JSValue> {
+        VM::own_property_keys(self, object)
+    }
+
+    fn get_index(&self, object: JSValue, index: usize) -> JSValue {
+        self.get_property(object, PropertyKey::Index(index as u32))
+    }
+
+    fn set_index(&mut self, object: JSValue, index: usize, value: JSValue) -> JSValue {
+        self.set_property(object, PropertyKey::Index(index as u32), value)
+    }
+
+    fn array_push(&mut self, object: JSValue, value: JSValue) -> JSValue {
+        VM::array_push(self, object, value)
+    }
+
+    fn array_values(&self, value: JSValue) -> Option<Vec<JSValue>> {
+        VM::array_values(self, value)
+    }
+
+    fn same_value(&self, lhs: JSValue, rhs: JSValue) -> bool {
+        self.object_same_value(lhs, rhs)
+    }
+
+    fn is_array(&self, value: JSValue) -> bool {
+        matches!(value.heap_kind(), Some(value::HeapKind::Array))
+    }
+
+    fn is_object(&self, value: JSValue) -> bool {
+        object_from_value(value).is_some()
+    }
+
+    fn is_callable(&self, value: JSValue) -> bool {
+        let Some(obj_ptr) = object_from_value(value) else {
+            return false;
+        };
+
+        unsafe {
+            matches!(
+                &(*obj_ptr).kind,
+                ObjectKind::Function(_)
+                    | ObjectKind::NativeFunction(_)
+                    | ObjectKind::NativeClosure(_)
+                    | ObjectKind::Class(_)
+            )
+        }
+    }
+
+    fn call_value(&mut self, callee: JSValue, this_value: JSValue, args: &[JSValue]) -> JSValue {
+        VM::call_value(self, callee, this_value, args)
+    }
+
+    fn construct_value(&mut self, callee: JSValue, args: &[JSValue]) -> JSValue {
+        VM::construct_value(self, callee, args)
     }
 
     fn json_stringify(&mut self, value: JSValue) -> Result<String, String> {
@@ -6574,6 +7239,10 @@ impl BuiltinHost for VM {
         VM::string_text(self, value)
     }
 
+    fn is_symbol(&self, value: JSValue) -> bool {
+        matches!(value.heap_kind(), Some(value::HeapKind::Symbol))
+    }
+
     fn bytes_from_value(&self, value: JSValue) -> Option<Vec<u8>> {
         VM::bytes_from_value(self, value)
     }
@@ -6592,6 +7261,33 @@ impl BuiltinHost for VM {
 
     fn is_truthy_value(&self, value: JSValue) -> bool {
         VM::is_truthy_value(self, value)
+    }
+
+    fn create_symbol(&mut self, description: Option<&str>) -> JSValue {
+        let description = description.map(|text| self.atoms.intern(text));
+        let id = self.next_symbol_id;
+        self.next_symbol_id = self.next_symbol_id.saturating_add(1);
+        self.alloc_object_with_kind(ObjectKind::Symbol(QSymbol { id, description }))
+    }
+
+    fn symbol_for(&mut self, key: &str) -> JSValue {
+        if let Some(&symbol) = self.symbol_registry.get(key) {
+            return symbol;
+        }
+
+        let symbol = self.create_symbol(Some(key));
+        self.symbol_registry.insert(key.to_owned(), symbol);
+        symbol
+    }
+
+    fn symbol_key_for(&self, value: JSValue) -> Option<String> {
+        self.symbol_registry
+            .iter()
+            .find_map(|(key, &symbol)| self.strict_equal(symbol, value).then(|| key.clone()))
+    }
+
+    fn eval_source(&mut self, source: &str) -> Result<JSValue, String> {
+        VM::eval_source(self, source)
     }
 
     fn console_render_args(&mut self, args: &[JSValue]) -> String {

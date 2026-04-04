@@ -624,6 +624,8 @@ pub struct StringLiteral {
 #[derive(Debug, Clone, PartialEq)]
 pub struct TemplateLiteral {
     pub value: String,
+    pub raw: String,
+    pub invalid_escape: bool,
     pub span: Span,
 }
 
@@ -763,6 +765,7 @@ pub enum BinaryOperator {
     BitwiseOr,
     BitwiseXor,
     In,
+    PrivateIn,
     Instanceof,
 }
 

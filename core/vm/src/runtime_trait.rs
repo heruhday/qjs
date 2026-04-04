@@ -111,6 +111,7 @@ pub trait TypeOps {
     fn typeof_(&self) -> Self; // typeof
     fn instanceof(&self, rhs: &Self) -> Self; // instanceof
     fn in_(&self, rhs: &Self) -> Self; // in
+    fn private_in(&self, rhs: &Self) -> Self; // #in
     fn delete(&self) -> Self; // delete
 }
 

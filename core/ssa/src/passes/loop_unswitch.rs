@@ -83,7 +83,12 @@ impl LoopUnswitching {
     }
 
     /// Find blocks that belong to a loop
-    fn find_loop_body(&self, ir: &IRFunction, header: BlockId, _backedge_source: BlockId) -> Vec<BlockId> {
+    fn find_loop_body(
+        &self,
+        ir: &IRFunction,
+        header: BlockId,
+        _backedge_source: BlockId,
+    ) -> Vec<BlockId> {
         let mut body = Vec::new();
         let mut visited = HashSet::new();
         let mut worklist = vec![header];
@@ -141,7 +146,14 @@ impl LoopUnswitching {
         }
 
         if let Some((branch_block, condition, target, fallthrough)) = branch_info {
-            self.unswitch_branch(ir, loop_info, branch_block, &condition, &target, &fallthrough)
+            self.unswitch_branch(
+                ir,
+                loop_info,
+                branch_block,
+                &condition,
+                &target,
+                &fallthrough,
+            )
         } else {
             false
         }
@@ -202,8 +214,11 @@ impl LoopUnswitching {
                 };
 
                 if orig_block.id == branch_block {
-                    if let IRTerminator::Branch { fallthrough, .. } = orig_block.terminator.clone() {
-                        new_block_false.terminator = IRTerminator::Jump { target: fallthrough };
+                    if let IRTerminator::Branch { fallthrough, .. } = orig_block.terminator.clone()
+                    {
+                        new_block_false.terminator = IRTerminator::Jump {
+                            target: fallthrough,
+                        };
                     }
                 }
 

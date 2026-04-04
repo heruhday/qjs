@@ -58,11 +58,15 @@ impl AliasAnalysis {
 
                     match (lhs_escape, rhs_escape) {
                         // Both don't escape: they're local, can't alias
-                        (Some(EscapeKind::NoEscape), Some(EscapeKind::NoEscape)) => AliasResult::NoAlias,
+                        (Some(EscapeKind::NoEscape), Some(EscapeKind::NoEscape)) => {
+                            AliasResult::NoAlias
+                        }
 
                         // One doesn't escape, other has limited escape: no alias
                         (Some(EscapeKind::NoEscape), Some(EscapeKind::ArgEscape))
-                        | (Some(EscapeKind::ArgEscape), Some(EscapeKind::NoEscape)) => AliasResult::NoAlias,
+                        | (Some(EscapeKind::ArgEscape), Some(EscapeKind::NoEscape)) => {
+                            AliasResult::NoAlias
+                        }
 
                         // Other combinations: conservative may alias
                         _ => AliasResult::MayAlias,

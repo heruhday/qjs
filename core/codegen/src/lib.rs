@@ -27,15 +27,22 @@ use crate::js_value::{JSValue, make_number, make_undefined};
 
 const ACC: u8 = 255;
 const MAX_TEMP_REG: u8 = ACC - 1;
+const COMPLETION_NORMAL: i16 = 0;
+const COMPLETION_RETURN: i16 = 1;
+const COMPLETION_THROW: i16 = 2;
+const COMPLETION_BREAK: i16 = 3;
+const COMPLETION_CONTINUE: i16 = 4;
 
 #[derive(Debug, Clone)]
 pub struct CompiledBytecode {
     pub bytecode: Vec<u32>,
     pub constants: Vec<JSValue>,
     pub string_constants: Vec<(u16, String)>,
+    pub atom_constants: Vec<(u16, String)>,
     pub function_constants: Vec<u16>,
     pub names: Vec<String>,
     pub properties: Vec<String>,
+    pub private_properties: Vec<String>,
 }
 
 #[derive(Debug)]
@@ -106,26 +113,61 @@ struct JumpPatch {
     kind: JumpPatchKind,
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Clone, Default)]
+struct JumpSink {
+    patches: Vec<usize>,
+    resolved_target: Option<usize>,
+}
+
+#[derive(Debug, Clone, Copy)]
 struct ControlContext {
-    break_patches: Vec<usize>,
-    continue_patches: Option<Vec<usize>>,
+    break_sink: usize,
+    continue_sink: Option<usize>,
 }
 
 impl ControlContext {
-    fn loop_context() -> Self {
+    fn loop_context(break_sink: usize, continue_sink: usize) -> Self {
         Self {
-            break_patches: Vec::new(),
-            continue_patches: Some(Vec::new()),
+            break_sink,
+            continue_sink: Some(continue_sink),
         }
     }
 
-    fn switch_context() -> Self {
+    fn switch_context(break_sink: usize) -> Self {
         Self {
-            break_patches: Vec::new(),
-            continue_patches: None,
+            break_sink,
+            continue_sink: None,
         }
     }
+}
+
+#[derive(Debug, Clone, Copy)]
+enum DeferredJumpDestination {
+    ControlBreak(usize),
+    ControlContinue(usize),
+    LabelBreak(usize),
+}
+
+#[derive(Debug, Clone, Copy)]
+struct DeferredJumpTarget {
+    id: i16,
+    destination: DeferredJumpDestination,
+}
+
+#[derive(Debug, Clone)]
+struct FinallyContext {
+    mode_reg: u8,
+    value_reg: u8,
+    target_reg: u8,
+    control_depth: usize,
+    label_depth: usize,
+    deferred_jumps: Vec<DeferredJumpTarget>,
+}
+
+#[derive(Debug, Clone, Default)]
+struct LabelContext {
+    name: String,
+    break_sink: usize,
 }
 
 pub fn compile_source(source: &str) -> Result<CompiledBytecode, CodegenError> {
@@ -145,19 +187,27 @@ struct Codegen {
     builder: BytecodeBuilder,
     name_slots: HashMap<String, u16>,
     property_slots: HashMap<String, u8>,
+    private_property_slots: HashMap<String, u8>,
     fast_name_regs: HashMap<String, u8>,
     fast_name_runtime_slots: HashMap<String, bool>,
     fast_name_scope_stack: Vec<Vec<FastNameScopeEntry>>,
     fast_name_scope_runtime_stack: Vec<bool>,
     names: Vec<String>,
     properties: Vec<String>,
+    private_properties: Vec<String>,
     string_constants: Vec<(u16, String)>,
+    atom_constants: Vec<(u16, String)>,
     undefined_const: Option<u16>,
     jump_patches: Vec<JumpPatch>,
-    function_patches: Vec<(u16, usize)>,
+    jump_sinks: Vec<JumpSink>,
+    function_patches: Vec<(u16, usize, bool)>,
     pending_functions: VecDeque<PendingFunction>,
     temp_top: u8,
     control_stack: Vec<ControlContext>,
+    label_stack: Vec<LabelContext>,
+    finally_stack: Vec<FinallyContext>,
+    finally_escape_patch_stack: Vec<Vec<usize>>,
+    next_deferred_jump_id: i16,
     nested_scope_depth: usize,
     fast_name_bindings_enabled: bool,
     current_self_upvalue: Option<(String, u8)>,
@@ -170,19 +220,27 @@ impl Codegen {
             builder: BytecodeBuilder::new(),
             name_slots: HashMap::new(),
             property_slots: HashMap::new(),
+            private_property_slots: HashMap::new(),
             fast_name_regs: HashMap::new(),
             fast_name_runtime_slots: HashMap::new(),
             fast_name_scope_stack: Vec::new(),
             fast_name_scope_runtime_stack: Vec::new(),
             names: Vec::new(),
             properties: Vec::new(),
+            private_properties: Vec::new(),
             string_constants: Vec::new(),
+            atom_constants: Vec::new(),
             undefined_const: None,
             jump_patches: Vec::new(),
+            jump_sinks: Vec::new(),
             function_patches: Vec::new(),
             pending_functions: VecDeque::new(),
             temp_top: 0,
             control_stack: Vec::new(),
+            label_stack: Vec::new(),
+            finally_stack: Vec::new(),
+            finally_escape_patch_stack: Vec::new(),
+            next_deferred_jump_id: 1,
             nested_scope_depth: 0,
             fast_name_bindings_enabled: false,
             current_self_upvalue: None,
@@ -219,12 +277,12 @@ impl Codegen {
         let function_constants = self
             .function_patches
             .iter()
-            .map(|(const_index, _)| *const_index)
+            .map(|(const_index, _, _)| *const_index)
             .collect::<Vec<_>>();
 
-        for (const_index, entry_pc) in self.function_patches {
+        for (const_index, entry_pc, is_async) in self.function_patches {
             if let Some(slot) = constants.get_mut(const_index as usize) {
-                *slot = make_number(entry_pc as f64);
+                *slot = encode_function_descriptor(entry_pc, is_async);
             }
         }
 
@@ -232,9 +290,11 @@ impl Codegen {
             bytecode,
             constants,
             string_constants: self.string_constants,
+            atom_constants: self.atom_constants,
             function_constants,
             names: self.names,
             properties: self.properties,
+            private_properties: self.private_properties,
         })
     }
 
@@ -251,6 +311,14 @@ impl Codegen {
         let reg = self.alloc_temp(Some(span))?;
         let index = self.builder.add_constant(make_undefined());
         self.string_constants.push((index, value.to_owned()));
+        self.builder.emit_load_k(reg, index);
+        Ok(reg)
+    }
+
+    fn load_runtime_atom(&mut self, value: &str, span: Span) -> Result<u8, CodegenError> {
+        let reg = self.alloc_temp(Some(span))?;
+        let index = self.builder.add_constant(make_undefined());
+        self.atom_constants.push((index, value.to_owned()));
         self.builder.emit_load_k(reg, index);
         Ok(reg)
     }
@@ -324,13 +392,26 @@ impl Codegen {
         self.jump_patches.push(JumpPatch { pos, target, kind });
     }
 
-    fn patch_loop_breaks(&mut self, patches: Vec<usize>, target: usize) {
-        for pos in patches {
+    fn alloc_jump_sink(&mut self) -> usize {
+        let sink_id = self.jump_sinks.len();
+        self.jump_sinks.push(JumpSink::default());
+        sink_id
+    }
+
+    fn queue_jump_sink_patch(&mut self, sink_id: usize, pos: usize) {
+        if let Some(target) = self.jump_sinks[sink_id].resolved_target {
             self.patch_jump(pos, target, JumpPatchKind::Jmp);
+        } else {
+            self.jump_sinks[sink_id].patches.push(pos);
         }
     }
 
-    fn patch_loop_continues(&mut self, patches: Vec<usize>, target: usize) {
+    fn resolve_jump_sink(&mut self, sink_id: usize, target: usize) {
+        let patches = {
+            let sink = &mut self.jump_sinks[sink_id];
+            sink.resolved_target = Some(target);
+            std::mem::take(&mut sink.patches)
+        };
         for pos in patches {
             self.patch_jump(pos, target, JumpPatchKind::Jmp);
         }
@@ -362,6 +443,21 @@ impl Codegen {
         })?;
         self.property_slots.insert(name.to_owned(), slot);
         self.properties.push(name.to_owned());
+        Ok(slot)
+    }
+
+    fn private_property_slot(&mut self, name: &str) -> Result<u8, CodegenError> {
+        if let Some(&slot) = self.private_property_slots.get(name) {
+            return Ok(slot);
+        }
+
+        let slot = u8::try_from(self.private_property_slots.len()).map_err(|_| {
+            CodegenError::PropertyOverflow {
+                name: name.to_owned(),
+            }
+        })?;
+        self.private_property_slots.insert(name.to_owned(), slot);
+        self.private_properties.push(name.to_owned());
         Ok(slot)
     }
 
@@ -777,6 +873,13 @@ fn pending_function_requires_runtime_env(pending: &PendingFunctionBody) -> bool 
     }
 }
 
+fn pending_function_is_async(pending: &PendingFunctionBody) -> bool {
+    match pending {
+        PendingFunctionBody::Function(function) => function.is_async,
+        PendingFunctionBody::Arrow(function) => function.is_async,
+    }
+}
+
 fn function_requires_runtime_env(function: &Function) -> bool {
     function.params.iter().any(pattern_requires_runtime_env)
         || statement_requires_runtime_env(&Statement::Block(function.body.clone()))
@@ -1028,19 +1131,24 @@ enum TemplatePart {
     Expression(Expression),
 }
 
-fn parse_template_literal_parts(
-    literal: &ast::TemplateLiteral,
-) -> Result<Vec<TemplatePart>, CodegenError> {
-    let value = literal.value.as_str();
-    let mut parts = Vec::new();
+#[derive(Debug)]
+struct TemplateQuasiPart {
+    cooked: Option<String>,
+    raw: String,
+}
+
+fn split_template_source(
+    value: &str,
+    span: Span,
+) -> Result<(Vec<String>, Vec<Expression>), CodegenError> {
+    let mut texts = Vec::new();
+    let mut expressions = Vec::new();
     let mut text_start = 0usize;
     let mut search_start = 0usize;
 
     while let Some(relative_start) = value[search_start..].find("${") {
         let expr_start = search_start + relative_start;
-        if expr_start > text_start {
-            parts.push(TemplatePart::Text(value[text_start..expr_start].to_owned()));
-        }
+        texts.push(value[text_start..expr_start].to_owned());
 
         let body_start = expr_start + 2;
         let mut matched = None;
@@ -1050,7 +1158,7 @@ fn parse_template_literal_parts(
             }
 
             let expression_source = &value[body_start..body_start + relative_end];
-            match parse_template_expression(expression_source, literal.span) {
+            match parse_template_expression(expression_source, span) {
                 Ok(expression) => {
                     matched = Some((body_start + relative_end + ch.len_utf8(), expression));
                     break;
@@ -1063,20 +1171,60 @@ fn parse_template_literal_parts(
         let Some((next_index, expression)) = matched else {
             return Err(CodegenError::Unsupported {
                 feature: "template literal interpolations",
-                span: literal.span,
+                span,
             });
         };
 
-        parts.push(TemplatePart::Expression(expression));
+        expressions.push(expression);
         text_start = next_index;
         search_start = next_index;
     }
 
-    if text_start < value.len() {
-        parts.push(TemplatePart::Text(value[text_start..].to_owned()));
+    texts.push(value[text_start..].to_owned());
+
+    Ok((texts, expressions))
+}
+
+fn parse_template_literal_parts(
+    literal: &ast::TemplateLiteral,
+) -> Result<Vec<TemplatePart>, CodegenError> {
+    let (texts, expressions) = split_template_source(&literal.value, literal.span)?;
+    let mut parts = Vec::new();
+
+    for (index, text) in texts.into_iter().enumerate() {
+        if !text.is_empty() {
+            parts.push(TemplatePart::Text(text));
+        }
+        if let Some(expression) = expressions.get(index).cloned() {
+            parts.push(TemplatePart::Expression(expression));
+        }
     }
 
     Ok(parts)
+}
+
+fn parse_tagged_template_literal_parts(
+    literal: &ast::TemplateLiteral,
+) -> Result<(Vec<TemplateQuasiPart>, Vec<Expression>), CodegenError> {
+    let (cooked_texts, expressions) = split_template_source(&literal.value, literal.span)?;
+    let (raw_texts, raw_expressions) = split_template_source(&literal.raw, literal.span)?;
+    if cooked_texts.len() != raw_texts.len() || expressions.len() != raw_expressions.len() {
+        return Err(CodegenError::Unsupported {
+            feature: "tagged template structure",
+            span: literal.span,
+        });
+    }
+
+    let quasis = cooked_texts
+        .into_iter()
+        .zip(raw_texts)
+        .map(|(cooked, raw)| TemplateQuasiPart {
+            cooked: (!literal.invalid_escape).then_some(cooked),
+            raw,
+        })
+        .collect::<Vec<_>>();
+
+    Ok((quasis, expressions))
 }
 
 fn parse_template_expression(source: &str, span: Span) -> Result<Expression, CodegenError> {
@@ -1107,4 +1255,10 @@ fn offset_to(target: usize, current_len: usize) -> Result<i16, CodegenError> {
 
 fn encode_asbx(opcode: Opcode, a: u8, sbx: i16) -> u32 {
     (((sbx as u16) as u32) << 16) | ((a as u32) << 8) | opcode.as_u8() as u32
+}
+
+fn encode_function_descriptor(entry_pc: usize, is_async: bool) -> JSValue {
+    let entry = entry_pc as f64;
+    let encoded = if is_async { -(entry + 1.0) } else { entry };
+    make_number(encoded)
 }

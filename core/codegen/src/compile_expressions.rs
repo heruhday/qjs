@@ -29,18 +29,14 @@ impl Codegen {
                 feature: "super",
                 span: *span,
             }),
-            Expression::PrivateIdentifier(identifier) => Err(CodegenError::Unsupported {
-                feature: "private identifiers",
-                span: identifier.span,
-            }),
+            Expression::PrivateIdentifier(identifier) => {
+                self.load_runtime_atom(&identifier.name, identifier.span)
+            }
             Expression::Class(class) => Err(CodegenError::Unsupported {
                 feature: "class expressions",
                 span: class.span,
             }),
-            Expression::TaggedTemplate(node) => Err(CodegenError::Unsupported {
-                feature: "tagged templates",
-                span: node.span,
-            }),
+            Expression::TaggedTemplate(node) => self.compile_tagged_template_expression(node),
             Expression::MetaProperty(node) => Err(CodegenError::Unsupported {
                 feature: "meta properties",
                 span: node.span,
@@ -49,11 +45,29 @@ impl Codegen {
                 feature: "yield",
                 span: node.span,
             }),
-            Expression::Await(node) => Err(CodegenError::Unsupported {
-                feature: "await",
-                span: node.span,
-            }),
+            Expression::Await(node) => self.compile_await_expression(node),
         }
+    }
+
+    pub(crate) fn compile_await_expression(
+        &mut self,
+        expression: &ast::AwaitExpression,
+    ) -> Result<u8, CodegenError> {
+        // Compile the argument expression to get the value/Promise
+        let arg_reg = self.compile_expression(&expression.argument)?;
+        
+        // For proper await semantics, we would need to:
+        // 1. Detect if it's a Promise
+        // 2. Suspend execution and attach a continuation
+        // 3. Resume when the Promise settles
+        //
+        // The current VM architecture doesn't support frame suspension/resumption,
+        // so we emit the Await opcode which currently just passes through the value.
+        // This allows await syntax to parse and run, though full Promise unwrapping
+        // would require transforming async functions into state machines.
+        self.builder.emit_await(arg_reg);
+        self.builder.emit_mov(arg_reg, ACC);
+        Ok(arg_reg)
     }
 
     pub(crate) fn compile_identifier_value(
@@ -213,6 +227,188 @@ impl Codegen {
             self.temp_top = result;
         }
 
+        Ok(result)
+    }
+
+    fn compile_string_array(&mut self, values: &[String], span: Span) -> Result<u8, CodegenError> {
+        let array_reg = self.alloc_temp(Some(span))?;
+        self.builder
+            .emit_new_arr(array_reg, values.len().min(u8::MAX as usize) as u8);
+
+        for value in values {
+            let value_reg = self.load_runtime_string(value, span)?;
+            if value_reg != ACC {
+                self.builder.emit_mov(ACC, value_reg);
+            }
+            self.builder.emit_array_push_acc(array_reg);
+            self.temp_top = array_reg;
+        }
+
+        Ok(array_reg)
+    }
+
+    fn compile_optional_string_array(
+        &mut self,
+        values: &[Option<String>],
+        span: Span,
+    ) -> Result<u8, CodegenError> {
+        let array_reg = self.alloc_temp(Some(span))?;
+        self.builder
+            .emit_new_arr(array_reg, values.len().min(u8::MAX as usize) as u8);
+
+        for value in values {
+            let value_reg = match value {
+                Some(text) => self.load_runtime_string(text, span)?,
+                None => self.load_undefined(Some(span))?,
+            };
+            if value_reg != ACC {
+                self.builder.emit_mov(ACC, value_reg);
+            }
+            self.builder.emit_array_push_acc(array_reg);
+            self.temp_top = array_reg;
+        }
+
+        Ok(array_reg)
+    }
+
+    fn compile_tagged_template_object(
+        &mut self,
+        quasi: &ast::TemplateLiteral,
+        quasis: &[TemplateQuasiPart],
+    ) -> Result<u8, CodegenError> {
+        let helper_reg = self.alloc_temp(Some(quasi.span))?;
+        let helper_slot = self.name_slot("__qjs_get_template_object")?;
+        self.builder.emit_load_name(helper_reg, helper_slot);
+
+        let key = format!(
+            "{}:{}:{}:{}:{}",
+            quasi.span.start.line,
+            quasi.span.start.column,
+            quasi.span.end.line,
+            quasi.span.end.column,
+            quasi.raw
+        );
+        let key_reg = self.load_runtime_string(&key, quasi.span)?;
+        let cooked_values = quasis
+            .iter()
+            .map(|part| part.cooked.clone())
+            .collect::<Vec<_>>();
+        let raw_values = quasis
+            .iter()
+            .map(|part| part.raw.clone())
+            .collect::<Vec<_>>();
+        let cooked_reg = self.compile_optional_string_array(&cooked_values, quasi.span)?;
+        let raw_reg = self.compile_string_array(&raw_values, quasi.span)?;
+
+        for (offset, reg) in [key_reg, cooked_reg, raw_reg].into_iter().enumerate() {
+            let expected = helper_reg as usize + 1 + offset;
+            if expected >= ACC as usize {
+                return Err(CodegenError::RegisterOverflow {
+                    span: Some(quasi.span),
+                });
+            }
+            if reg != expected as u8 {
+                self.builder.emit_mov(expected as u8, reg);
+                self.temp_top = self.temp_top.max(expected as u8);
+            }
+        }
+
+        self.builder.emit_call(helper_reg, 3);
+        self.builder.emit_mov(helper_reg, ACC);
+        self.temp_top = helper_reg;
+        Ok(helper_reg)
+    }
+
+    fn compile_member_callee(
+        &mut self,
+        member: &MemberExpression,
+    ) -> Result<(u8, u8), CodegenError> {
+        let this_reg = self.compile_expression(&member.object)?;
+        let callee_reg = self.alloc_temp(Some(member.span))?;
+
+        match &member.property {
+            MemberProperty::Identifier(identifier) => {
+                let slot = self.property_slot(&identifier.name)?;
+                self.builder.emit_get_prop(callee_reg, this_reg, slot);
+            }
+            MemberProperty::Computed { expression, .. } => {
+                let key_reg = self.compile_expression(expression)?;
+                self.builder.emit_get_prop_acc(this_reg, key_reg);
+                self.builder.emit_mov(callee_reg, ACC);
+                self.temp_top = callee_reg;
+            }
+            MemberProperty::PrivateName(identifier) => {
+                return Err(CodegenError::Unsupported {
+                    feature: "private method calls",
+                    span: identifier.span,
+                });
+            }
+        }
+
+        Ok((callee_reg, this_reg))
+    }
+
+    pub(crate) fn compile_tagged_template_expression(
+        &mut self,
+        expression: &ast::TaggedTemplateExpression,
+    ) -> Result<u8, CodegenError> {
+        let (quasis, values) = parse_tagged_template_literal_parts(&expression.quasi)?;
+
+        if let Expression::Member(member) = &expression.tag {
+            let (callee_reg, this_reg) = self.compile_member_callee(member.as_ref())?;
+            let template_reg = self.compile_tagged_template_object(&expression.quasi, &quasis)?;
+            let arg_regs = std::iter::once(Ok(template_reg))
+                .chain(values.iter().map(|value| self.compile_expression(value)))
+                .collect::<Result<Vec<_>, _>>()?;
+
+            for (index, reg) in arg_regs.into_iter().enumerate() {
+                let expected = callee_reg as usize + 1 + index;
+                if expected >= ACC as usize {
+                    return Err(CodegenError::RegisterOverflow {
+                        span: Some(expression.span),
+                    });
+                }
+                if reg != expected as u8 {
+                    self.builder.emit_mov(expected as u8, reg);
+                    self.temp_top = self.temp_top.max(expected as u8);
+                }
+            }
+
+            self.builder
+                .emit_call_this(callee_reg, this_reg, (values.len() + 1) as u8);
+            self.builder.emit_mov(callee_reg, ACC);
+            self.temp_top = callee_reg;
+            return Ok(callee_reg);
+        }
+
+        let callee_reg = self.compile_expression(&expression.tag)?;
+        let template_reg = self.compile_tagged_template_object(&expression.quasi, &quasis)?;
+        let arg_regs = std::iter::once(Ok(template_reg))
+            .chain(values.iter().map(|value| self.compile_expression(value)))
+            .collect::<Result<Vec<_>, _>>()?;
+
+        for (index, reg) in arg_regs.into_iter().enumerate() {
+            let expected = callee_reg as usize + 1 + index;
+            if expected >= ACC as usize {
+                return Err(CodegenError::RegisterOverflow {
+                    span: Some(expression.span),
+                });
+            }
+            if reg != expected as u8 {
+                self.builder.emit_mov(expected as u8, reg);
+                self.temp_top = self.temp_top.max(expected as u8);
+            }
+        }
+
+        self.builder
+            .emit_call(callee_reg, (values.len() + 1).min(u8::MAX as usize) as u8);
+        let result = if self.current_self_upvalue_reg == Some(callee_reg) {
+            self.alloc_temp(Some(expression.span))?
+        } else {
+            callee_reg
+        };
+        self.builder.emit_mov(result, ACC);
+        self.temp_top = result;
         Ok(result)
     }
 
@@ -421,10 +617,16 @@ impl Codegen {
                     self.builder.emit_delete_prop(reg, object, slot);
                     Ok(reg)
                 }
-                MemberProperty::Computed { .. } => Err(CodegenError::Unsupported {
-                    feature: "computed delete",
-                    span: expression.span,
-                }),
+                MemberProperty::Computed {
+                    expression: prop_expr,
+                    ..
+                } => {
+                    let object = self.compile_expression(&member.object)?;
+                    let key = self.compile_expression(prop_expr)?;
+                    let reg = self.alloc_temp(Some(expression.span))?;
+                    self.builder.emit_delete_prop(reg, object, key);
+                    Ok(reg)
+                }
                 MemberProperty::PrivateName(identifier) => Err(CodegenError::Unsupported {
                     feature: "private members",
                     span: identifier.span,
@@ -615,6 +817,10 @@ impl Codegen {
             }
             BinaryOperator::In => {
                 self.builder.emit_in(left, right);
+                self.builder.emit_mov(left, ACC);
+            }
+            BinaryOperator::PrivateIn => {
+                self.builder.emit_private_in(left, right);
                 self.builder.emit_mov(left, ACC);
             }
             BinaryOperator::Instanceof => {
@@ -897,6 +1103,23 @@ impl Codegen {
                 self.temp_top = object;
                 return Ok(object);
             }
+
+            let (callee, this_reg) = self.compile_member_callee(member)?;
+
+            if let [CallArgument::Spread { argument, .. }] = expression.arguments.as_slice() {
+                let array_reg = self.compile_expression(argument)?;
+                self.builder.emit_call_this_var(callee, this_reg, array_reg);
+                self.builder.emit_mov(callee, ACC);
+                self.temp_top = callee;
+                return Ok(callee);
+            }
+
+            let arg_count =
+                self.compile_fixed_call_arguments(callee, &expression.arguments, expression.span)?;
+            self.builder.emit_call_this(callee, this_reg, arg_count);
+            self.builder.emit_mov(callee, ACC);
+            self.temp_top = callee;
+            return Ok(callee);
         }
 
         if !matches!(expression.callee, Expression::Member(_))
@@ -1071,10 +1294,8 @@ impl Codegen {
                 self.builder.emit_set_prop_acc(object_reg, key_reg);
             }
             PropertyKey::PrivateName(identifier) => {
-                return Err(CodegenError::Unsupported {
-                    feature: "private object properties",
-                    span: identifier.span,
-                });
+                let slot = self.private_property_slot(&identifier.name)?;
+                self.builder.emit_set_private_prop(value_reg, object_reg, slot);
             }
         }
         Ok(())

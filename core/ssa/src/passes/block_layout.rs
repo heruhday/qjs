@@ -18,39 +18,37 @@ impl BlockLayoutOptimization {
 
         let mut new_order = Vec::new();
         let mut visited = HashSet::new();
-        
+
         // Start from entry block and build a layout that tries to keep hot paths together
         self.layout_blocks(ir, ir.entry, &mut new_order, &mut visited);
-        
+
         // Add any remaining blocks (unreachable code)
         for block in &ir.blocks {
             if !visited.contains(&block.id) {
                 new_order.push(block.id);
             }
         }
-        
+
         // Check if layout changed
         let old_ids: Vec<_> = ir.blocks.iter().map(|b| b.id).collect();
         if old_ids == new_order {
             return false;
         }
-        
+
         // Reorder blocks according to new layout
-        let mut block_map: HashMap<BlockId, _> = ir.blocks
-            .iter()
-            .map(|b| (b.id, b.clone()))
-            .collect();
-        
+        let mut block_map: HashMap<BlockId, _> =
+            ir.blocks.iter().map(|b| (b.id, b.clone())).collect();
+
         ir.blocks.clear();
         for id in new_order {
             if let Some(block) = block_map.remove(&id) {
                 ir.blocks.push(block);
             }
         }
-        
+
         true
     }
-    
+
     /// Layout blocks using a DFS-like traversal that prioritizes fallthrough paths
     fn layout_blocks(
         &self,
@@ -62,10 +60,10 @@ impl BlockLayoutOptimization {
         if visited.contains(&block_id) {
             return;
         }
-        
+
         visited.insert(block_id);
         layout.push(block_id);
-        
+
         // Find the block to get its terminator
         if let Some(block) = ir.blocks.iter().find(|b| b.id == block_id) {
             match &block.terminator {

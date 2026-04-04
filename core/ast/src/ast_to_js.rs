@@ -1458,7 +1458,8 @@ impl JsEmitter {
                 | BinaryOperator::GreaterThan
                 | BinaryOperator::GreaterThanOrEqual
                 | BinaryOperator::In
-                | BinaryOperator::Instanceof => PREC_RELATIONAL,
+                | BinaryOperator::Instanceof
+                | BinaryOperator::PrivateIn => PREC_RELATIONAL,
                 BinaryOperator::LeftShift
                 | BinaryOperator::SignedRightShift
                 | BinaryOperator::UnsignedRightShift => PREC_SHIFT,
@@ -1529,6 +1530,7 @@ impl JsEmitter {
             BinaryOperator::BitwiseOr => "|",
             BinaryOperator::BitwiseXor => "^",
             BinaryOperator::In => "in",
+            BinaryOperator::PrivateIn => "in",
             BinaryOperator::Instanceof => "instanceof",
         }
     }

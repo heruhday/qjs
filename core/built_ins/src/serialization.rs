@@ -1,6 +1,8 @@
+use std::collections::HashMap;
+
 use value::{JSValue, make_undefined};
 
-use crate::{BuiltinHost, BuiltinMethod, BuiltinObject};
+use crate::{BuiltinHost, BuiltinMethod, install_global_object};
 
 const JSON_METHODS: &[BuiltinMethod] = &[
     BuiltinMethod::new("stringify", "__builtin_json_stringify"),
@@ -22,12 +24,12 @@ const YAML_METHODS: &[BuiltinMethod] = &[
     BuiltinMethod::new("parse", "__builtin_yaml_parse"),
 ];
 
-pub(crate) const OBJECTS: &[BuiltinObject] = &[
-    BuiltinObject::new("JSON", JSON_METHODS),
-    BuiltinObject::new("Msgpack", MSGPACK_METHODS),
-    BuiltinObject::new("Bin", BIN_METHODS),
-    BuiltinObject::new("YAML", YAML_METHODS),
-];
+pub(crate) fn install<H: BuiltinHost>(host: &mut H, global_slots: &HashMap<&str, u16>) {
+    let _ = install_global_object(host, global_slots, "JSON", JSON_METHODS);
+    let _ = install_global_object(host, global_slots, "Msgpack", MSGPACK_METHODS);
+    let _ = install_global_object(host, global_slots, "Bin", BIN_METHODS);
+    let _ = install_global_object(host, global_slots, "YAML", YAML_METHODS);
+}
 
 pub(crate) fn dispatch<H: BuiltinHost>(
     host: &mut H,

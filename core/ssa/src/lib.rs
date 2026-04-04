@@ -21,11 +21,10 @@ pub use jit::{
     RegAllocResult, RegisterAllocator, SpillSlot,
 };
 pub use optimization::{
-    coalesce_registers, constant_fold, copy_propagation, eliminate_dead_code,
-    fold_temporary_checks, loop_invariant_code_motion, optimize_basic_peephole,
-    optimize_bytecode, optimize_ir, optimize_superinstructions, optimize_tier0,
-    optimize_tier2, optimize_to_bytecode, reuse_registers_linear_scan, run_fixed_point_round,
-    run_until_stable, simplify_branches, OptTier, Optimizer,
+    OptTier, Optimizer, coalesce_registers, constant_fold, copy_propagation, eliminate_dead_code,
+    fold_temporary_checks, loop_invariant_code_motion, optimize_basic_peephole, optimize_bytecode,
+    optimize_ir, optimize_superinstructions, optimize_tier0, optimize_tier2, optimize_to_bytecode,
+    reuse_registers_linear_scan, run_fixed_point_round, run_until_stable, simplify_branches,
 };
 pub use passes::{
     AliasAnalysis, AliasResult, BlockLayoutOptimization, CfgSimplification, ConstantFolding,

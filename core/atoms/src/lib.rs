@@ -11,7 +11,7 @@ pub struct AtomEntry {
     pub(crate) marked: bool,
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct AtomTable {
     map: HashMap<String, Atom>,
     vec: Vec<Option<AtomEntry>>,
@@ -53,6 +53,10 @@ impl AtomTable {
             .and_then(Option::as_ref)
             .map(|entry| entry.text.as_str())
             .expect("attempted to resolve an invalid atom")
+    }
+
+    pub fn get(&self, s: &str) -> Option<Atom> {
+        self.map.get(s).copied()
     }
 
     pub fn mark(&mut self, atom: Atom) {

@@ -15,6 +15,7 @@ members = [
     "core/ssa",
     "core/value",
     "core/vm",
+    "qjs-repl",
 ]
 
 [workspace.package]

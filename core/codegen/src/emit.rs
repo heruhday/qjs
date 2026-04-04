@@ -392,6 +392,11 @@ impl BytecodeBuilder {
         self.emit_raw(Opcode::LoadArg.as_u8(), dst, arg_index, 0);
     }
 
+    /// load_rest_args dst, start_index
+    pub fn emit_load_rest_args(&mut self, dst: u8, start_index: u8) {
+        self.emit_raw(Opcode::LoadRestArgs.as_u8(), dst, start_index, 0);
+    }
+
     /// load_acc src
     pub fn emit_load_acc(&mut self, src: u8) {
         self.emit_raw(Opcode::LoadAcc.as_u8(), src, 0, 0);
@@ -467,6 +472,11 @@ impl BytecodeBuilder {
         self.emit_raw(Opcode::In.as_u8(), 0, lhs, rhs);
     }
 
+    /// private_in lhs, rhs (result in accumulator)
+    pub fn emit_private_in(&mut self, lhs: u8, rhs: u8) {
+        self.emit_raw(Opcode::PrivateIn.as_u8(), 0, lhs, rhs);
+    }
+
     /// instanceof lhs, rhs (result in accumulator)
     pub fn emit_instanceof(&mut self, lhs: u8, rhs: u8) {
         self.emit_raw(Opcode::Instanceof.as_u8(), 0, lhs, rhs);
@@ -510,6 +520,16 @@ impl BytecodeBuilder {
     /// set_prop obj, key, value
     pub fn emit_set_prop(&mut self, value: u8, obj: u8, key: u8) {
         self.emit_raw(Opcode::SetProp.as_u8(), value, obj, key);
+    }
+
+    /// get_private_prop dst, obj, key
+    pub fn emit_get_private_prop(&mut self, dst: u8, obj: u8, key: u8) {
+        self.emit_raw(Opcode::GetPrivateProp.as_u8(), dst, obj, key);
+    }
+
+    /// set_private_prop obj, key, value
+    pub fn emit_set_private_prop(&mut self, value: u8, obj: u8, key: u8) {
+        self.emit_raw(Opcode::SetPrivateProp.as_u8(), value, obj, key);
     }
 
     /// get_idx_ic dst, obj, cache_slot
@@ -701,6 +721,16 @@ impl BytecodeBuilder {
     /// call_var callee, array_reg
     pub fn emit_call_var(&mut self, callee: u8, array_reg: u8) {
         self.emit_raw(Opcode::CallVar.as_u8(), callee, array_reg, 0);
+    }
+
+    /// call_this callee, this_reg, arg_count
+    pub fn emit_call_this(&mut self, callee: u8, this_reg: u8, arg_count: u8) {
+        self.emit_raw(Opcode::CallThis.as_u8(), callee, this_reg, arg_count);
+    }
+
+    /// call_this_var callee, this_reg, array_reg
+    pub fn emit_call_this_var(&mut self, callee: u8, this_reg: u8, array_reg: u8) {
+        self.emit_raw(Opcode::CallThisVar.as_u8(), callee, this_reg, array_reg);
     }
 
     /// enter frame_size

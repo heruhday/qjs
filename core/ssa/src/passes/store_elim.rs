@@ -41,9 +41,7 @@ impl StoreElimination {
 
                     IRInst::Unary { dst, operand, .. }
                     | IRInst::Binary {
-                        dst,
-                        lhs: operand,
-                        ..
+                        dst, lhs: operand, ..
                     } => {
                         // These also produce values that could be dead
                         let location = format!("compute_{:?}", dst);

@@ -1,6 +1,8 @@
+use std::collections::HashMap;
+
 use value::{JSValue, make_undefined};
 
-use crate::{BuiltinHost, BuiltinMethod, BuiltinObject};
+use crate::{BuiltinHost, BuiltinMethod, install_global_object};
 
 const CONSOLE_METHODS: &[BuiltinMethod] = &[
     BuiltinMethod::new("log", "__builtin_console_log"),
@@ -22,7 +24,9 @@ const CONSOLE_METHODS: &[BuiltinMethod] = &[
     BuiltinMethod::new("timeLog", "__builtin_console_time_log"),
 ];
 
-pub(crate) const OBJECTS: &[BuiltinObject] = &[BuiltinObject::new("console", CONSOLE_METHODS)];
+pub(crate) fn install<H: BuiltinHost>(host: &mut H, global_slots: &HashMap<&str, u16>) {
+    let _ = install_global_object(host, global_slots, "console", CONSOLE_METHODS);
+}
 
 pub(crate) fn dispatch<H: BuiltinHost>(
     host: &mut H,

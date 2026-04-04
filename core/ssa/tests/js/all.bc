@@ -6404,24 +6404,24 @@ mov r2, r255, r0
 call_ret r1, 1
 load_name r1, identifier[11]
 load_name r2, identifier[37]
-get_prop r2, r2, r10
-load_i r3, 1
+get_prop r3, r2, r10
+load_i r4, 1
+load_i r5, 5
+load_i r6, 2
+call_this r3, r2, 3
 load_i r4, 5
-load_i r5, 2
-call r2, 3
-load_i r3, 5
-strict_eq r255, r3
+strict_eq r255, r4
 mov r2, r255, r0
 call_ret r1, 1
 load_name r1, identifier[11]
 load_name r2, identifier[37]
-get_prop r2, r2, r9
-load_i r3, 1
-load_i r4, 5
-load_i r5, 2
-call r2, 3
-load_i r3, 1
-strict_eq r255, r3
+get_prop r3, r2, r9
+load_i r4, 1
+load_i r5, 5
+load_i r6, 2
+call_this r3, r2, 3
+load_i r4, 1
+strict_eq r255, r4
 mov r2, r255, r0
 call_ret r1, 1
 load_name r1, identifier[11]

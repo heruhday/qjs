@@ -75,7 +75,7 @@ pub fn instruction_operands(inst: &DecodedInst) -> InstructionOperands {
             push_unique_reg(&mut defs, inst.a);
             push_unique_reg(&mut defs, ACC_REG);
         }
-        Opcode::LoadArg => {
+        Opcode::LoadArg | Opcode::LoadRestArgs => {
             push_unique_reg(&mut defs, inst.a);
         }
         Opcode::LoadAcc => {
@@ -128,6 +128,7 @@ pub fn instruction_operands(inst: &DecodedInst) -> InstructionOperands {
         | Opcode::LogicalOr
         | Opcode::NullishCoalesce
         | Opcode::In
+        | Opcode::PrivateIn
         | Opcode::Instanceof
         | Opcode::AddStr
         | Opcode::EqI32Fast
@@ -199,11 +200,11 @@ pub fn instruction_operands(inst: &DecodedInst) -> InstructionOperands {
             push_unique_reg(&mut uses, inst.b);
             push_unique_reg(&mut uses, inst.c);
         }
-        Opcode::GetProp | Opcode::GetSuper | Opcode::GetPropIc | Opcode::GetPropMono => {
+        Opcode::GetProp | Opcode::GetSuper | Opcode::GetPropIc | Opcode::GetPropMono | Opcode::GetPrivateProp => {
             push_unique_reg(&mut defs, inst.a);
             push_unique_reg(&mut uses, inst.b);
         }
-        Opcode::SetProp | Opcode::SetSuper | Opcode::SetPropIc => {
+        Opcode::SetProp | Opcode::SetSuper | Opcode::SetPropIc | Opcode::SetPrivateProp => {
             push_unique_reg(&mut defs, ACC_REG);
             push_unique_reg(&mut uses, inst.a);
             push_unique_reg(&mut uses, inst.b);
@@ -345,10 +346,26 @@ pub fn instruction_operands(inst: &DecodedInst) -> InstructionOperands {
         | Opcode::Construct
         | Opcode::CallIc
         | Opcode::CallIcSuper
+        | Opcode::CallThis
         | Opcode::CallMono => {
             push_unique_reg(&mut defs, ACC_REG);
-            push_unique_reg(&mut uses, 0);
-            let _ = push_call_bundle(&mut uses, inst.a, inst.b);
+            push_unique_reg(
+                &mut uses,
+                if inst.opcode == Opcode::CallThis {
+                    inst.b
+                } else {
+                    0
+                },
+            );
+            let _ = push_call_bundle(
+                &mut uses,
+                inst.a,
+                if inst.opcode == Opcode::CallThis {
+                    inst.c
+                } else {
+                    inst.b
+                },
+            );
         }
         Opcode::TailCall | Opcode::CallRet => {
             push_unique_reg(&mut uses, 0);
@@ -359,11 +376,20 @@ pub fn instruction_operands(inst: &DecodedInst) -> InstructionOperands {
             push_unique_reg(&mut uses, 0);
             let _ = push_call_bundle(&mut uses, inst.b, inst.c);
         }
-        Opcode::CallVar | Opcode::CallIcVar => {
+        Opcode::CallVar | Opcode::CallIcVar | Opcode::CallThisVar => {
             push_unique_reg(&mut defs, ACC_REG);
-            push_unique_reg(&mut uses, 0);
+            push_unique_reg(
+                &mut uses,
+                if inst.opcode == Opcode::CallThisVar {
+                    inst.b
+                } else {
+                    0
+                },
+            );
             push_unique_reg(&mut uses, inst.a);
-            if inst.a < ACC_REG {
+            if matches!(inst.opcode, Opcode::CallThisVar) {
+                push_unique_reg(&mut uses, inst.c);
+            } else if inst.a < ACC_REG {
                 push_unique_reg(&mut uses, inst.a + 1);
             }
         }

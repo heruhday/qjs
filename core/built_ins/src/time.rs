@@ -1,9 +1,10 @@
+use std::collections::HashMap;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use chrono::{DateTime, Duration, NaiveDate, NaiveDateTime};
+use chrono::{DateTime, Duration, NaiveDate, NaiveDateTime, TimeZone, Utc};
 use value::{JSValue, make_number, to_f64};
 
-use crate::{BuiltinHost, BuiltinMethod, BuiltinObject};
+use crate::{BuiltinHost, BuiltinMethod, install_global_function, install_methods};
 
 const DATE_METHODS: &[BuiltinMethod] = &[
     BuiltinMethod::new("now", "__builtin_date_now"),
@@ -11,28 +12,67 @@ const DATE_METHODS: &[BuiltinMethod] = &[
     BuiltinMethod::new("UTC", "__builtin_date_utc"),
 ];
 
-pub(crate) const OBJECTS: &[BuiltinObject] = &[BuiltinObject::new("Date", DATE_METHODS)];
+const DATE_INSTANCE_METHODS: &[BuiltinMethod] = &[
+    BuiltinMethod::new("getTime", "__builtin_date_get_time"),
+    BuiltinMethod::new("valueOf", "__builtin_date_value_of"),
+    BuiltinMethod::new("toISOString", "__builtin_date_to_iso_string"),
+];
+
+const MILLIS_PROP: &str = "__qjs_date_millis";
+const KIND_PROP: &str = "__qjs_builtin_kind";
+
+pub(crate) fn install<H: BuiltinHost>(host: &mut H, global_slots: &HashMap<&str, u16>) {
+    let _ = install_global_function(host, global_slots, "Date", "__builtin_date", DATE_METHODS);
+}
 
 pub(crate) fn dispatch<H: BuiltinHost>(
     host: &mut H,
     name: &str,
+    _callee_value: JSValue,
+    this_value: JSValue,
     args: &[JSValue],
 ) -> Option<JSValue> {
     match name {
-        "__builtin_date_now" => Some(date_now(args)),
+        "__builtin_date" => Some(host.intern_string(&format_date_string(date_now_millis()))),
+        "__builtin_date_now" => Some(make_number(date_now_millis() as f64)),
         "__builtin_date_parse" => Some(date_parse(host, args)),
         "__builtin_date_utc" => Some(date_utc(host, args)),
+        "__builtin_date_get_time" | "__builtin_date_value_of" => {
+            Some(host.get_property(this_value, MILLIS_PROP))
+        }
+        "__builtin_date_to_iso_string" => Some(date_to_iso_string(host, this_value)),
         _ => None,
     }
 }
 
-fn date_now(_args: &[JSValue]) -> JSValue {
-    let millis = match SystemTime::now().duration_since(UNIX_EPOCH) {
-        Ok(duration) => duration.as_secs_f64() * 1000.0,
-        Err(_) => 0.0,
-    };
+pub(crate) fn construct<H: BuiltinHost>(
+    host: &mut H,
+    _callee_value: JSValue,
+    name: &str,
+    args: &[JSValue],
+) -> Option<JSValue> {
+    if name != "__builtin_date" {
+        return None;
+    }
 
-    make_number(millis)
+    let millis = date_constructor_millis(host, args);
+    Some(create_date_instance(host, millis))
+}
+
+fn create_date_instance<H: BuiltinHost>(host: &mut H, millis: f64) -> JSValue {
+    let object = host.create_object();
+    let kind = host.intern_string("Date");
+    host.set_property(object, KIND_PROP, kind);
+    host.set_property(object, MILLIS_PROP, make_number(millis));
+    install_methods(host, object, DATE_INSTANCE_METHODS);
+    object
+}
+
+fn date_now_millis() -> i64 {
+    match SystemTime::now().duration_since(UNIX_EPOCH) {
+        Ok(duration) => (duration.as_secs_f64() * 1000.0) as i64,
+        Err(_) => 0,
+    }
 }
 
 fn date_parse<H: BuiltinHost>(host: &mut H, args: &[JSValue]) -> JSValue {
@@ -81,6 +121,64 @@ fn date_utc<H: BuiltinHost>(host: &mut H, args: &[JSValue]) -> JSValue {
     ) {
         Some(millis) => make_number(millis as f64),
         None => make_number(f64::NAN),
+    }
+}
+
+fn date_to_iso_string<H: BuiltinHost>(host: &mut H, this_value: JSValue) -> JSValue {
+    let millis = to_f64(host.get_property(this_value, MILLIS_PROP)).unwrap_or(f64::NAN);
+    if !millis.is_finite() {
+        return host.intern_string("Invalid Date");
+    }
+    host.intern_string(&format_date_string(millis as i64))
+}
+
+fn date_constructor_millis<H: BuiltinHost>(host: &mut H, args: &[JSValue]) -> f64 {
+    match args {
+        [] => date_now_millis() as f64,
+        [value] => {
+            if let Some(text) = host.string_text(*value) {
+                parse_date_text_to_millis(text)
+                    .map(|millis| millis as f64)
+                    .unwrap_or(f64::NAN)
+            } else {
+                to_f64(host.number_value(*value)).unwrap_or(f64::NAN)
+            }
+        }
+        _ => {
+            let Some(year) = date_integer_arg(host, args, 0, None) else {
+                return f64::NAN;
+            };
+            let Some(month_index) = date_integer_arg(host, args, 1, None) else {
+                return f64::NAN;
+            };
+            let Some(day) = date_integer_arg(host, args, 2, Some(1)) else {
+                return f64::NAN;
+            };
+            let Some(hours) = date_integer_arg(host, args, 3, Some(0)) else {
+                return f64::NAN;
+            };
+            let Some(minutes) = date_integer_arg(host, args, 4, Some(0)) else {
+                return f64::NAN;
+            };
+            let Some(seconds) = date_integer_arg(host, args, 5, Some(0)) else {
+                return f64::NAN;
+            };
+            let Some(milliseconds) = date_integer_arg(host, args, 6, Some(0)) else {
+                return f64::NAN;
+            };
+
+            utc_millis_from_components(
+                year,
+                month_index,
+                day,
+                hours,
+                minutes,
+                seconds,
+                milliseconds,
+            )
+            .map(|millis| millis as f64)
+            .unwrap_or(f64::NAN)
+        }
     }
 }
 
@@ -164,4 +262,11 @@ fn utc_millis_from_components(
         .checked_add_signed(Duration::milliseconds(milliseconds))?;
 
     Some(value.and_utc().timestamp_millis())
+}
+
+fn format_date_string(millis: i64) -> String {
+    Utc.timestamp_millis_opt(millis)
+        .single()
+        .map(|value| value.to_rfc3339())
+        .unwrap_or_else(|| "Invalid Date".to_owned())
 }

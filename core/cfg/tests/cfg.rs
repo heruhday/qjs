@@ -284,9 +284,11 @@ fn function_entries_include_nested_function_offsets() {
         ],
         constants: vec![make_number(2.0), make_number(4.0)],
         string_constants: Vec::new(),
+        atom_constants: Vec::new(),
         function_constants: vec![0, 1],
         names: Vec::new(),
         properties: Vec::new(),
+        private_properties: Vec::new(),
     };
 
     assert_eq!(CFG::function_entries(&compiled), vec![0, 2, 4]);

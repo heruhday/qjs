@@ -68,6 +68,8 @@ impl AsmInstruction {
             | Opcode::SetIdxFast
             | Opcode::GetProp
             | Opcode::SetProp
+            | Opcode::GetPrivateProp
+            | Opcode::SetPrivateProp
             | Opcode::GetIdxIc
             | Opcode::SetIdxIc
             | Opcode::GetLengthIc
@@ -220,6 +222,7 @@ impl AsmInstruction {
             | Opcode::LogicalOr
             | Opcode::NullishCoalesce
             | Opcode::In
+            | Opcode::PrivateIn
             | Opcode::Instanceof => Format::BC,
 
             Opcode::Call
@@ -227,6 +230,8 @@ impl AsmInstruction {
             | Opcode::Construct
             | Opcode::CallIc
             | Opcode::CallIcSuper
+            | Opcode::CallThis
+            | Opcode::CallThisVar
             | Opcode::LoadThisCall
             | Opcode::LoadArgCall => Format::ABC, // Special: A B format
 
@@ -236,6 +241,7 @@ impl AsmInstruction {
             | Opcode::IsUndef
             | Opcode::IsNull
             | Opcode::LoadArg
+            | Opcode::LoadRestArgs
             | Opcode::LoadAcc
             | Opcode::Keys
             | Opcode::Switch
@@ -330,13 +336,22 @@ impl AsmInstruction {
                     | Opcode::Construct
                     | Opcode::CallIc
                     | Opcode::CallIcSuper
+                    | Opcode::CallThis
+                    | Opcode::CallThisVar
                     | Opcode::LoadThisCall
                     | Opcode::LoadArgCall => {
                         // A B format
-                        format!(
-                            "{:04X}: {} r{}, {}",
-                            pc_byte_offset, opcode_str, self.a, self.b
-                        )
+                        if matches!(self.opcode, Opcode::CallThis | Opcode::CallThisVar) {
+                            format!(
+                                "{:04X}: {} r{}, r{}, {}",
+                                pc_byte_offset, opcode_str, self.a, self.b, self.c
+                            )
+                        } else {
+                            format!(
+                                "{:04X}: {} r{}, {}",
+                                pc_byte_offset, opcode_str, self.a, self.b
+                            )
+                        }
                     }
                     Opcode::Call1SubI | Opcode::Call2SubIAdd => {
                         format!(
@@ -651,6 +666,7 @@ impl AsmInstruction {
             Opcode::GetIdxFast => "get_idx_fast",
             Opcode::SetIdxFast => "set_idx_fast",
             Opcode::LoadArg => "load_arg",
+            Opcode::LoadRestArgs => "load_rest_args",
             Opcode::LoadAcc => "load_acc",
             Opcode::StrictEq => "strict_eq",
             Opcode::StrictNeq => "strict_neq",
@@ -666,6 +682,7 @@ impl AsmInstruction {
             Opcode::LogicalOr => "logical_or",
             Opcode::NullishCoalesce => "nullish_coalesce",
             Opcode::In => "in",
+            Opcode::PrivateIn => "private_in",
             Opcode::Instanceof => "instanceof",
             Opcode::GetLengthIc => "get_length_ic",
             Opcode::ArrayPushAcc => "array_push_acc",
@@ -715,6 +732,8 @@ impl AsmInstruction {
             Opcode::TailCall => "tail_call",
             Opcode::Construct => "construct",
             Opcode::CallVar => "call_var",
+            Opcode::CallThis => "call_this",
+            Opcode::CallThisVar => "call_this_var",
             Opcode::Enter => "enter",
             Opcode::Leave => "leave",
             Opcode::Yield => "yield",
@@ -852,12 +871,15 @@ impl AsmInstruction {
             Opcode::CallMethodIc => "call_method_ic",
             Opcode::CallMethod2Ic => "call_method2_ic",
 
+            Opcode::GetPrivateProp => "get_private_prop",
+            Opcode::SetPrivateProp => "set_private_prop",
+
             Opcode::Reserved(n) => match n {
                 61..=63 => "reserved_61_63",
                 123..=127 => "reserved_123_127",
                 130..=159 => "reserved_130_159",
                 174..=199 => "reserved_174_199",
-                225..=239 => "reserved_225_239",
+                228..=238 => "reserved_228_238",
                 243..=255 => "reserved_243_255",
                 _ => "reserved",
             },
@@ -918,6 +940,7 @@ impl AsmInstruction {
             Opcode::GetIdxFast => "get_idx_fast",
             Opcode::SetIdxFast => "set_idx_fast",
             Opcode::LoadArg => "load_arg",
+            Opcode::LoadRestArgs => "load_rest_args",
             Opcode::LoadAcc => "load_acc",
             Opcode::StrictEq => "strict_eq",
             Opcode::StrictNeq => "strict_neq",
@@ -933,6 +956,7 @@ impl AsmInstruction {
             Opcode::LogicalOr => "logical_or",
             Opcode::NullishCoalesce => "nullish_coalesce",
             Opcode::In => "in",
+            Opcode::PrivateIn => "private_in",
             Opcode::Instanceof => "instanceof",
             Opcode::GetLengthIc => "get_length_ic",
             Opcode::ArrayPushAcc => "array_push_acc",
@@ -982,6 +1006,8 @@ impl AsmInstruction {
             Opcode::TailCall => "tail_call",
             Opcode::Construct => "construct",
             Opcode::CallVar => "call_var",
+            Opcode::CallThis => "call_this",
+            Opcode::CallThisVar => "call_this_var",
             Opcode::Enter => "enter",
             Opcode::Leave => "leave",
             Opcode::Yield => "yield",
@@ -1108,6 +1134,8 @@ impl AsmInstruction {
             Opcode::GetPropElem => "get_prop_elem",
             Opcode::CallMethodIc => "call_method_ic",
             Opcode::CallMethod2Ic => "call_method2_ic",
+            Opcode::GetPrivateProp => "get_private_prop",
+            Opcode::SetPrivateProp => "set_private_prop",
             Opcode::Reserved(n) => match n {
                 61..=63 => "reserved_61_63",
                 123..=127 => "reserved_123_127",
@@ -1132,10 +1160,16 @@ impl AsmInstruction {
                     | Opcode::Construct
                     | Opcode::CallIc
                     | Opcode::CallIcSuper
+                    | Opcode::CallThis
+                    | Opcode::CallThisVar
                     | Opcode::LoadThisCall
                     | Opcode::LoadArgCall => {
                         // A B format
-                        format!("{} r{}, {}", opcode_str, self.a, self.b)
+                        if matches!(self.opcode, Opcode::CallThis | Opcode::CallThisVar) {
+                            format!("{} r{}, r{}, {}", opcode_str, self.a, self.b, self.c)
+                        } else {
+                            format!("{} r{}, {}", opcode_str, self.a, self.b)
+                        }
                     }
                     Opcode::Call1SubI | Opcode::Call2SubIAdd => {
                         format!("{} r{}, r{}, {}", opcode_str, self.a, self.b, self.c as i8)

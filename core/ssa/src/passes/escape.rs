@@ -46,9 +46,7 @@ impl EscapeAnalysis {
                         local_values.insert(dst.clone());
                         self.classify_use(operand, &mut local_values, &mut return_values);
                     }
-                    IRInst::Binary {
-                        dst, lhs, rhs, ..
-                    } => {
+                    IRInst::Binary { dst, lhs, rhs, .. } => {
                         local_values.insert(dst.clone());
                         self.classify_use(lhs, &mut local_values, &mut return_values);
                         self.classify_use(rhs, &mut local_values, &mut return_values);

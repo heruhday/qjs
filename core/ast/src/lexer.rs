@@ -404,6 +404,7 @@ impl<'a> Lexer<'a> {
     ) -> Result<Token, LexError> {
         self.bump_char();
         let mut value = String::new();
+        let mut raw = String::new();
         let mut invalid_escape = false;
 
         loop {
@@ -418,23 +419,32 @@ impl<'a> Lexer<'a> {
                 Some('$') if self.peek_nth_char(1) == Some('{') => {
                     value.push('$');
                     value.push('{');
+                    raw.push('$');
+                    raw.push('{');
                     self.consume_str("${");
+                    let value_len = value.len();
                     self.copy_template_expression(&mut value, 1)?;
+                    raw.push_str(&value[value_len..]);
                 }
                 Some('\\') => {
                     self.bump_char();
-                    let (escaped, escape_invalid) = self.read_template_escape_sequence()?;
+                    raw.push('\\');
+                    let (escaped, escape_invalid, raw_escape) =
+                        self.read_template_escape_sequence()?;
                     invalid_escape |= escape_invalid;
+                    raw.push_str(&raw_escape);
                     if let Some(escaped) = escaped {
                         value.push_str(&escaped);
                     }
                 }
                 Some(ch) if is_line_terminator(ch) => {
                     value.push('\n');
+                    raw.push('\n');
                     self.consume_line_break();
                 }
                 Some(ch) => {
                     value.push(ch);
+                    raw.push(ch);
                     self.bump_char();
                 }
             }
@@ -443,6 +453,7 @@ impl<'a> Lexer<'a> {
         Ok(self.make_token(
             TokenKind::Template {
                 value,
+                raw,
                 invalid_escape,
             },
             start,
@@ -984,7 +995,9 @@ impl<'a> Lexer<'a> {
         Ok(Some(value))
     }
 
-    fn read_template_escape_sequence(&mut self) -> Result<(Option<String>, bool), LexError> {
+    fn read_template_escape_sequence(
+        &mut self,
+    ) -> Result<(Option<String>, bool, String), LexError> {
         let start = self.position();
         let Some(ch) = self.peek_char() else {
             return Err(self.error_at("unterminated escape sequence", Span::point(start)));
@@ -993,48 +1006,48 @@ impl<'a> Lexer<'a> {
         let result = match ch {
             '\'' => {
                 self.bump_char();
-                (Some("'".to_string()), false)
+                (Some("'".to_string()), false, "'".to_string())
             }
             '"' => {
                 self.bump_char();
-                (Some("\"".to_string()), false)
+                (Some("\"".to_string()), false, "\"".to_string())
             }
             '`' => {
                 self.bump_char();
-                (Some("`".to_string()), false)
+                (Some("`".to_string()), false, "`".to_string())
             }
             '\\' => {
                 self.bump_char();
-                (Some("\\".to_string()), false)
+                (Some("\\".to_string()), false, "\\".to_string())
             }
             'n' => {
                 self.bump_char();
-                (Some("\n".to_string()), false)
+                (Some("\n".to_string()), false, "n".to_string())
             }
             'r' => {
                 self.bump_char();
-                (Some("\r".to_string()), false)
+                (Some("\r".to_string()), false, "r".to_string())
             }
             't' => {
                 self.bump_char();
-                (Some("\t".to_string()), false)
+                (Some("\t".to_string()), false, "t".to_string())
             }
             'b' => {
                 self.bump_char();
-                (Some("\u{0008}".to_string()), false)
+                (Some("\u{0008}".to_string()), false, "b".to_string())
             }
             'f' => {
                 self.bump_char();
-                (Some("\u{000c}".to_string()), false)
+                (Some("\u{000c}".to_string()), false, "f".to_string())
             }
             'v' => {
                 self.bump_char();
-                (Some("\u{000b}".to_string()), false)
+                (Some("\u{000b}".to_string()), false, "v".to_string())
             }
             '0' => {
                 self.bump_char();
                 let invalid = self.peek_char().is_some_and(|next| next.is_ascii_digit());
-                (Some("\0".to_string()), invalid)
+                (Some("\0".to_string()), invalid, "0".to_string())
             }
             'x' => {
                 self.bump_char();
@@ -1043,10 +1056,13 @@ impl<'a> Lexer<'a> {
                     .read_fixed_hex_digits(2)
                     .and_then(|code| codepoint_to_string(code, Span::point(start)))
                 {
-                    Ok(value) => (Some(value), false),
+                    Ok(value) => {
+                        let raw_suffix = self.source[checkpoint.0 - 1..self.offset].to_string();
+                        (Some(value), false, raw_suffix)
+                    }
                     Err(_) => {
                         (self.offset, self.line, self.column) = checkpoint;
-                        (Some("x".to_string()), true)
+                        (Some("x".to_string()), true, "x".to_string())
                     }
                 }
             }
@@ -1057,20 +1073,23 @@ impl<'a> Lexer<'a> {
                     .read_unicode_escape_value(start)
                     .and_then(|code| codepoint_to_string(code, Span::point(start)))
                 {
-                    Ok(value) => (Some(value), false),
+                    Ok(value) => {
+                        let raw_suffix = self.source[checkpoint.0 - 1..self.offset].to_string();
+                        (Some(value), false, raw_suffix)
+                    }
                     Err(_) => {
                         (self.offset, self.line, self.column) = checkpoint;
-                        (Some("u".to_string()), true)
+                        (Some("u".to_string()), true, "u".to_string())
                     }
                 }
             }
             c if is_line_terminator(c) => {
                 self.consume_line_break();
-                return Ok((None, false));
+                return Ok((None, false, "\n".to_string()));
             }
             _ => {
                 self.bump_char();
-                (Some(ch.to_string()), ch.is_ascii_digit())
+                (Some(ch.to_string()), ch.is_ascii_digit(), ch.to_string())
             }
         };
 

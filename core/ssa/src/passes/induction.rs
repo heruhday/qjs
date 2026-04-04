@@ -5,7 +5,6 @@ use cfg::BlockId;
 use crate::ir::{IRFunction, IRInst, IRValue};
 use crate::passes::Pass;
 
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct InductionVariable {
     pub base: IRValue,
@@ -30,7 +29,9 @@ impl InductionVariableOptimization {
                 for inst in &header_block.instructions {
                     if let IRInst::Phi { incoming, .. } = inst {
                         // Phi nodes are candidates for induction variables
-                        if let Some((base, step)) = self.analyze_phi_for_induction(ir, header_id, incoming) {
+                        if let Some((base, step)) =
+                            self.analyze_phi_for_induction(ir, header_id, incoming)
+                        {
                             result.push(InductionVariable { base, step });
                         }
                     }

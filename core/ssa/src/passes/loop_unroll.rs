@@ -86,7 +86,12 @@ impl LoopUnrolling {
     }
 
     /// Find blocks that belong to a loop (reachable from header and can reach back to header)
-    fn find_loop_body(&self, ir: &IRFunction, header: BlockId, _backedge_source: BlockId) -> Vec<BlockId> {
+    fn find_loop_body(
+        &self,
+        ir: &IRFunction,
+        header: BlockId,
+        _backedge_source: BlockId,
+    ) -> Vec<BlockId> {
         let mut body = Vec::new();
         let mut visited = HashSet::new();
         let mut worklist = vec![header];

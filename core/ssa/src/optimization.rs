@@ -136,7 +136,10 @@ pub fn optimize_basic_peephole(ir: &mut IRFunction) -> bool {
                         IRInst::Mov { dst, src },
                     ) if src == previous_dst => (
                         None,
-                        Some(IRInst::LoadConst { dst: dst.clone(), value: *value }),
+                        Some(IRInst::LoadConst {
+                            dst: dst.clone(),
+                            value: *value,
+                        }),
                     ),
                     (
                         IRInst::Mov {
@@ -222,13 +225,13 @@ pub fn optimize_superinstructions(ir: &mut IRFunction) -> bool {
     for block in &mut ir.blocks {
         // First, try to fuse binary operations into branches
         changed |= fuse_compare_into_branch(block);
-        
+
         // Try to fuse binary operations into special bytecode instructions
         changed |= fuse_binary_into_bytecode(block);
-        
+
         // Try to fuse bytecode calls into returns
         changed |= fuse_call_into_return(block);
-        
+
         // Then lift terminal values
         loop {
             let Some(last) = block.instructions.last().cloned() else {
@@ -254,7 +257,7 @@ pub fn optimize_superinstructions(ir: &mut IRFunction) -> bool {
 /// Fuse Binary/Unary operations into special bytecode instructions
 fn fuse_binary_into_bytecode(block: &mut IRBlock) -> bool {
     let mut changed = false;
-    
+
     let mut i = 0;
     while i < block.instructions.len() {
         match &block.instructions[i] {
@@ -325,18 +328,18 @@ fn fuse_binary_into_bytecode(block: &mut IRBlock) -> bool {
         }
         i += 1;
     }
-    
+
     changed
 }
 
 /// Fuse Call bytecode instruction directly into CallReturn terminator
 fn fuse_call_into_return(block: &mut IRBlock) -> bool {
     let mut changed = false;
-    
+
     if block.instructions.is_empty() {
         return false;
     }
-    
+
     // Check if last instruction is a Call bytecode operation
     if let Some(last_idx) = block.instructions.len().checked_sub(1) {
         if let IRInst::Bytecode { inst, uses, defs } = &block.instructions[last_idx] {
@@ -359,18 +362,18 @@ fn fuse_call_into_return(block: &mut IRBlock) -> bool {
             }
         }
     }
-    
+
     changed
 }
 
 /// Fuse binary compare operations directly into branch conditions
 fn fuse_compare_into_branch(block: &mut IRBlock) -> bool {
     let mut changed = false;
-    
+
     if block.instructions.is_empty() {
         return false;
     }
-    
+
     // Check if last instruction is a compare operation
     if let Some(last_idx) = block.instructions.len().checked_sub(1) {
         if let IRInst::Binary {
@@ -382,10 +385,11 @@ fn fuse_compare_into_branch(block: &mut IRBlock) -> bool {
         {
             // Check if the compare result is only used in the terminator
             if let IRTerminator::Branch {
-                condition: IRCondition::Truthy {
-                    value: cond_value,
-                    negate,
-                },
+                condition:
+                    IRCondition::Truthy {
+                        value: cond_value,
+                        negate,
+                    },
                 target,
                 fallthrough,
             } = &block.terminator
@@ -398,7 +402,7 @@ fn fuse_compare_into_branch(block: &mut IRBlock) -> bool {
                         IRBinaryOp::Eq => Some(CompareKind::Neq), // Eq becomes Neq with negate
                         _ => None,
                     };
-                    
+
                     if let Some(kind) = compare_kind {
                         block.terminator = IRTerminator::Branch {
                             condition: IRCondition::Compare {
@@ -417,7 +421,7 @@ fn fuse_compare_into_branch(block: &mut IRBlock) -> bool {
             }
         }
     }
-    
+
     changed
 }
 

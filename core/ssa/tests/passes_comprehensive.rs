@@ -709,11 +709,11 @@ fn alias_analysis_distinguishes_references() {
     );
 
     analysis.analyze(&ir);
-    
+
     // Current implementation: conservative stub that always returns MayAlias
     let result_self = analysis.query(&r0, &r0);
     let result_distinct = analysis.query(&r0, &r1);
-    
+
     // Both should return MayAlias (conservative implementation)
     assert_eq!(result_self, AliasResult::MayAlias);
     assert_eq!(result_distinct, AliasResult::MayAlias);
@@ -743,14 +743,12 @@ fn block_layout_optimization_orders_for_cache_locality() {
             // Block 1: Rarely taken path (should move away)
             IRBlock {
                 id: 1,
-                instructions: vec![
-                    IRInst::Binary {
-                        dst: reg(1),
-                        op: IRBinaryOp::Add,
-                        lhs: reg(1),
-                        rhs: IRValue::Constant(make_int32(1)),
-                    },
-                ],
+                instructions: vec![IRInst::Binary {
+                    dst: reg(1),
+                    op: IRBinaryOp::Add,
+                    lhs: reg(1),
+                    rhs: IRValue::Constant(make_int32(1)),
+                }],
                 terminator: IRTerminator::Return {
                     value: Some(reg(1)),
                 },
@@ -760,12 +758,10 @@ fn block_layout_optimization_orders_for_cache_locality() {
             // Block 2: Common path (should stay near entry)
             IRBlock {
                 id: 2,
-                instructions: vec![
-                    IRInst::Mov {
-                        dst: reg(2),
-                        src: reg(0),
-                    },
-                ],
+                instructions: vec![IRInst::Mov {
+                    dst: reg(2),
+                    src: reg(0),
+                }],
                 terminator: IRTerminator::Return {
                     value: Some(reg(2)),
                 },
@@ -882,7 +878,9 @@ fn escape_analysis_categorizes_object_scope() {
             dst: _obj.clone(),
             src: field.clone(),
         }],
-        IRTerminator::Return { value: Some(_obj.clone()) },
+        IRTerminator::Return {
+            value: Some(_obj.clone()),
+        },
     );
 
     let escape = EscapeAnalysis;
@@ -1075,14 +1073,12 @@ fn loop_unswitching_hoists_invariant_branches() {
             // Path 1 inside loop
             IRBlock {
                 id: 3,
-                instructions: vec![
-                    IRInst::Binary {
-                        dst: var.clone(),
-                        op: IRBinaryOp::Add,
-                        lhs: var.clone(),
-                        rhs: IRValue::Constant(make_int32(2)),
-                    },
-                ],
+                instructions: vec![IRInst::Binary {
+                    dst: var.clone(),
+                    op: IRBinaryOp::Add,
+                    lhs: var.clone(),
+                    rhs: IRValue::Constant(make_int32(2)),
+                }],
                 terminator: IRTerminator::Jump { target: 1 },
                 successors: vec![1],
                 predecessors: vec![2],
@@ -1157,7 +1153,9 @@ fn store_elimination_removes_unused_writes() {
                 src: r0.clone(),
             },
         ],
-        IRTerminator::Return { value: Some(r1.clone()) },
+        IRTerminator::Return {
+            value: Some(r1.clone()),
+        },
     );
 
     let store_elim = StoreElimination;
@@ -1191,7 +1189,9 @@ fn strength_reduction_replaces_mul_with_add() {
                 rhs: r0.clone(),
             },
         ],
-        IRTerminator::Return { value: Some(r2.clone()) },
+        IRTerminator::Return {
+            value: Some(r2.clone()),
+        },
     );
 
     let strength = StrengthReduction;
@@ -1398,7 +1398,9 @@ fn combination_memory_optimization_chain() {
                 src: r2.clone(),
             },
         ],
-        IRTerminator::Return { value: Some(r4.clone()) },
+        IRTerminator::Return {
+            value: Some(r4.clone()),
+        },
     );
 
     let store_elim = StoreElimination;
@@ -1480,14 +1482,12 @@ fn combination_unswitching_and_unrolling() {
             // Path A
             IRBlock {
                 id: 3,
-                instructions: vec![
-                    IRInst::Binary {
-                        dst: i.clone(),
-                        op: IRBinaryOp::Add,
-                        lhs: i.clone(),
-                        rhs: IRValue::Constant(make_int32(1)),
-                    },
-                ],
+                instructions: vec![IRInst::Binary {
+                    dst: i.clone(),
+                    op: IRBinaryOp::Add,
+                    lhs: i.clone(),
+                    rhs: IRValue::Constant(make_int32(1)),
+                }],
                 terminator: IRTerminator::Jump { target: 1 },
                 successors: vec![1],
                 predecessors: vec![2],
@@ -1495,14 +1495,12 @@ fn combination_unswitching_and_unrolling() {
             // Path B
             IRBlock {
                 id: 4,
-                instructions: vec![
-                    IRInst::Binary {
-                        dst: i.clone(),
-                        op: IRBinaryOp::Add,
-                        lhs: i.clone(),
-                        rhs: IRValue::Constant(make_int32(2)),
-                    },
-                ],
+                instructions: vec![IRInst::Binary {
+                    dst: i.clone(),
+                    op: IRBinaryOp::Add,
+                    lhs: i.clone(),
+                    rhs: IRValue::Constant(make_int32(2)),
+                }],
                 terminator: IRTerminator::Jump { target: 1 },
                 successors: vec![1],
                 predecessors: vec![2],

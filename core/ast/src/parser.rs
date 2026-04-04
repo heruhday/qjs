@@ -1639,6 +1639,14 @@ impl Parser {
             let right = self.parse_expression_bp(right_bp, allow_in)?;
             let span = Span::between(left.span(), right.span());
             left = match operator {
+                InfixOperator::Binary(BinaryOperator::In) if matches!(&left, Expression::PrivateIdentifier(_)) => {
+                    Expression::Binary(Box::new(BinaryExpression {
+                        operator: BinaryOperator::PrivateIn,
+                        left,
+                        right,
+                        span,
+                    }))
+                }
                 InfixOperator::Binary(operator) => Expression::Binary(Box::new(BinaryExpression {
                     operator,
                     left,
@@ -1904,6 +1912,7 @@ impl Parser {
             }))),
             TokenKind::Template {
                 value,
+                raw,
                 invalid_escape,
             } => {
                 if invalid_escape {
@@ -1914,6 +1923,8 @@ impl Parser {
                 }
                 Ok(Expression::Literal(Literal::Template(TemplateLiteral {
                     value,
+                    raw,
+                    invalid_escape,
                     span: token.span,
                 })))
             }
@@ -2465,8 +2476,14 @@ impl Parser {
     fn parse_template_literal(&mut self) -> Result<TemplateLiteral, ParseError> {
         let token = self.advance();
         match token.kind {
-            TokenKind::Template { value, .. } => Ok(TemplateLiteral {
+            TokenKind::Template {
                 value,
+                raw,
+                invalid_escape,
+            } => Ok(TemplateLiteral {
+                value,
+                raw,
+                invalid_escape,
                 span: token.span,
             }),
             _ => Err(ParseError::new("template literal expected", token.span)),

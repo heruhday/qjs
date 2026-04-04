@@ -47,10 +47,17 @@ impl Span {
 pub enum TokenKind {
     Number(String),
     String(String),
-    Template { value: String, invalid_escape: bool },
+    Template {
+        value: String,
+        raw: String,
+        invalid_escape: bool,
+    },
     Identifier(String),
     PrivateName(String),
-    RegExp { body: String, flags: String },
+    RegExp {
+        body: String,
+        flags: String,
+    },
     Eof,
     Null,
     False,

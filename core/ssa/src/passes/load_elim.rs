@@ -23,12 +23,7 @@ impl LoadElimination {
 
             for inst in &mut block.instructions {
                 match inst {
-                    IRInst::Binary {
-                        op,
-                        dst,
-                        lhs,
-                        rhs,
-                    } => {
+                    IRInst::Binary { op, dst, lhs, rhs } => {
                         // Check if we've seen this exact operation before with same operands
                         let op_key = format!("{:?}_{:?}_{:?}", op, lhs, rhs);
 
@@ -75,7 +70,10 @@ impl LoadElimination {
 
     /// Check if two values could alias according to alias analysis
     fn could_alias(&self, lhs: &IRValue, rhs: &IRValue, alias: &AliasAnalysis) -> bool {
-        matches!(alias.query(lhs, rhs), AliasResult::MayAlias | AliasResult::MustAlias)
+        matches!(
+            alias.query(lhs, rhs),
+            AliasResult::MayAlias | AliasResult::MustAlias
+        )
     }
 }
 
